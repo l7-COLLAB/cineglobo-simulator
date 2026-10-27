@@ -43,7 +43,7 @@ export function applyPopcornAction(s,action){
  }
  if(action==='heat'){
   if(s.phase!=='loading'||!has(s,s.kind==='salgada'?'base':'oil'))return fail(s,'Primeiro confira a base/óleo correto antes de aquecer no jogo.');
-  return ok({...s,temperatureC:SIMULATED_TARGET_C,phase:'heated'},'Painel fictício em 200 °C. Não usar esta simulação como instrução real de operação.');
+  return ok({...s,temperatureC:25,phase:'heating'},'Aquecimento fictício iniciado. Aguarde o mostrador chegar a 200 °C.');
  }
  if(action==='motor'){
   if(s.phase!=='heated'||s.temperatureC!==SIMULATED_TARGET_C)return fail(s,'Aguarde o painel simulado chegar a 200 °C.');
@@ -79,8 +79,14 @@ export function applyPopcornAction(s,action){
  return fail(s,'Ação não reconhecida.');
 }
 export function advancePopcornBatch(s,seconds){
- if(!s||s.phase!=='popping'||!s.motor||!s.lid||!Number.isFinite(seconds)||seconds<=0)return s;
- const elapsed=Math.min(8,s.seconds+Math.min(seconds,.05));
+ if(!s||!Number.isFinite(seconds)||seconds<=0)return s;
+ const dt=Math.min(seconds,.05);
+ if(s.phase==='heating'){
+  const temp=Math.min(SIMULATED_TARGET_C,s.temperatureC+35*dt);
+  return {...s,temperatureC:temp,phase:temp>=SIMULATED_TARGET_C?'heated':'heating'};
+ }
+ if(s.phase!=='popping'||!s.motor||!s.lid)return s;
+ const elapsed=Math.min(8,s.seconds+dt);
  if(elapsed>=8)return {...s,seconds:8,phase:'slow',popIntervalSeconds:SLOW_POP_INTERVAL_SECONDS};
  return {...s,seconds:elapsed};
 }
