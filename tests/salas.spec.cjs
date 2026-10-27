@@ -42,7 +42,7 @@ test('sala: recepção, ingresso válido, bloqueio de duplicidade, filme e limpe
  await page.locator('[data-room-action="cleaning"]').click();
  expect(await page.evaluate(()=>window.__roomTest.routines()['Sala 1'].mode)).toBe('limpeza');
  await page.locator('[data-room-action="finish"]').click();
- await expect(page.getByText(/Conferências pendentes/)).toBeVisible();
+ await expect(page.locator('#modalContent [role="status"]')).toContainText(/Conferências pendentes/);
  for(const action of ['seats','floor','items'])await page.locator('[data-room-action="'+action+'"]').click();
  await page.locator('[data-room-action="finish"]').click();
  expect(await page.evaluate(()=>window.__roomTest.routines()['Sala 1'].completed)).toBe(true);
