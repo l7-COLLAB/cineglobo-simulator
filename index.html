@@ -34,6 +34,7 @@ button,select,input,textarea{touch-action:manipulation}
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js';
 import { finishCinema, upholsteredGeometry } from './visuals.js';
 import { saleError } from './training-rules.mjs';
+import { createPopcornBatch,applyPopcornAction,advancePopcornBatch,createMixedTub,applyMixedTubAction } from './popcorn-training.mjs';
 import { createPerformanceMonitor } from './performance-monitor.js';
 import { createCheckoutZone } from './checkout-zone.js';
 import { createCinemaCharacter } from './character-kit.js';
@@ -404,6 +405,9 @@ function addTrainingClients(){const people=[{x:-1.35,z:-6.1,color:0x546778},{x:.
 // v1.5 — estação tridimensional e preparação dos EPIs; mantém o núcleo v1.4.
 let epi={started:false,cap:false,hair:false,gloves:false,uniform:false,checked:false,errors:0,longHair:true,finished:false};
 let epiVisual={},equipMotion=null;
+const popcornTraining={salgada:createPopcornBatch('salgada'),doce:createPopcornBatch('doce')};
+let mixedTub=createMixedTub(),popcornPanel=null;
+const popcornModels={};
 function epiNotice(t){say(t);refreshEpiHUD()}
 function refreshEpiHUD(){
  let panel=$('epiProgress');if(!panel)return;
@@ -427,9 +431,87 @@ function finishEquip(){const id=equipMotion?.id;if(!id)return;epi[id]=true;equip
 function verifyEpi(){if(!allowRole('bomboniere'))return;if(!epi.started)return startEpi();
  const needed=['cap','hair','uniform','gloves'].filter(k=>!epi[k]);
  if(needed.length){epi.errors++;return epiNotice('Preparação incompleta. Confira: '+needed.map(x=>({cap:'boné',hair:'cabelo',uniform:'uniforme',gloves:'luvas'}[x])).join(', ')+'.')}
- epi.checked=true;epi.finished=true;refreshEpiHUD();complete(4,'Missão de EPIs concluída! A estação foi liberada para futuros módulos de preparo. Nenhuma receita foi simulada nesta fase.');
+ epi.checked=true;epi.finished=true;refreshEpiHUD();epiNotice('EPIs conferidos. Agora opere uma pipoqueira, registre os ingredientes e complete a batelada no equipamento 3D.');
 }
-function machineAction(){if(!allowRole('bomboniere'))return;if(!epi.finished){epi.errors++;return epiNotice('A produção permanece bloqueada. Complete os EPIs e valide a preparação antes de operar a pipoqueira.')}epiNotice('Estação liberada! A próxima missão ensinará o preparo com os movimentos dos ingredientes. Os comandos térmicos ainda estão desativados por segurança.')}
+const machineSteps={
+ salgada:[['begin','Iniciar preparo'],['base','Conferir base de 1 L de óleo + 1 L de manteiga'],['heat','Aquecer painel simulado até 200 °C'],['motor','Acionar misturador'],['mix','Adicionar 1 copo de mistura'],['corn','Adicionar 1 copo de milho'],['salt','Registrar colher rasa de sal (etapa não avaliada)'],['lid','Fechar tampa'],['stop','Desligar motor'],['tilt','Inclinar caldeirão'],['reset','Reiniciar batelada']],
+ doce:[['begin','Iniciar preparo'],['oil','Adicionar 1 copo de óleo'],['heat','Aquecer painel simulado até 200 °C'],['motor','Acionar misturador'],['corn','Adicionar 1 copo de milho'],['chocolate','Adicionar 1 copo de chocolate em pó'],['lid','Fechar tampa'],['stop','Desligar motor'],['tilt','Inclinar caldeirão'],['reset','Reiniciar batelada']]
+};
+const popcornPhaseLabels={idle:'Aguardando início',loading:'Conferir base e insumos',heating:'Aquecimento no jogo',heated:'Painel em 200 °C',mixing:'Misturador e ingredientes',popping:'Pipocas estourando',slow:'Estalos espaçados (1 a 2 s)',stopped:'Motor desligado',ready:'Batelada pronta'};
+function popcornStatus(kind){
+ const p=popcornTraining[kind];
+ return popcornPhaseLabels[p.phase]+' | '+Math.round(p.temperatureC)+' °C (simulado) | erros: '+p.errors+' | '+(p.completed?'CONCLUÍDO':'em treino');
+}
+function refreshPopcornHUD(){
+ const target=$('epiProgress');if(!target)return;
+ target.querySelectorAll('[data-popcorn-summary]').forEach(e=>e.remove());
+ if(currentRole!=='bomboniere')return;
+ const summary=document.createElement('div');summary.dataset.popcornSummary='true';summary.className='small';
+ summary.textContent='Salgada: '+popcornPhaseLabels[popcornTraining.salgada.phase]+' · Doce: '+popcornPhaseLabels[popcornTraining.doce.phase]+' · Balde misto: '+(mixedTub.completed?'pronto':'pendente');
+ target.appendChild(summary);
+}
+function updatePopcornVisual(kind){
+ const m=popcornModels[kind],s=popcornTraining[kind];if(!m)return;
+ m.kettle.rotation.z=s.completed?-.48:0;
+ m.lid.rotation.x=s.lid?0:-.52;
+ m.popcorn.visible=['popping','slow','stopped','ready'].includes(s.phase);
+ m.indicator.material.color.setHex(s.completed?0x55c593:s.phase==='popping'||s.phase==='slow'?0xffb45d:s.motor?0x75b8f3:0x4a4f59);
+}
+function machineAction(kind){
+ if(!allowRole('bomboniere'))return;
+ if(!epi.finished){epi.errors++;return epiNotice('Complete e verifique os EPIs na bancada antes de operar os equipamentos.')}
+ popcornPanel=kind;renderPopcornPanel(kind);
+}
+function operatePopcorn(kind,action){
+ if(!allowRole('bomboniere')||!epi.finished){epiNotice('O preparo requer a função Bomboniere e a verificação dos EPIs.');return}
+ const result=applyPopcornAction(popcornTraining[kind],action);
+ popcornTraining[kind]=result.state;
+ updatePopcornVisual(kind);refreshPopcornHUD();
+ if(result.error)epi.errors++;
+ if(result.state.completed&&!result.error)complete(4,'Batelada '+kind+' concluída por ações verificadas. Prepare o outro sabor ou o balde misto.');
+ else say(result.message);
+ if(popcornPanel===kind)renderPopcornPanel(kind,result.message,result.error);
+}
+function renderPopcornPanel(kind,feedback='',error=null){
+ const title=kind==='salgada'?'SALGADA':'DOCE';
+ const buttons=machineSteps[kind].map(([action,label])=>'<button data-popcorn-kind="'+kind+'" data-popcorn-action="'+action+'" type="button" style="min-height:44px">'+label+'</button>').join('');
+ modal('<h2>Pipoqueira '+title+'</h2><p class="small">Treinamento virtual. O painel exibe 200 °C apenas na simulação; não é uma instrução de operação real.</p>'+
+ '<p class="notice" id="popcornLive" data-popcorn-live="'+kind+'" role="status">'+popcornStatus(kind)+'</p>'+
+ (feedback?'<p class="notice" style="color:'+(error?'#f3a69f':'#cfebc4')+'">'+feedback+'</p>':'')+
+ '<p class="small">Ações físicas simuladas. Escolha um componente do equipamento ou toque no comando correspondente. A ordem incorreta é rejeitada.</p>'+
+ '<div class="rows" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px">'+buttons+'</div>'+
+ (kind==='salgada'?'<p class="small">A colher rasa de sal especial é informativa, sem penalização: seu momento de adição precisa de confirmação operacional. Base de 1 L + 1 L é referência de preparo, não a dose de cada batelada.</p>':
+ '<p class="small">Doce: chocolate em pó, não caramelo ou açúcar. O óleo é registrado antes do aquecimento no jogo.</p>')+
+ '<p class="small">Observe os estalos espaçados antes de desligar e inclinar. As animações não avançam com o jogo pausado ou em aba oculta.</p>');
+}
+function renderMixedTub(feedback='',error=null){
+ popcornPanel='misto';
+ const sequence=[['saltHalf','1. Primeira metade salgada'],['sweetHalf','2. Segunda metade doce'],['saltFinish','3. Acabamento com salgada'],['reset','Reiniciar balde']];
+ modal('<h2>Balde misto · montagem simulada</h2><p class="notice">Etapas realizadas: '+mixedTub.steps.length+'/3 · '+(mixedTub.completed?'APROVADO':'pendente')+' · erros: '+mixedTub.errors+'</p>'+
+ (feedback?'<p class="notice" style="color:'+(error?'#f3a69f':'#cfebc4')+'">'+feedback+'</p>':'')+
+ '<p class="small">Prepare primeiro os dois sabores nas pipoqueiras separadas. O conteúdo será adicionado em sequência, sem misturar as divisões.</p>'+
+ '<div class="rows">'+sequence.map(([action,label])=>'<button type="button" style="min-height:44px" data-popcorn-kind="misto" data-popcorn-action="'+action+'">'+label+'</button>').join('')+'</div>');
+}
+function operateMixedTub(action){
+ if(!allowRole('bomboniere')||!epi.finished){epiNotice('Verifique os EPIs antes de montar os recipientes.');return}
+ const result=applyMixedTubAction(mixedTub,action,{salted:popcornTraining.salgada,sweet:popcornTraining.doce});
+ mixedTub=result.state;refreshPopcornHUD();say(result.message);
+ renderMixedTub(result.message,result.error);
+}
+function animatePopcornTraining(dt){
+ if(currentRole!=='bomboniere')return;
+ for(const kind of ['salgada','doce']){
+  const previous=popcornTraining[kind];
+  const next=advancePopcornBatch(previous,dt);
+  if(next!==previous)popcornTraining[kind]=next;
+  const model=popcornModels[kind];
+  if(model&&next.phase==='popping')model.popcorn.scale.y=1+.025*Math.sin(next.seconds*9);
+  else if(model)model.popcorn.scale.y=1;
+  if(previous.phase!==next.phase){updatePopcornVisual(kind);refreshPopcornHUD();if(next.phase==='slow')say('Estalos espaçados. Desligue o misturador da pipoqueira '+kind+' antes de inclinar.');}
+  const live=$('popcornLive');
+  if(live?.dataset.popcornLive===kind)live.textContent=popcornStatus(kind);
+ }
+}
 function buildPopcornStation(){
  const silver=new THREE.MeshStandardMaterial({color:0xc4cbd0,metalness:.72,roughness:.27});
  const black=new THREE.MeshStandardMaterial({color:0x15171a,metalness:.27,roughness:.4});
@@ -460,7 +542,7 @@ function buildPopcornStation(){
   b(g,0,1.73,-.57,1.83,1.73,.025,glass);b(g,0,1.73,.57,1.83,1.73,.023,glass);
   for(const xx of [-.91,.91])b(g,xx,1.73,0,.025,1.73,1.08,glass);
   b(g,0,1.62,.0,1.68,.07,.99,black);
-  let kettle=cyl(g,0,1.97,0,.53,.41,.43,silver,28);cyl(g,0,2.2,0,.55,.55,.045,silver,28);
+  let kettle=cyl(g,0,1.97,0,.53,.41,.43,silver,28);const lid=cyl(g,0,2.2,0,.55,.55,.045,silver,28);
   cyl(g,0,2.25,0,.05,.05,.18,black);for(const side of [-1,1])b(g,side*.65,2.13,0,.3,.055,.07,silver);
   // Mesma silhueta e posições, uma chamada de desenho por sabor.
   const popcorn=new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1,0),mat(color),48);
@@ -470,7 +552,7 @@ function buildPopcornStation(){
   b(g,0,2.77,.65,1.6,.25,.04,black);
   const sign=document.createElement('canvas');sign.width=512;sign.height=100;const cx=sign.getContext('2d');cx.fillStyle='#17181b';cx.fillRect(0,0,512,100);cx.fillStyle='#ffe9ba';cx.font='bold 51px Arial';cx.textAlign='center';cx.fillText(name,256,68);
   const label=piece(g,new THREE.PlaneGeometry(1.46,.285),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(sign),side:THREE.DoubleSide}),0,2.78,.678);
-  for(let k=0;k<3;k++)cyl(g,-.52+k*.21,2.44,.61,.053,.053,.036,k===0?gold:black,14);
+  const machineButtons=[];for(let k=0;k<3;k++)machineButtons.push(cyl(g,-.52+k*.21,2.44,.61,.053,.053,.036,k===0?gold:black,14));
   // Porta frontal articulada visualmente: armação, puxador e base de coleta.
   b(g,0,1.48,.615,1.79,.045,.035,silver);
   for(const xx of [-.79,.79])b(g,xx,1.7,.618,.028,1.56,.03,silver);
@@ -492,8 +574,21 @@ function buildPopcornStation(){
   for(const xx of [-.71,.71])for(const zz of [-.45,.45])b(g,xx,.35,zz,.10,.34,.10,silver);
   // Placa de controle, maçanetas e bandeja de acesso reconhecíveis no cenário.
   b(g,.73,1.62,.63,.09,.54,.10,red);
-  world.push({name:'Pipoqueira '+name.toLowerCase(),x:3.8+offset,z:-4.55,callback:machineAction,marker:g});
+  const flavor=name==='SALGADA'?'salgada':'doce';
+  popcornModels[flavor]={group:g,kettle,lid,popcorn,indicator:machineButtons[0]};
+  machineButtons[0].material=new THREE.MeshBasicMaterial({color:0x4a4f59});
+  popcorn.visible=false;updatePopcornVisual(flavor);
+  world.push({name:'Pipoqueira '+name.toLowerCase(),x:3.8+offset,z:-4.48,callback:()=>machineAction(flavor),marker:g});
+  world.push({name:'Misturador '+name.toLowerCase(),x:3.8+offset-.52,z:-4.55,callback:()=>operatePopcorn(flavor,'motor'),marker:machineButtons[0]});
+  world.push({name:'Tampa '+name.toLowerCase(),x:3.8+offset-.30,z:-4.60,callback:()=>operatePopcorn(flavor,'lid'),marker:lid});
+  world.push({name:'Inclinar caldeirão '+name.toLowerCase(),x:3.8+offset+.36,z:-4.60,callback:()=>operatePopcorn(flavor,'tilt'),marker:kettle});
  }
+ // Balde físico de montagem acessível no balcão.
+ const tubGroup=new THREE.Group();tubGroup.name='Balde misto · treinamento';tubGroup.position.set(1.22,1.97,-4.65);scene.add(tubGroup);
+ const tubMaterial=new THREE.MeshStandardMaterial({color:0xe8d3bd,roughness:.64});
+ const tubBody=new THREE.Mesh(new THREE.CylinderGeometry(.16,.13,.31,14),tubMaterial);tubGroup.add(tubBody);
+ const tubRing=new THREE.Mesh(new THREE.TorusGeometry(.161,.02,6,14),gold);tubRing.position.y=.16;tubRing.rotation.x=Math.PI/2;tubGroup.add(tubRing);
+ world.push({name:'Montar balde misto',x:1.22,z:-4.22,callback:()=>{if(!allowRole('bomboniere'))return;if(!epi.finished)return epiNotice('Coloque e confira seus EPIs primeiro.');renderMixedTub()},marker:tubGroup});
  // Estação de preparação acessível pelo hall, localizada junto à bomboniere.
  const rack=new THREE.Group();rack.position.set(6.73,0,-5.65);scene.add(rack);
  // Bancada de EPIs junto à máquina doce, orientada para o corredor frontal.
@@ -650,7 +745,7 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
  for(let x of [-2,2])for(let z of [2,5])collider(x,z,1.55,1.2);
  collider(-.25,-7.0,.5,.6);
  }
-function complete(i,msg){completed.add(i);tasksRender();say(msg)}function close(){ $('modal').classList.remove('visible');if(!isMobile)renderer.domElement.requestPointerLock?.()}function modal(html){$('modalContent').innerHTML=html;$('modal').classList.add('visible');document.exitPointerLock?.()}$('closeModal').onclick=close;$('modalContent').addEventListener('click',e=>{const btn=e.target.closest('[data-room-light]');if(btn){setRoomLights(btn.dataset.room,btn.dataset.roomLight);say(btn.dataset.roomLight==='filme'?'Música encerrada: arandelas apagadas, LEDs de orientação ligados.':btn.dataset.roomLight==='limpeza'?'Luzes gerais acesas para a limpeza após o filme.':'Arandelas ligadas para entrada do público.')}});
+function complete(i,msg){completed.add(i);tasksRender();say(msg)}function close(){ $('modal').classList.remove('visible');if(!isMobile)renderer.domElement.requestPointerLock?.()}function modal(html){$('modalContent').innerHTML=html;$('modal').classList.add('visible');document.exitPointerLock?.()}$('closeModal').onclick=close;$('modalContent').addEventListener('click',e=>{const pop=e.target.closest('[data-popcorn-action]');if(pop){if(pop.dataset.popcornKind==='misto')operateMixedTub(pop.dataset.popcornAction);else operatePopcorn(pop.dataset.popcornKind,pop.dataset.popcornAction);return;}const btn=e.target.closest('[data-room-light]');if(btn){setRoomLights(btn.dataset.room,btn.dataset.roomLight);say(btn.dataset.roomLight==='filme'?'Música encerrada: arandelas apagadas, LEDs de orientação ligados.':btn.dataset.roomLight==='limpeza'?'Luzes gerais acesas para a limpeza após o filme.':'Arandelas ligadas para entrada do público.')}});
 // Banco exclusivamente fictício para demonstração — nunca consulta CPF real.
 const trainingDBKey='cineglobo_demo_tickets_v11';
 let trainingTickets=[];let selectedClient=0;let mission={served:0,rejected:0,attempts:0};
@@ -734,7 +829,7 @@ function movement(){
  const now=performance.now();if(now-lastFrame<1000/settings.fps)return;
  lastFrame=now;
  const dt=Math.min(.05,clock.getDelta());
- if($('start').style.display==='none'){animateEpi(dt);advanceCustomer(dt);updateWorkers(dt);updateTrainerFollow(dt);checkoutVisual?.tick(dt);}
+ if($('start').style.display==='none'){animateEpi(dt);animatePopcornTraining(dt);advanceCustomer(dt);updateWorkers(dt);updateTrainerFollow(dt);checkoutVisual?.tick(dt);}
  const blocked=paused||$('modal').classList.contains('visible')||$('start').style.display!=='none';
  let forward=blocked?0:(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-joy.y;
  let strafe=blocked?0:(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joy.x;
