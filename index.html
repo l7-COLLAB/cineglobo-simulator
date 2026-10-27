@@ -1,0 +1,664 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><title>CineGlobo Simulator | iPhone · v2.0</title><style>.epi-line{font-size:12px;padding:3px 0;color:#f0d6ad}#epiProgress{max-height:200px;overflow:auto} 
+:root{font-family:Inter,system-ui,-apple-system,Arial,sans-serif;color:#f8f5f0;background:#101017}*{box-sizing:border-box}body{margin:0;overflow:hidden}button,select,input,textarea{font:inherit}button{cursor:pointer}#scene{position:fixed;inset:0}#top{position:fixed;top:0;left:0;right:0;padding:13px 17px;background:linear-gradient(#101017eb,#10101720);display:flex;gap:12px;align-items:center;z-index:3;flex-wrap:wrap}.brand{font-weight:850;letter-spacing:.06em}.brand span{color:#ec9046}.tag{font-size:11px;border:1px solid #8b8590;border-radius:40px;padding:5px 9px;color:#ddd}.spacer{flex:1}select,button,input,textarea{background:#282733;color:white;border:1px solid #555361;border-radius:9px;padding:9px 12px}button:hover{background:#3b3642}.primary{background:#ab4a32;border-color:#dc6d48}.primary:hover{background:#c35c3e}#hud{position:fixed;z-index:3;top:85px;left:15px;width:min(325px,calc(100vw - 30px));pointer-events:none}#hud>div{pointer-events:auto}.panel{background:#17171fdc;border:1px solid #5b4851;border-radius:14px;padding:14px;box-shadow:0 12px 35px #0004;backdrop-filter:blur(12px);margin-bottom:9px}.small{font-size:12px;color:#c4bfc4}.tasks{max-height:220px;overflow:auto}.task{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:12px}.task.done{text-decoration:line-through;color:#a6c9b0}#helper{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);width:min(590px,calc(100vw - 24px));background:#191720ee;border:1px solid #ac6253;border-radius:16px;padding:14px;z-index:5;box-shadow:0 12px 35px #0008}#helper strong{color:#f5ba81}#helper p{margin:7px 0;line-height:1.45;font-size:14px}#helper button{margin:4px 5px 0 0;font-size:12px}#cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#fff9;font-size:26px;pointer-events:none;text-shadow:0 0 5px #000}#action{position:fixed;bottom:155px;left:50%;transform:translateX(-50%);background:#1c1824df;padding:10px 16px;border-radius:12px;border:1px solid #b76b4d;z-index:3;text-align:center;display:none}.overlay{position:fixed;inset:0;background:#09080bcc;display:none;align-items:center;justify-content:center;z-index:10;padding:15px}.overlay.visible{display:flex}.dialog{background:#1c1b24;border:1px solid #7e5554;border-radius:17px;padding:21px;width:min(720px,100%);max-height:90vh;overflow:auto;box-shadow:0 25px 65px #000b}h2{margin:0 0 9px}h3{margin:14px 0 8px}.muted{color:#bbb5c0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px}.field{display:flex;flex-direction:column;gap:5px;margin:9px 0;font-size:13px}.field input,.field select,.field textarea{width:100%}.screen{border-radius:12px;background:#0d1a20;border:1px solid #42616a;padding:16px;margin:13px 0}.rows{display:flex;gap:8px;flex-wrap:wrap}.exit{float:right}.badge{font-size:11px;border:1px solid #695b63;border-radius:30px;padding:4px 9px}.notice{padding:12px;border-left:3px solid #e78a50;background:#2c2429;margin:7px 0;font-size:13px}.foot{font-size:11px;color:#b3aab0}#joy{position:fixed;bottom:25px;left:22px;width:105px;height:105px;border-radius:50%;background:#ffffff20;border:1px solid #fff6;display:none;z-index:4;touch-action:none}#nub{position:absolute;top:34px;left:34px;width:35px;height:35px;border-radius:50%;background:#fff9}#touchInteract{display:none;position:fixed;bottom:45px;right:22px;border-radius:50%;height:70px;width:70px;z-index:4;background:#a34d3a}#look{position:fixed;right:0;top:70px;bottom:145px;width:48%;touch-action:none;z-index:2;display:none}#start{position:fixed;inset:0;background:linear-gradient(110deg,#161018fa,#331d20e8);z-index:20;display:flex;align-items:center;justify-content:center;padding:22px}#start .dialog{width:min(620px,100%)}@media(max-width:750px){#top{padding:7px 9px;gap:5px}.brand{font-size:12px}.tag{display:none}#hud{top:66px;width:210px}.panel{padding:9px}.tasks{max-height:95px}.task{font-size:11px}#helper{bottom:124px;padding:9px}#helper p{font-size:12px}#joy,#touchInteract,#look{display:block}#action{bottom:225px;font-size:12px}button{padding:7px 8px;font-size:12px}}
+
+/* Missão de validação v1.1 */
+.training-stat{background:#25222c;border:1px solid #70565b;border-radius:10px;padding:10px;margin:9px 0}.ticket-row{border:1px solid #514552;border-radius:10px;padding:12px;margin:9px 0;background:#22222a}.ticket-row p{margin:5px 0}.input-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.input-inline input{flex:1;min-width:175px}.tag-valid{color:#a0e8b1}.tag-used{color:#ffa093}.npc-panel{display:flex;align-items:center;gap:10px}
+/* Caixa simulado - v0.5 */
+.cash-layout{display:grid;grid-template-columns:1fr minmax(180px,225px);gap:13px;align-items:start}.cash-side{background:#171f28;border:1px solid #39515a;border-radius:12px;padding:13px;position:sticky;top:0}.cash-choices{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}.cash-choices button.active{background:#a9563d;border-color:#e6a47b}.seat-map{display:grid;grid-template-columns:repeat(12,minmax(20px,1fr));gap:6px;margin:12px auto;max-width:430px}.seat-map button{padding:9px 0;font-size:12px;border-radius:6px;background:#405b57}.seat-map button.selected{background:#e0a34d;color:#19171b;font-weight:bold}.seat-map button:disabled{background:#4e363d;opacity:.55;cursor:not-allowed}.screen-label{margin:auto;width:75%;text-align:center;background:#cfd5dc;color:#1b2530;letter-spacing:.15em;font-size:11px;padding:6px;border-radius:3px}.cash-total{font-size:25px;font-weight:800;color:#f3bf74}.cash-step{font-size:12px;color:#c8ccd6;letter-spacing:.07em}.ticket-slip{background:#f8f3e8;color:#20252b;padding:18px;border:2px dashed #ac8870;border-radius:9px;margin-top:14px}.ticket-slip p{margin:7px 0}.cash-muted{opacity:.7;font-size:12px}.cash-bill{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0}.cash-bill input{max-width:120px}.cash-layout button:focus-visible{outline:2px solid #f6b265;outline-offset:2px}@media(max-width:650px){.cash-layout{grid-template-columns:1fr}.cash-side{position:static}.seat-map{gap:3px}.seat-map button{padding:9px 0}}
+
+/* Caixa desktop integrado ao computador 3D */
+.pos-shell{border:1px solid #445565;border-radius:14px;background:#0c151f;box-shadow:0 16px 45px #0006;overflow:hidden;margin:10px 0}
+.pos-top{background:linear-gradient(100deg,#143145,#263c4b);padding:12px 15px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pos-logo{font-weight:900;letter-spacing:.08em}.pos-logo span{color:#ffae6d}.pos-pill{background:#0e2630;padding:5px 10px;border-radius:22px;font-size:11px;color:#b5dbe7}.pos-content{padding:14px;background:#e9f0f4;color:#102538}.pos-content .screen{background:white;color:#142b3d;border:1px solid #c5d4da}.pos-content h3{color:#132b3c}.pos-content p{color:#2d4050}.pos-content button{background:#24485c;border-color:#46718a}.pos-content button.primary,.pos-content .cash-choices button.active{background:#ae4b34;color:white}.pos-content .cash-side{background:#183044;color:#fff}.pos-content .cash-side p{color:#d2e3e9}.pos-content .cash-muted{color:#bdcfda}.pos-content .seat-map button{background:#347a65}.pos-content .seat-map button.selected{background:#ffc96c}.pos-content .seat-map button:disabled{background:#745b61}.pos-content .screen-label{background:#3e647c;color:#fff}.pos-content input{background:#fff;color:#152331}.pos-foot{background:#112a39;color:#b7d7df;font-size:11px;padding:9px 14px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+@media(max-width:760px){.pos-content .cash-layout{grid-template-columns:1fr}.pos-top{padding:10px}.pos-content{padding:8px}.pos-content .seat-map{gap:3px}.pos-content .seat-map button{padding:7px 0;font-size:10px}}
+
+/* v1.4 — diálogo orientado */
+.customer-dialog{background:#171c25;border:1px solid #4b5668;border-radius:14px;padding:16px;margin:12px 0;display:flex;gap:12px;align-items:flex-start}
+.customer-portrait{width:48px;height:48px;border-radius:50%;background:linear-gradient(145deg,#6e8794,#303e55);display:grid;place-items:center;font-size:24px;flex-shrink:0}
+.customer-message{line-height:1.55;color:#f5f0ed}.customer-option{display:block;width:100%;text-align:left;margin:8px 0;padding:12px;white-space:normal}
+.customer-score{background:#202f29;border:1px solid #437c63;padding:12px;border-radius:10px;line-height:1.6}
+.customer-bad{background:#38272a;border-color:#a25d5d}
+
+/* iPhone / PWA controls */
+html,body{overscroll-behavior:none;height:100%;width:100%;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+button,select,input,textarea{touch-action:manipulation}
+#scene canvas{display:block;touch-action:none}
+#mobileHudToggle{display:none;position:fixed;left:calc(12px + env(safe-area-inset-left));top:calc(66px + env(safe-area-inset-top));z-index:7;background:#1a1722ed;border:1px solid #ce8067;padding:10px 13px;font-weight:700}
+#rotateHint{display:none;position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:11;max-width:80vw;background:#191720e8;padding:9px;border:1px solid #94644d;border-radius:10px;font-size:12px;text-align:center;pointer-events:none}
+@media(pointer:coarse){#joy,#touchInteract,#look{display:block}#joy{left:calc(18px + env(safe-area-inset-left));bottom:calc(19px + env(safe-area-inset-bottom));height:112px;width:112px}#nub{top:38px;left:38px}#touchInteract{right:calc(19px + env(safe-area-inset-right));bottom:calc(27px + env(safe-area-inset-bottom));height:76px;width:76px;font-weight:800;box-shadow:0 4px 22px #000a}#look{top:calc(70px + env(safe-area-inset-top));bottom:calc(115px + env(safe-area-inset-bottom))}#mobileHudToggle{display:block}#hud{top:calc(115px + env(safe-area-inset-top));left:calc(8px + env(safe-area-inset-left));width:min(270px,64vw);max-height:55dvh;overflow:auto;transition:opacity .15s}body.hud-closed #hud{display:none}#helper{bottom:calc(139px + env(safe-area-inset-bottom));max-height:40dvh;overflow:auto;width:min(520px,90vw)}#action{bottom:calc(202px + env(safe-area-inset-bottom))}#top{padding-top:calc(8px + env(safe-area-inset-top));padding-left:calc(9px + env(safe-area-inset-left));padding-right:calc(9px + env(safe-area-inset-right))}#start .dialog{max-height:85dvh}#rotateHint{display:block}}
+@media(pointer:coarse) and (orientation:landscape){#hud{max-height:58dvh}#joy{width:94px;height:94px}#nub{top:30px;left:30px}#touchInteract{width:65px;height:65px}#helper{bottom:calc(6px + env(safe-area-inset-bottom));left:56%;width:min(410px,55vw);max-height:45dvh}#action{bottom:calc(87px + env(safe-area-inset-bottom))}#rotateHint{display:none}}
+@media(pointer:coarse) and (orientation:portrait){#helper{bottom:calc(145px + env(safe-area-inset-bottom))}#start .dialog{max-height:87dvh}#rotateHint{display:block}}
+</style><link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#171018"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="CineGlobo"><link rel="apple-touch-icon" href="./icon-180.png"></head><body><div id="scene"></div><button id="mobileHudToggle" type="button" aria-expanded="false" aria-controls="hud">☰ Tarefas</button><div id="rotateHint">Dica: gire o iPhone na horizontal para ampliar a visão do cinema.</div><div id="cross">+</div><div id="top"><div class="brand">◉ CINE<span>GLOBO</span> SIMULATOR</div><span class="tag">v2.0 · iPHONE</span><span class="spacer"></span><select id="city" aria-label="Unidade"></select><button id="openSchedule">Agenda</button><button id="openNotices">Avisos</button><button id="openAdmin">Admin</button><button id="pauseBtn" aria-label="Pausar jogo">☰ Pausa</button></div><aside id="hud"><div class="panel"><strong id="siteName">Cine Globo · Ijuí</strong><div class="small">Treinamento: abertura de turno</div></div><div class="panel"><strong>Checklist de abertura</strong><div id="tasks" class="tasks"></div><div id="progress" class="small"></div></div><div class="panel" id="rolePanel"></div><div class="panel" id="epiProgress"></div></aside><div id="action"></div><div id="helper"><strong>INSTRUTOR VIRTUAL</strong><p id="speech">Bem-vindo ao CineGlobo Simulator. Vou acompanhar seu primeiro turno.</p><div class="rows"><button id="nextSpeech" class="primary">Continuar</button><button id="askHelp">Pedir orientação</button><button id="hideHelp">Ocultar</button></div></div><div id="joy"><div id="nub"></div></div><div id="look"></div><button id="touchInteract">AGIR</button><div class="overlay" id="pauseOverlay"><div class="dialog" style="max-width:560px"><h2>Jogo pausado</h2><p class="muted">CineGlobo Simulator · Configurações de navegação e áudio</p><div class="rows"><button id="resumeBtn" class="primary">▶ Continuar</button><button id="resetViewBtn">↺ Centralizar câmera</button></div><h3>Configurações</h3><label class="field">Sensibilidade do mouse: <strong id="mouseText"></strong><input id="mouseSens" type="range" min="1" max="100" value="22"></label><label class="field">Sensibilidade ao tocar/arrastar: <strong id="touchText"></strong><input id="touchSens" type="range" min="1" max="100" value="22"></label><label class="field">Qualidade gráfica<select id="quality"><option value="low">Econômica · mais leve</option><option value="medium">Equilibrada</option><option value="high">Alta</option></select></label><label class="field">Limite de quadros por segundo<select id="fps"><option value="30">30 FPS · econômico</option><option value="45">45 FPS · equilibrado</option><option value="60">60 FPS · fluido</option></select></label><label class="field">Volume geral: <strong id="volumeText"></strong><input id="volume" type="range" min="0" max="100" value="40"></label><p class="small">Esta demonstração não possui trilha sonora; o volume fica configurado para sons introduzidos futuramente. No celular: joystick à esquerda, olhar arrastando à direita e AGIR. ESC abre a pausa no computador.</p><button id="closePause" class="primary">Salvar e continuar</button></div></div><div class="overlay" id="modal"><div class="dialog"><button class="exit" id="closeModal">Fechar ✕</button><div id="modalContent"></div></div></div><div id="start"><div class="dialog"><h2>CineGlobo Simulator</h2><p>Protótipo imersivo 3D para demonstração comercial. Você pode caminhar pelo cinema, interagir com equipamentos, acompanhar o instrutor e testar a simulação de bilheteria.</p><p class="notice">O ambiente ainda é <b>conceitual</b>, não reproduz a planta real de Ijuí. Programação, ingressos e procedimentos são fictícios.</p><div class="field"><label>Escolha a unidade</label><select id="startCity"></select></div><div class="field"><label>Escolha sua função neste turno</label><select id="startRole"><option value="caixa">Caixa e atendimento</option><option value="bomboniere">Bomboniere e pipoqueiras</option><option value="sala">Salas e controle de ingressos</option></select></div><p class="notice">Os outros setores serão atendidos por funcionários virtuais. Você poderá escolher outra função ao iniciar um novo turno.</p><p class="small"><b>Novidades:</b> cliente que caminha até o caixa quando o computador é acionado; monitor voltado para o funcionário; missão espacial de EPIs com movimentos animados; estação de duas pipoqueiras com vitrines, caldeirões e controles; menu de pausa com sensibilidade e qualidade ajustáveis; separação física das salas; portas interativas, salas exploráveis e instrutor visível no modo local e GLB opcional quando hospedado e alternativa geométrica. <b>Computador:</b> WASD para andar, mouse para olhar, E para interagir, ESC para liberar o cursor. <b>Celular:</b> joystick à esquerda, arrastar à direita e botão AGIR.</p><button class="primary" id="enter">Entrar no cinema virtual</button></div></div><script>
+(()=>{const b=document.getElementById('mobileHudToggle');if(matchMedia('(pointer:coarse)').matches){document.body.classList.add('hud-closed')}b.addEventListener('click',()=>{const hidden=document.body.classList.toggle('hud-closed');b.setAttribute('aria-expanded',String(!hidden));b.textContent=hidden?'☰ Tarefas':'✕ Fechar tarefas';});if('serviceWorker' in navigator && location.protocol==='https:')window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));})();
+</script><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js"}}</script><script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
+const $=x=>document.getElementById(x),cities=['Três Passos','Palmeira das Missões','Santa Rosa','Frederico Westphalen','Cruz Alta','Ijuí','Horizontina'];
+const defaults={notices:[{city:'Todas',text:'Bem-vindo ao ambiente demonstrativo. Todos os dados são fictícios.'}],sessions:[{city:'Ijuí',film:'Aventura Estelar (demonstração)',time:'14:00',room:'Sala 1',format:'2D'},{city:'Ijuí',film:'Mistério da Noite (demonstração)',time:'16:30',room:'Sala 2',format:'3D'}],tasks:['Acender as luzes do hall','Ligar o computador do caixa','Ligar a mini impressora','Conferir a televisão do catálogo','Preparar a pipoqueira','Conferir a iluminação da Sala 1','Conferir a climatização da Sala 2']};
+let data;try{data={...defaults,...JSON.parse(localStorage.getItem('cineglobo_demo')||'{}')}}catch{data=structuredClone(defaults)};
+let settings={mouse:22,touch:22,quality:"low",fps:30,volume:40};try{settings={...settings,...JSON.parse(localStorage.getItem("cineglobo_config")||"{}")}}catch{};let paused=false,lastFrame=0;let roomLighting={},blockers=[],doors=[],trainer=null,trainerParts=[],trainerMixer=null,trainerRealistic=false,roomState='hall';let city='Ijuí',completed=new Set(),currentTarget=null,speechIndex=0,scene,camera,renderer,world=[],player={x:0,z:6,yaw:0,pitch:0},keys={},lookActive=false,isMobile=matchMedia('(pointer:coarse)').matches,joy={x:0,y:0},ambient,lights=[];
+// Escala dinâmica: um jogador por posto, demais setores operados por NPCs.
+let currentRole='caixa',npcTeam=[],npcClock=0,npcCycles={caixa:0,bomboniere:0,sala:0};
+const roleNames={caixa:'Caixa',bomboniere:'Bomboniere e pipoqueiras',sala:'Salas'};
+function allowRole(role){if(currentRole===role)return true;say('Este posto está sob responsabilidade da equipe virtual. Sua função atual é '+roleNames[currentRole]+'. Reinicie o turno para trocar de função.');return false}
+function roleHUD(){const el=$('rolePanel');if(!el)return;el.innerHTML='<b>Turno · '+roleNames[currentRole]+'</b>'+Object.keys(roleNames).map(k=>'<div class="epi-line">'+(k===currentRole?'● Você: ':'✓ Funcionário virtual: ')+roleNames[k]+' <span class="small">'+(k===currentRole?'treinamento ativo':'em operação')+'</span></div>').join('')+'<div class="small">Ações automáticas da equipe: '+Object.entries(npcCycles).filter(([k])=>k!==currentRole).reduce((n,[k,v])=>n+v,0)+'</div>'}
+function setRole(role){currentRole=roleNames[role]?role:'caixa';document.querySelector('#epiProgress').style.display=currentRole==='bomboniere'?'block':'none';roleHUD();say('Você vai treinar em '+roleNames[currentRole]+'. O instrutor caminhará com você; aproxime-se e use E/AGIR para conversar. Os outros postos ficam com funcionários virtuais.');}
+function makeWorker(role,x,z,color){const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);const shirt=mat(color),skin=mat(0xc0906e),pants=mat(0x20252b);const torso=new THREE.Mesh(new THREE.CylinderGeometry(.19,.25,.72,10),shirt);torso.position.y=1.23;g.add(torso);const head=new THREE.Mesh(new THREE.SphereGeometry(.16,12,9),skin);head.position.y=1.74;g.add(head);const brim=new THREE.Mesh(new THREE.CylinderGeometry(.19,.19,.08,14),mat(0x17191e));brim.position.y=1.88;g.add(brim);for(const side of [-1,1]){let leg=new THREE.Mesh(new THREE.CylinderGeometry(.075,.085,.8,8),pants);leg.position.set(side*.12,.44,0);g.add(leg);let arm=new THREE.Group();arm.position.set(side*.25,1.43,0);const sleeve=new THREE.Mesh(new THREE.CylinderGeometry(.065,.075,.50,8),shirt);sleeve.position.y=-.23;arm.add(sleeve);g.add(arm);g.userData['arm'+side]=arm;}g.visible=role!==currentRole;npcTeam.push({role,g,origin:{x,z},phase:Math.random()*6.28});}
+function setupWorkers(){makeWorker('caixa',-5.25,-4.02,0x4b545d);makeWorker('bomboniere',3.9,-3.53,0x733840);makeWorker('sala',-.1,-8.15,0x3c5967);updateWorkers()}
+function updateWorkers(dt=0){npcClock+=dt;for(const n of npcTeam){n.g.visible=n.role!==currentRole;if(!n.g.visible)continue;const t=npcClock+n.phase;n.g.position.x=n.origin.x+Math.sin(t*.37)*.12;n.g.position.z=n.origin.z+Math.cos(t*.4)*.10;n.g.rotation.y=Math.sin(t*.3)*.23;n.g.userData['arm-1'].rotation.x=Math.sin(t*2)*.23;n.g.userData['arm1'].rotation.x=-Math.sin(t*2)*.23;}if(dt&&Math.floor(npcClock/20)!==Math.floor((npcClock-dt)/20)){for(const k of Object.keys(npcCycles))if(k!==currentRole)npcCycles[k]++;roleHUD()}}
+const speeches=['Bem-vindo! Este é um cinema virtual de treinamento. Comece explorando o hall e interagindo com equipamentos.','Aproxime-se de um objeto identificado e pressione E, ou AGIR no celular. Cada ação simula um procedimento.','Para treinar no caixa, caminhe para trás do balcão e use o computador voltado ao funcionário. Um cliente virá até você; também é possível clicar diretamente quando o monitor estiver selecionado. Depois confira o filme, a sessão, as poltronas e o pagamento.','Na agenda você verá sessões fictícias da unidade selecionada. No painel Admin poderá modificar horários e comunicados.'];
+function trainerAdvice(){const tips={caixa:'Estou ao seu lado. Aproxime-se da face do monitor do caixa e pressione E/AGIR ou clique nele. Quando o cliente chegar, confirme o pedido e conclua a venda no computador.',bomboniere:'Vamos para a bomboniere. Comece pela preparação de EPIs somente se você for operar as pipoqueiras. Siga os objetos da bancada em sequência.',sala:'Eu vou acompanhar você até as salas. Confira o ingresso do cliente, a sala correta e o horário antes de liberar o acesso.'};say(tips[currentRole]);}
+function updateTrainerFollow(dt){if(!trainer||paused||$('start').style.display!=='none')return;
+ const sideX=Math.cos(player.yaw),sideZ=-Math.sin(player.yaw);
+ const backX=Math.sin(player.yaw),backZ=Math.cos(player.yaw);
+ const choices=[[-1.18,1.28],[1.18,1.28],[-1.3,1.85],[1.3,1.85]];
+ let target=null;
+ for(const [side,back] of choices){const x=player.x+sideX*side+backX*back,z=player.z+sideZ*side+backZ*back;
+ if(canStand(x,z)){target={x,z};break}}
+ if(!target)return;
+ const d=Math.hypot(trainer.position.x-target.x,trainer.position.z-target.z);
+ if(d>7){trainer.position.x=target.x;trainer.position.z=target.z;}
+ else if(d>.13){const step=Math.min(d,dt*2.15);trainer.position.x+=(target.x-trainer.position.x)/d*step;trainer.position.z+=(target.z-trainer.position.z)/d*step;}
+ const interaction=world.find(o=>o.instructor);if(interaction){interaction.x=trainer.position.x;interaction.z=trainer.position.z;}
+ trainer.rotation.y=Math.atan2(player.x-trainer.position.x,player.z-trainer.position.z);
+ if(!trainerRealistic){trainer.position.y=Math.sin(performance.now()*.005)*(d>.2?.028:.008);for(const a of trainerParts)a.pivot.rotation.x=Math.sin(performance.now()*.011+a.side)*(d>.2?.26:.03);}
+}
+function say(t){$('helper').style.display='block';$('speech').textContent=t}function save(){localStorage.setItem('cineglobo_demo',JSON.stringify(data))}function fillCities(){['city','startCity'].forEach(id=>{$(id).innerHTML=cities.map(c=>`<option ${c==='Ijuí'?'selected':''}>${c}</option>`).join('')})}fillCities();
+function setCity(c){city=c;$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${t}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
+function mat(color){return new THREE.MeshStandardMaterial({color,roughness:.75})}function box(x,y,z,w,h,d,color){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));m.position.set(x,y,z);scene.add(m);return m}function textSign(t,x,y,z,w=2,color='#ffffff'){let c=document.createElement('canvas');c.width=512;c.height=100;let ctx=c.getContext('2d');ctx.fillStyle='#20191d';ctx.fillRect(0,0,512,100);ctx.fillStyle=color;ctx.font='bold 38px Arial';ctx.textAlign='center';ctx.fillText(t,256,66);const m=new THREE.Mesh(new THREE.PlaneGeometry(w,w*100/512),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),side:THREE.DoubleSide}));m.position.set(x,y,z);scene.add(m)}function object(name,x,z,color,callback){let marker=box(x,1.05,z,.5,.6,.45,color);world.push({name,x,z,callback,marker});}
+function collider(x,z,w,d){blockers.push({x,z,w,d})}
+function canStand(x,z){
+ if(x < -7.98||x > 7.98||z>10.65||z < -21.65)return false;
+ const r=.24;
+ for(const b of blockers){if(Math.abs(x-b.x)<b.w/2+r&&Math.abs(z-b.z)<b.d/2+r)return false}
+ // Separação do hall e das salas, com entrada somente por portas abertas.
+ if(z < -10.68 && z > -11.18){
+  const door=doors.find(d=>Math.abs(x-d.x)<.92);
+  if(!door||!door.open)return false;
+ }
+ if(z < -11.0 && Math.abs(x)<.32)return false;
+ return true;
+}
+function makeDoor(x,label){
+ const hinge=new THREE.Group();hinge.position.set(x-1,-.0,-10.8);scene.add(hinge);
+ const panel=new THREE.Mesh(new THREE.BoxGeometry(1.9,2.6,.11),mat(0x7e373b));panel.position.set(.95,1.35,0);hinge.add(panel);
+ const handle=new THREE.Mesh(new THREE.SphereGeometry(.075,10,8),mat(0xf3c783));handle.position.set(1.67,1.25,.12);hinge.add(handle);
+ const d={x,hinge,open:false,goal:0};doors.push(d);
+ object('Porta '+label,x,-9.6,0xd6a35e,()=>{d.open=!d.open;d.goal=d.open?-Math.PI*.55:0;say(d.open?'Porta aberta. Agora entre para explorar '+label+'.':'Porta fechada. Use E ou AGIR para abrir novamente.')});
+}
+function makeTrainer(){
+ // Instrutor humano procedural: sem textura facial de pessoa real, baixo custo para navegador.
+ const group=new THREE.Group();group.position.set(.75,0,3.15);scene.add(group);trainer=group;
+ const skin=new THREE.MeshStandardMaterial({color:0xb98768,roughness:.94}),skinShade=new THREE.MeshStandardMaterial({color:0x99684e,roughness:.94});
+ const shirt=new THREE.MeshStandardMaterial({color:0x111316,roughness:.94}),pants=new THREE.MeshStandardMaterial({color:0x191a1e,roughness:.96});
+ const hair=new THREE.MeshStandardMaterial({color:0x211b1a,roughness:.97}),shoe=new THREE.MeshStandardMaterial({color:0x131416,roughness:.83});
+ function part(geometry,material,x,y,z,rz=0,parent=group){const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);m.rotation.z=rz;parent.add(m);return m}
+ const sphere=(r,sx,sy,sz,material,x,y,z)=>{const m=part(new THREE.SphereGeometry(r,12,9),material,x,y,z);m.scale.set(sx,sy,sz);return m};
+ // Frente do personagem = +Z, acompanha o usuário com movimento apenas de rotação.
+ sphere(1,.30,.42,.18,shirt,0,1.49,0);
+ sphere(1,.24,.19,.17,shirt,0,1.23,0);
+ const collar=part(new THREE.CylinderGeometry(.119,.14,.09,10),shirt,0,1.83,.005);
+ part(new THREE.CylinderGeometry(.094,.108,.19,10),skin,0,1.89,0);
+ // Cabeça com proporções, orelhas, olhos, nariz, sobrancelhas e boca próprios.
+ sphere(1,.19,.244,.185,skin,0,2.10,.005);
+ sphere(1,.046,.07,.027,skinShade,-.192,2.095,.008);
+ sphere(1,.046,.07,.027,skinShade,.192,2.095,.008);
+ const whites=new THREE.MeshStandardMaterial({color:0xddd7cc,roughness:.9});
+ const iris=new THREE.MeshStandardMaterial({color:0x332e2a,roughness:.63});
+ for(const sign of [-1,1]){
+   sphere(1,.038,.022,.013,whites,sign*.076,2.129,.170);
+   sphere(1,.014,.016,.008,iris,sign*.076,2.128,.184);
+   const brow=part(new THREE.BoxGeometry(.076,.012,.018),hair,sign*.078,2.173,.170);brow.rotation.z=-sign*.09;
+ }
+ sphere(1,.032,.055,.039,skin,0,2.073,.184);
+ sphere(1,.058,.009,.008,skinShade,0,2.009,.178);
+ // Corte de cabelo, com volume discretamente superior ao crânio.
+ sphere(1,.193,.090,.187,hair,0,2.297,-.014);
+ for(const side of [-1,1])sphere(1,.040,.10,.11,hair,side*.161,2.23,-.018);
+ // Braços, antebraços e mãos (suspensos em postura neutra).
+ const arms=[];
+ for(const side of [-1,1]){
+   const pivot=new THREE.Group();pivot.position.set(side*.308,1.705,0);group.add(pivot);
+   const upper=part(new THREE.CylinderGeometry(.105,.091,.39,10),shirt,side*.078,-.17,0,side*.18,pivot);
+   sphere(1,.099,.103,.101,shirt,side*.041,-.025,0).visible=false;
+   part(new THREE.CylinderGeometry(.082,.066,.35,10),skin,side*.13,-.52,.045,side*.08,pivot);
+   const hand=part(new THREE.SphereGeometry(.073,10,8),skin,side*.14,-.71,.063);hand.scale.set(.85,1.30,.73);
+   arms.push({pivot,side});
+ }
+ // Pernas, calçados e solas claras.
+ for(const side of [-1,1]){
+   part(new THREE.CylinderGeometry(.15,.119,.84,10),pants,side*.146,.665,0);
+   sphere(1,.15,.14,.145,pants,side*.146,1.05,0);
+   const foot=sphere(1,.137,.083,.24,shoe,side*.148,.145,.095);
+   const sole=part(new THREE.BoxGeometry(.25,.027,.39),new THREE.MeshStandardMaterial({color:0x404044,roughness:.9}),side*.148,.075,.116);
+ }
+ // Logotipo vetorial sintético no tecido: identificação ilustrativa Cine Globo.
+ const logo=document.createElement('canvas');logo.width=256;logo.height=256;
+ const c=logo.getContext('2d');c.clearRect(0,0,256,256);c.strokeStyle='#f2eee7';c.lineWidth=5;
+ c.beginPath();c.arc(128,87,50,0,Math.PI*2);c.stroke();
+ c.beginPath();c.ellipse(128,87,22,50,0,0,Math.PI*2);c.stroke();
+ c.beginPath();c.moveTo(79,87);c.lineTo(177,87);c.moveTo(89,62);c.lineTo(167,62);c.moveTo(89,112);c.lineTo(167,112);c.stroke();
+ c.font='bold 27px Arial';c.fillStyle='#f2eee7';c.textAlign='center';c.fillText('CINE',128,169);c.fillText('GLOBO',128,199);
+ const map=new THREE.CanvasTexture(logo);map.colorSpace=THREE.SRGBColorSpace;
+ const chest=part(new THREE.PlaneGeometry(.21,.21),new THREE.MeshBasicMaterial({map,transparent:true,side:THREE.DoubleSide,depthWrite:false}),.128,1.61,.186);chest.rotation.y=.06;
+ // Orientação do instrutor por marcador fixo, sem componente luminoso dinâmico.
+ const cc=document.createElement('canvas');cc.width=512;cc.height=128;const ctx=cc.getContext('2d');ctx.fillStyle='#13151edb';ctx.fillRect(0,10,512,100);ctx.fillStyle='#ffe2af';ctx.font='bold 29px Arial';ctx.textAlign='center';ctx.fillText('INSTRUTOR • E PARA FALAR',256,69);
+ const badge=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cc),transparent:true,depthWrite:false}));badge.position.y=2.65;badge.scale.set(2.5,.62,1);group.add(badge);
+ object('Conversar com instrutor',1.25,1.25,0x93433f,()=>say('Sou seu instrutor do Cine Globo. Posso demonstrar o funcionamento do caixa, a validação dos ingressos e as rotinas das salas.'));
+ // Controle de gestos compartilhado com animação econômica no ciclo principal.
+ trainerParts=arms;
+}
+
+
+// Integração demonstrativa de modelo GLB rigado (fonte: three.js, licença MIT).
+// A conexão com o modelo é opcional; caso falhe, o instrutor anterior permanece.
+// Um personagem comercial fotorrealista e um uniforme fiel requerem asset dedicado.
+function loadDetailedTrainer(){
+ // Navegadores restringem importação de modelos externos quando o HTML é aberto por file://.
+ // Nessas condições o instrutor procedural permanece sempre visível.
+ if(location.protocol === 'file:'){
+   console.info('CineGlobo: arquivo local; instrutor incorporado mantido. Para modelos GLB, hospede o jogo em HTTPS.');
+   return;
+ }
+ const url='https://cdn.jsdelivr.net/gh/mrdoob/three.js@r165/examples/models/gltf/Soldier.glb';
+ const loader=new GLTFLoader();
+ loader.load(url, gltf=>{
+   if(!trainer)return;
+   const character=gltf.scene;
+   const outer=new THREE.Group();
+   // Normaliza o personagem para aproximadamente 1,82 m.
+   const bounds=new THREE.Box3().setFromObject(character);
+   const dims=bounds.getSize(new THREE.Vector3());
+   const scale=1.82/Math.max(.01,dims.y);
+   character.scale.setScalar(scale);
+   character.updateMatrixWorld(true);
+   const normalized=new THREE.Box3().setFromObject(character);
+   character.position.y-=normalized.min.y;
+   // Modelos de demonstração seguem orientação própria, corrigida pelo contêiner.
+   character.rotation.y=Math.PI;
+   outer.add(character);
+   outer.position.copy(trainer.position);
+   scene.add(outer);
+   // Uniformização aproximada: escurece tecidos, preserva pele/cabelo e detalhes de rosto.
+   character.traverse(node=>{
+     if(!node.isMesh)return;
+     node.frustumCulled=false;
+     const mats=Array.isArray(node.material)?node.material:[node.material];
+     node.material=mats.map(original=>{
+       const material=original.clone();
+       const label=(node.name+' '+material.name).toLowerCase();
+       if(/body|vest|jacket|shirt|suit|uniform|pants|trouser|cloth|boot/.test(label)){
+         if(material.color)material.color.multiply(new THREE.Color('#33363b'));
+       }
+       material.roughness=Math.max(.78,material.roughness||.78);
+       return material;
+     });
+     if(!Array.isArray(node.material))node.material=node.material[0];
+   });
+   // Emblema ilustrativo independente, sem pretender ser bordado oficial.
+   const badge=document.createElement('canvas');badge.width=256;badge.height=128;
+   const ctx=badge.getContext('2d');ctx.fillStyle='#f5f5f5';ctx.font='bold 25px Arial';ctx.textAlign='center';ctx.fillText('◉ CINE GLOBO',128,66);
+   const logo=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(badge),transparent:true,depthTest:true}));
+   logo.position.set(.14,1.48,.22);logo.scale.set(.26,.13,1);outer.add(logo);
+   const label=document.createElement('canvas');label.width=512;label.height=100;const lc=label.getContext('2d');lc.fillStyle='#16151bdc';lc.fillRect(0,10,512,80);lc.fillStyle='#ffe1b9';lc.font='bold 25px Arial';lc.textAlign='center';lc.fillText('INSTRUTOR • E PARA FALAR',256,60);
+   const nameplate=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(label),transparent:true}));nameplate.position.y=2.18;nameplate.scale.set(2.2,.43,1);outer.add(nameplate);
+   const idle=gltf.animations.find(a=>/idle/i.test(a.name));
+   if(idle){trainerMixer=new THREE.AnimationMixer(character);trainerMixer.clipAction(idle).play()}
+   // Exibe o GLB apenas se possuir malha visível e dimensões plausíveis.
+   let visibleMeshes=0;
+   character.traverse(n=>{if(n.isMesh && n.visible && n.geometry) visibleMeshes++});
+   const finalBounds=new THREE.Box3().setFromObject(character);
+   const finalSize=finalBounds.getSize(new THREE.Vector3());
+   if(!visibleMeshes || !Number.isFinite(finalSize.y) || finalSize.y < .9 || finalSize.y > 3){
+     scene.remove(outer);
+     console.warn('CineGlobo: modelo sem geometria válida, instrutor incorporado mantido.');
+     return;
+   }
+   trainer.visible=false;trainer=outer;trainerParts=[];trainerRealistic=true;
+   console.info('CineGlobo: instrutor GLB de demonstração carregado.');
+ },undefined,error=>console.warn('CineGlobo: modelo GLB indisponível; instrutor leve mantido.',error));
+}
+
+function setRoomLights(room, mode){
+ const L=roomLighting[room];if(!L)return;L.mode=mode;
+ const ar=mode==='entrada',clean=mode==='limpeza';
+ L.sconceLight.intensity=ar?2.0:clean?.45:0;
+ L.cleanLight.intensity=clean?3.4:0;
+ L.sconces.forEach(o=>{o.bulb.material.emissiveIntensity=ar?2.8:clean?.5:.025;});
+ L.ceiling.forEach(o=>{o.bulb.material.emissiveIntensity=clean?3.0:.015;});
+ L.leds.forEach(o=>{o.visible=true;});
+ const status=document.getElementById('lightingStatus');if(status)status.textContent=mode==='entrada'?'ARANDELAS ACESAS — iluminação suave para recepção e comerciais; LEDs ligados.':mode==='filme'?'FILME — arandelas apagadas, luzes gerais apagadas; somente LEDs de orientação ligados.':'LIMPEZA — luzes gerais acesas para a equipe limpar a sala; LEDs ligados.';
+}
+function roomLightingDialog(label){const mode=roomLighting[label]?.mode||'entrada';modal(`<h2>${label} — Painel de iluminação</h2><p class="notice">Procedimento informado para Ijuí: ao terminar a música após os comerciais, desligar as ARANDELAS e manter os LEDs. As luzes gerais são para limpeza depois do filme.</p><div class="rows"><button data-room-light="entrada" data-room="${label}">Arandelas · entrada</button><button data-room-light="filme" data-room="${label}">Somente LEDs · filme</button><button data-room-light="limpeza" data-room="${label}">Luzes gerais · limpeza</button></div><p id="lightingStatus" class="notice"></p><p class="small">Circuitos independentes: arandelas, LEDs e luzes gerais. Intensidade e iluminação real simuladas no ambiente.</p>`);setRoomLights(label,mode)}
+function addRoom(x,label,is3d){
+ const left=x-3.75,right=x+3.75;
+ box(x,-.10,-16.30,7.5,.18,10.8,0x595659);
+ box(x,3.77,-16.3,7.5,.16,10.8,0x17181b);
+ box(x,2,-21.64,7.5,4,.16,0x19191c);
+ // Painéis vinho com frisos verticais alaranjados, conforme referências.
+ const burgundy=0x5d1827,orange=0xee632c;
+ for(const wallX of [left+.10,right-.10]){
+  box(wallX,2,-16.3,.15,3.8,10.55,burgundy);
+  for(const z of [-20.1,-17.55,-15.0,-12.45])box(wallX+(wallX<x?.085:-.085),2,z,.035,3.65,.21,orange);
+  box(wallX+(wallX<x?.09:-.09),.83,-16.30,.04,1.55,10.55,0x17171b);
+ }
+ // Tela frontal na parede oposta à entrada.
+ const screen=box(x,2.18,-21.47,6.35,2.75,.06,0xd9d7d2);
+ screen.material.roughness=.95;
+ box(x,.58,-21.40,6.5,.22,.08,0x18191b);
+ // 120 poltronas (A-J, 12 por fileira), corredores laterais. Assentos orientados para a tela em Z negativo.
+ // Instancing evita centenas de chamadas gráficas independentes.
+ const seatDefs=[
+  {kind:'base',geo:new THREE.BoxGeometry(.425,.20,.48),material:mat(0x17191c)},
+  {kind:'back',geo:new THREE.BoxGeometry(.43,.68,.18),material:mat(0x24272b)},
+  {kind:'arms',geo:new THREE.BoxGeometry(.065,.30,.52),material:mat(0x292a2e)},
+  {kind:'vip',geo:new THREE.BoxGeometry(.42,.19,.52),material:mat(0x45372f)},
+  {kind:'vipback',geo:new THREE.BoxGeometry(.43,.65,.19),material:mat(0x514039)},
+  {kind:'vipleg',geo:new THREE.BoxGeometry(.42,.09,.37),material:mat(0x45372f)}];
+ const meshes=seatDefs.map(d=>{let m=new THREE.InstancedMesh(d.geo,d.material,d.kind.startsWith('vip')?12:120);m.instanceMatrix.setUsage(THREE.StaticDrawUsage);scene.add(m);return m});
+ const counters=meshes.map(()=>0),dummy=new THREE.Object3D();
+ function place(k,px,py,pz){dummy.position.set(px,py,pz);dummy.rotation.set(0,0,0);dummy.updateMatrix();meshes[k].setMatrixAt(counters[k]++,dummy.matrix)}
+ for(let row=0;row<10;row++)for(let col=0;col<12;col++){
+  const sx=x+(col-5.5)*.48, sz=-20.04+row*.80, vip=row===4;
+  if(vip){place(3,sx,.46,sz);place(4,sx,.84,sz+.18);place(5,sx,.28,sz-.43)}
+  else{place(0,sx,.42,sz);place(1,sx,.76,sz+.18)}
+  place(2,sx-.235,.57,sz);
+  // Colisores necessários para não atravessar assentos.
+  collider(sx,sz,.40,.53);
+ }
+ meshes.forEach((m,i)=>{m.count=counters[i];m.instanceMatrix.needsUpdate=true;m.computeBoundingSphere()});
+ // Luminárias com emissão visual e iluminação real agregada por sala (perfil leve).
+ const sconces=[],ceiling=[],leds=[];
+ // Duas fontes de luz reais compartilhadas por sala em vez de oito pontos individuais.
+ // As arandelas permanecem visualmente iluminadas via material emissivo.
+ const sconceLight=new THREE.PointLight(0xffa765,2.0,15,2);
+ sconceLight.position.set(x,2.75,-16.3);scene.add(sconceLight);
+ const cleanLight=new THREE.PointLight(0xffeed9,0,17,2);
+ cleanLight.position.set(x,3.25,-16.3);scene.add(cleanLight);
+ for(const wx of [left+.25,right-.25])for(const z of [-19.1,-16.5,-13.9]){
+  const bulb=box(wx,2.45,z,.09,.42,.16,0xffd8a8);
+  bulb.material=new THREE.MeshStandardMaterial({color:0xffefd0,emissive:0xffbd78,emissiveIntensity:2.8,roughness:.45});
+  sconces.push({bulb});
+ }
+ for(const z of [-18.6,-14.4]){
+  const bulb=box(x,3.58,z,.46,.055,.46,0xe7e9df);
+  bulb.material=new THREE.MeshStandardMaterial({color:0xf3eae2,emissive:0xfff3e0,emissiveIntensity:.015});
+  ceiling.push({bulb});
+ }
+ // Pequenos pontos vermelhos independentes de arandelas e luzes gerais.
+ // Um único InstancedMesh por sala: muitos LEDs com apenas uma chamada gráfica.
+ const ledGeo=new THREE.SphereGeometry(.045,6,4);
+ const ledMat=new THREE.MeshBasicMaterial({color:0xff2415,toneMapped:false});
+ const ledPositions=[];
+ for(const wx of [left+.28,right-.28])for(let z=-20.9;z<=-11.35;z+=.29)ledPositions.push([wx,.048,z]);
+ const ledDots=new THREE.InstancedMesh(ledGeo,ledMat,ledPositions.length);
+ const ledDummy=new THREE.Object3D();
+ ledPositions.forEach(([px,py,pz],i)=>{ledDummy.position.set(px,py,pz);ledDummy.updateMatrix();ledDots.setMatrixAt(i,ledDummy.matrix)});
+ ledDots.instanceMatrix.needsUpdate=true;
+ ledDots.computeBoundingSphere();scene.add(ledDots);leds.push(ledDots);
+ // Os pontos iluminam visualmente o caminho sem uma PointLight por LED,
+ // conservando o desempenho da versão 0.7.
+
+ roomLighting[label]={sconces,ceiling,leds,sconceLight,cleanLight,mode:'entrada'};
+ object('Painel de iluminação '+label,x+2.9,-12.1,0xe5d1a6,()=>roomLightingDialog(label));
+ textSign(is3d?'SALA 2 · 2D / 3D':'SALA 1 · 2D',x,3.2,-12.0,3.2);
+ setRoomLights(label,'entrada');
+}
+
+// Cliente interativo com balão 3D leve, associado ao caixa fictício.
+let serviceMission=null;
+let queueCustomer=null, queueCustomerTarget=null, queueArrivalPending=false;
+let customerAtCounter=false, customerApproaching=false;
+function summonCustomer(){
+ if(!allowRole('caixa'))return;
+ if(customerApproaching){say('O cliente já está vindo até o balcão. Aguarde sua aproximação.');return}
+ if(customerAtCounter){openCustomerDialogue();return}
+ if(!queueCustomer){openCash();return}
+ newServiceMission();customerApproaching=true;queueArrivalPending=true;
+ queueCustomer.visible=true;
+ queueCustomer.position.set(-1.6,0,2.65);
+ queueCustomerTarget=new THREE.Vector3(-4.65,0,-1.65);
+ say('Você assumiu o caixa. Um cliente está se aproximando. Receba-o, confirme o pedido e realize a venda no computador.');
+}
+function advanceCustomer(dt){
+ if(!customerApproaching||!queueCustomer||!queueCustomerTarget||paused)return;
+ const delta=queueCustomerTarget.clone().sub(queueCustomer.position);delta.y=0;
+ const distance=delta.length();
+ if(distance>.065){const step=Math.min(distance,dt*1.75);queueCustomer.position.addScaledVector(delta.normalize(),step);
+ queueCustomer.rotation.y=Math.atan2(-delta.x,-delta.z);
+ queueCustomer.position.y=Math.sin(performance.now()*.009)*.015;
+ }else{
+ customerApproaching=false;customerAtCounter=true;queueCustomer.position.copy(queueCustomerTarget);
+ queueCustomer.rotation.y=0;
+ if(queueArrivalPending){queueArrivalPending=false;openCustomerDialogue()}
+ }
+}
+
+function newServiceMission(){const options=currentSessions();const sess=options[0]||{film:'Sessão de treinamento',time:'14:00',room:'Sala 1',format:'2D'};serviceMission={city,session:{...sess},count:2,category:'Inteira',stage:'greeting',score:0,feedback:[]};return serviceMission}
+function openCustomerDialogue(){
+ if(!customerAtCounter){say('O cliente ainda não chegou ao balcão.');return}
+ const m=serviceMission&&serviceMission.city===city?serviceMission:newServiceMission();
+ const chat=(message,choices,detail='')=>{modal(`<h2>Atendimento ao cliente · ${escapeHtml(city)}</h2><p class="small">Missão demonstrativa: comunique-se com o cliente e registre a venda correta no caixa.</p><div class="customer-dialog"><div class="customer-portrait" aria-hidden="true">👤</div><div><b>CLIENTE VIRTUAL</b><div class="customer-message">${escapeHtml(message)}</div></div></div>${detail}<div id="customerReplies">${choices.map(([label,cmd])=>`<button class="customer-option" data-customer-choice="${cmd}">${escapeHtml(label)}</button>`).join('')}</div><p class="small">O cliente utiliza balões de texto. Não é necessário microfone neste treinamento.</p>`);document.querySelectorAll('[data-customer-choice]').forEach(btn=>btn.onclick=()=>action(btn.dataset.customerChoice))};
+ const action=cmd=>{if(cmd==='hello'){m.stage='request';chat(`Boa tarde! Gostaria de ${m.count} ingressos para ${m.session.film}, às ${m.session.time}. Você pode me ajudar?`,[['Claro! Vou confirmar a sala e os lugares.','check'],['Escolha qualquer lugar, depois vemos.','incorrect'],['Não sei atender esse pedido.','help']]);return}
+ if(cmd==='check'){m.stage='confirmed';m.score+=1;chat(`Obrigado! A sessão é ${m.session.format}, na ${m.session.room}. Podemos escolher dois lugares juntos?`,[['Sim. Vou conferir o mapa de poltronas no computador.','open'],['Pode entrar sem comprar ingresso.','incorrect']]);return}
+ if(cmd==='open'){m.stage='selling';say(`Missão do cliente: venda ${m.count} ingressos para ${m.session.film}, ${m.session.time}, ${m.session.room}.`);openCash();return}
+ if(cmd==='help'){chat('Sem problemas. Você pode consultar a programação, confirmar a sala e usar o computador do caixa para fazer a venda.',[['Entendi. Vamos continuar.','hello'],['Abrir o computador do caixa','open']]);return}
+ if(cmd==='incorrect'){m.feedback.push('É necessário conferir o pedido e concluir a venda antes de autorizar a entrada.');chat('Você poderia conferir minha sessão e me orientar corretamente?', [['Desculpe. Vou conferir filme, horário e sala antes da venda.','check'],['Pedir ajuda ao instrutor','help'] ],'<div class="customer-score customer-bad">O instrutor identificou uma resposta inadequada. Você pode corrigir o atendimento.</div>');return}
+ if(cmd==='reset'){customerAtCounter=false;customerApproaching=false;queueCustomer.visible=false;queueCustomer.position.set(-1.6,0,2.65);serviceMission=null;close();say('Atendimento encerrado. Volte ao computador para chamar o próximo cliente.');return}
+ if(cmd==='finish'){const issued=trainingTickets.filter(t=>t.city===city&&t.film===m.session.film&&t.time===m.session.time&&t.room===m.session.room&&t.status==='novo');const passed=issued.length>=m.count;chat(passed?'Obrigado pelo atendimento! Agora vou guardar meus ingressos.':'Ainda não encontrei meus dois ingressos desta sessão. Podemos conferir?',[[passed?'Atender próximo cliente':'Voltar à bilheteria',passed?'reset':'open']],`<div class="customer-score ${passed?'':'customer-bad'}">${passed?'Treinamento concluído: foram localizados pelo menos dois ingressos fictícios compatíveis.':'Faltam ingressos compatíveis. A missão permanece pendente.'}</div>`)}
+ };
+ if(m.stage==='selling'){action('finish');return}
+ if(m.stage==='confirmed'){action('open');return}
+ if(m.stage==='request'){action('hello');return}
+ chat('Olá! Preciso comprar ingressos, você pode me atender?', [['Boa tarde! Claro, para qual filme e horário?','hello'],['O caixa está ali, faça você mesmo.','incorrect'],['Vou pedir ajuda ao instrutor.','help']]);
+}
+function createCustomerAtCounter(){
+ const g=new THREE.Group();g.position.set(-1.6,0,2.65);g.visible=false;scene.add(g);queueCustomer=g;
+ const shirt=new THREE.MeshStandardMaterial({color:0x46647a,roughness:.93});const skin=new THREE.MeshStandardMaterial({color:0xb98264,roughness:.85});const pants=new THREE.MeshStandardMaterial({color:0x242832,roughness:.96});
+ const torso=new THREE.Mesh(new THREE.CylinderGeometry(.19,.25,.77,9),shirt);torso.position.y=1.18;g.add(torso);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.165,12,8),skin);head.position.y=1.74;g.add(head);
+ const hair=new THREE.Mesh(new THREE.SphereGeometry(.169,12,6,0,Math.PI*2,0,Math.PI*.44),new THREE.MeshStandardMaterial({color:0x26201e}));hair.position.y=1.76;g.add(hair);
+ for(const x of [-.14,.14]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.072,.083,.8,7),pants);leg.position.set(x,.4,0);g.add(leg);const arm=new THREE.Mesh(new THREE.CylinderGeometry(.055,.063,.65,7),skin);arm.position.set(x*.0+(x<0?-.28:.28),1.05,0);arm.rotation.z=x<0?-.13:.13;g.add(arm)}
+ // Balão renderizado como uma placa voltada ao jogador, sem fontes de luz adicionais.
+ const cv=document.createElement('canvas');cv.width=512;cv.height=142;const ct=cv.getContext('2d');ct.fillStyle='#ffffff';ct.beginPath();ct.roundRect(9,8,494,116,22);ct.fill();ct.fillStyle='#202c39';ct.font='bold 29px Arial';ct.textAlign='center';ct.fillText('Olá! Preciso de ingressos.',256,61);ct.font='24px Arial';ct.fillText('Pressione E para atender',256,97);
+ const balloon=new THREE.Mesh(new THREE.PlaneGeometry(2.45,.7),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthTest:false,side:THREE.DoubleSide}));balloon.position.set(0,2.48,0);balloon.renderOrder=9;g.add(balloon);
+ object('Atender cliente',-4.65,-1.65,0x557d86,()=>{if(customerAtCounter)openCustomerDialogue();else say('Ative o computador por trás do balcão para chamar o próximo cliente.')});world[world.length-1].marker.visible=false;
+ return balloon;
+}
+// Clientes de demonstração: geometria simples para preservar o desempenho.
+function addTrainingClients(){const people=[{x:-1.35,z:-6.1,color:0x546778},{x:.0,z:-6.4,color:0x687b66}];for(const p of people){const body=new THREE.Group();body.position.set(p.x,0,p.z);scene.add(body);const shirt=new THREE.MeshStandardMaterial({color:p.color,roughness:.96});const skin=new THREE.MeshStandardMaterial({color:0xb98a6f,roughness:.95});const torso=new THREE.Mesh(new THREE.CylinderGeometry(.22,.26,.85,7),shirt);torso.position.y=1.2;body.add(torso);const head=new THREE.Mesh(new THREE.SphereGeometry(.16,8,6),skin);head.position.y=1.79;body.add(head);for(const x of [-.12,.12]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.065,.08,.8,6),new THREE.MeshStandardMaterial({color:0x262831}));leg.position.set(x,.4,0);body.add(leg)}}}
+
+// v1.5 — estação tridimensional e preparação dos EPIs; mantém o núcleo v1.4.
+let epi={started:false,cap:false,hair:false,gloves:false,uniform:false,checked:false,errors:0,longHair:true,finished:false};
+let epiVisual={},equipMotion=null;
+function epiNotice(t){say(t);refreshEpiHUD()}
+function refreshEpiHUD(){
+ let panel=$('epiProgress');if(!panel)return;
+ const list=[['Boné',epi.cap],['Cabelo preso / curto',epi.hair],['Uniforme',epi.uniform],['Luvas adequadas',epi.gloves],['Verificação final',epi.checked]];
+ panel.innerHTML='<b>Missão 01 · Segurança da bomboniere</b>'+list.map(([name,ok])=>`<div class="epi-line">${ok?'✓':'○'} ${name}</div>`).join('')+`<div class="small">Erros: ${epi.errors} · ${epi.finished?'Aprovada':'Em treinamento'}</div>`;
+}
+function startEpi(){if(!allowRole('bomboniere'))return;epi.started=true;epiNotice('Missão 01: prepare-se na bancada de EPIs. Olhe para cada peça, aproxime-se e pressione E ou AGIR. A animação deverá terminar para a etapa ser validada.')}
+function equip(id){if(!allowRole('bomboniere'))return;
+ if(!epi.started){epi.errors++;return epiNotice('Primeiro inicie a missão no terminal de treinamento ao lado da bancada.')}
+ if(equipMotion)return epiNotice('Conclua o movimento atual antes de pegar outra peça.');
+ if(id==='hair'&&!epi.longHair)return epiNotice('Seu personagem está com cabelo curto; não é necessário prendê-lo.');
+ if(epi[id])return epiNotice('Esse item já foi colocado.');
+ const msg={cap:'Colocando o boné de proteção...',hair:'Prendendo o cabelo comprido...',uniform:'Ajustando o uniforme...',gloves:'Vestindo as luvas de segurança...'};
+ equipMotion={id,time:0,duration:id==='gloves'?1.75:1.35};epiNotice(msg[id]);
+}
+function finishEquip(){const id=equipMotion?.id;if(!id)return;epi[id]=true;equipMotion=null;
+ if(id==='cap'&&epiVisual.cap)epiVisual.cap.visible=true;
+ if(id==='gloves'&&epiVisual.gloves)epiVisual.gloves.visible=true;
+ epiNotice({cap:'Boné colocado.',hair:'Cabelo preso e afastado do equipamento.',uniform:'Uniforme ajustado.',gloves:'Luvas de segurança colocadas.'}[id]);
+}
+function verifyEpi(){if(!allowRole('bomboniere'))return;if(!epi.started)return startEpi();
+ const needed=['cap','hair','uniform','gloves'].filter(k=>!epi[k]);
+ if(needed.length){epi.errors++;return epiNotice('Preparação incompleta. Confira: '+needed.map(x=>({cap:'boné',hair:'cabelo',uniform:'uniforme',gloves:'luvas'}[x])).join(', ')+'.')}
+ epi.checked=true;epi.finished=true;refreshEpiHUD();complete(4,'Missão de EPIs concluída! A estação foi liberada para futuros módulos de preparo. Nenhuma receita foi simulada nesta fase.');
+}
+function machineAction(){if(!allowRole('bomboniere'))return;if(!epi.finished){epi.errors++;return epiNotice('A produção permanece bloqueada. Complete os EPIs e valide a preparação antes de operar a pipoqueira.')}epiNotice('Estação liberada! A próxima missão ensinará o preparo com os movimentos dos ingredientes. Os comandos térmicos ainda estão desativados por segurança.')}
+function buildPopcornStation(){
+ const silver=new THREE.MeshStandardMaterial({color:0xc4cbd0,metalness:.72,roughness:.27});
+ const black=new THREE.MeshStandardMaterial({color:0x15171a,metalness:.27,roughness:.4});
+ const red=new THREE.MeshStandardMaterial({color:0x8d212d,metalness:.35,roughness:.38});
+ const glass=new THREE.MeshPhysicalMaterial({color:0xe6f5ff,transparent:true,opacity:.17,roughness:.07,metalness:.1,depthWrite:false,side:THREE.DoubleSide});
+ const gold=new THREE.MeshStandardMaterial({color:0xd5ad57,metalness:.57,roughness:.36});
+ function piece(parent,geo,material,x,y,z){const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);parent.add(m);return m}
+ function b(parent,x,y,z,w,h,d,m){return piece(parent,new THREE.BoxGeometry(w,h,d),m,x,y,z)}
+ function cyl(parent,x,y,z,rTop,rBottom,h,m,segments=20){return piece(parent,new THREE.CylinderGeometry(rTop,rBottom,h,segments),m,x,y,z)}
+ // Substitui a caixa genérica por duas vitrines independentes com caldeirão suspenso.
+ for(const [offset,name,color] of [[-1.05,'SALGADA',0xead176],[1.05,'DOCE',0x915536]]){
+  const g=new THREE.Group();g.position.set(3.8+offset,0,-5.72);scene.add(g);
+  b(g,0,.69,0,1.94,.20,1.23,red);b(g,0,2.66,0,2.02,.19,1.31,red);
+  b(g,0,.81,.57,1.84,.07,.065,silver);b(g,0,.81,-.57,1.84,.07,.065,silver);
+  for(const xx of [-.91,.91])for(const zz of [-.54,.54])b(g,xx,1.73,zz,.055,1.78,.06,silver);
+  b(g,0,1.73,-.57,1.83,1.73,.025,glass);b(g,0,1.73,.57,1.83,1.73,.023,glass);
+  for(const xx of [-.91,.91])b(g,xx,1.73,0,.025,1.73,1.08,glass);
+  b(g,0,1.62,.0,1.68,.07,.99,black);
+  let kettle=cyl(g,0,1.97,0,.53,.41,.43,silver,28);cyl(g,0,2.2,0,.55,.55,.045,silver,28);
+  cyl(g,0,2.25,0,.05,.05,.18,black);for(const side of [-1,1])b(g,side*.65,2.13,0,.3,.055,.07,silver);
+  const popcorn=new THREE.Group();g.add(popcorn);
+  for(let i=0;i<48;i++){const angle=i*2.399,rad=Math.sqrt(i/48)*.73;const bit=piece(popcorn,new THREE.DodecahedronGeometry(.075+(i%3)*.013,0),mat(color),Math.cos(angle)*rad, .92+(i%5)*.105,Math.sin(angle)*rad*.52);bit.rotation.y=angle;}
+  b(g,0,2.77,.65,1.6,.25,.04,black);
+  const sign=document.createElement('canvas');sign.width=512;sign.height=100;const cx=sign.getContext('2d');cx.fillStyle='#17181b';cx.fillRect(0,0,512,100);cx.fillStyle='#ffe9ba';cx.font='bold 51px Arial';cx.textAlign='center';cx.fillText(name,256,68);
+  const label=piece(g,new THREE.PlaneGeometry(1.46,.285),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(sign),side:THREE.DoubleSide}),0,2.78,.678);
+  for(let k=0;k<3;k++)cyl(g,-.52+k*.21,2.44,.61,.053,.053,.036,k===0?gold:black,14);
+  // Porta frontal articulada visualmente: armação, puxador e base de coleta.
+  b(g,0,1.48,.615,1.79,.045,.035,silver);
+  for(const xx of [-.79,.79])b(g,xx,1.7,.618,.028,1.56,.03,silver);
+  b(g,.66,1.30,.675,.19,.035,.09,black);
+  b(g,0,.53,.33,1.72,.15,.44,black);
+  // Saída inferior de grãos, pés e aro da panela.
+  cyl(g,0,1.75,0,.44,.42,.025,black,28);
+  for(const xx of [-.71,.71])for(const zz of [-.45,.45])b(g,xx,.35,zz,.10,.34,.10,silver);
+  // Placa de controle, maçanetas e bandeja de acesso reconhecíveis no cenário.
+  b(g,.73,1.62,.63,.09,.54,.10,red);
+  world.push({name:'Pipoqueira '+name.toLowerCase(),x:3.8+offset,z:-4.55,callback:machineAction,marker:g});
+ }
+ // Estação de preparação acessível pelo hall, localizada junto à bomboniere.
+ const rack=new THREE.Group();rack.position.set(6.73,0,-5.65);scene.add(rack);
+ // Bancada de EPIs junto à máquina doce, orientada para o corredor frontal.
+ b(rack,0,.86,.02,1.36,.12,.82,silver);
+ for(const x of [-.54,.54])for(const z of [-.29,.30])b(rack,x,.42,z,.055,.8,.055,black);
+ b(rack,0,1.82,-.38,1.34,1.50,.055,red);
+ b(rack,0,2.62,-.37,1.42,.24,.14,black);
+ const signC=document.createElement('canvas');signC.width=640;signC.height=126;const sg=signC.getContext('2d');sg.fillStyle='#242024';sg.fillRect(0,0,640,126);sg.fillStyle='#f7dfbf';sg.font='bold 53px Arial';sg.textAlign='center';sg.fillText('EPIs • PREPARAÇÃO',320,84);
+ piece(rack,new THREE.PlaneGeometry(1.33,.27),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(signC),side:THREE.DoubleSide}),0,2.64,-.284);
+ // Boné: copa arredondada em meia-esfera com aba oval orientada ao jogador.
+ const capGroup=new THREE.Group();rack.add(capGroup);capGroup.position.set(-.43,.955,.11);
+ const capCrown=piece(capGroup,new THREE.SphereGeometry(.19,20,12,0,Math.PI*2,0,Math.PI/2),black,0,0,0);capCrown.scale.z=.90;
+ let visor=piece(capGroup,new THREE.SphereGeometry(.18,20,10),black,0,-.008,.17);visor.scale.set(1.05,.09,.77);
+ piece(capGroup,new THREE.TorusGeometry(.048,.012,6,24),gold,0,.128,-.12);
+ // Luvas: cinco dedos e punho separados, modelados na bancada.
+ const gloveGroups=[];
+ for(let i=0;i<2;i++){
+  const gg=new THREE.Group();rack.add(gg);gg.position.set(.25+i*.25,.963,.10);gg.rotation.y=i===0?-.20:.20;
+  b(gg,0,0,0,.16,.035,.19,gold);b(gg,0,0,.15,.14,.035,.12,gold);
+  for(let j=0;j<4;j++){const finger=b(gg,-.057+j*.038,0,-.135,.027,.033,.14-(j===0?.026:0),gold);finger.rotation.y=(j-1.5)*.035}
+  const thumb=b(gg,i===0?-.097:.097,0,.009,.038,.035,.105,gold);thumb.rotation.y=i===0?-.48:.48;gloveGroups.push(gg);
+ }
+ const hairTie=piece(rack,new THREE.TorusGeometry(.085,.019,10,24),black,-.04,.97,.22);hairTie.rotation.x=Math.PI/2;
+ // Camisa em cabide: torso trapezoidal, mangas e gola, substituindo a placa retangular.
+ const shirt=new THREE.Group();rack.add(shirt);shirt.position.set(-.28,1.79,-.298);
+ const torso=piece(shirt,new THREE.CylinderGeometry(.16,.225,.47,4,1),black,0,-.15,0);torso.rotation.y=Math.PI/4;torso.scale.z=.26;
+ for(const side of [-1,1]){const sleeve=b(shirt,side*.23,-.04,0,.18,.17,.08,black);sleeve.rotation.z=side*.35}
+ const collar=piece(shirt,new THREE.TorusGeometry(.082,.015,6,20,Math.PI),silver,0,.08,.01);collar.rotation.z=Math.PI;
+ // Espelho, botões e indicadores visuais para validação final.
+ b(rack,.42,1.89,-.29,.32,.65,.035,silver);b(rack,.42,1.89,-.266,.275,.58,.008,glass);
+ for(let j=0;j<3;j++)cyl(rack,.43,1.38+j*.10,-.229,.035,.035,.012,j===2?gold:black,12);
+ // Alvos individuais associados às peças reais; localização correta no corredor da bomboniere.
+ const stationObject=(label,x,z,call,mesh)=>world.push({name:label,x,z,callback:call,marker:mesh||rack,epiStation:true});
+ stationObject('Iniciar missão EPIs',6.78,-4.48,startEpi,rack);
+ stationObject('Colocar boné',6.30,-4.64,()=>equip('cap'),capGroup);
+ stationObject('Prender cabelo',6.69,-4.65,()=>equip('hair'),hairTie);
+ stationObject('Ajustar uniforme',6.44,-5.07,()=>equip('uniform'),shirt);
+ stationObject('Vestir luvas',7.11,-4.65,()=>equip('gloves'),gloveGroups[0]);
+ stationObject('Verificar preparação',7.13,-5.1,verifyEpi,rack);
+ // Indicadores de equipamento no campo de visão do jogador.
+ const hands=new THREE.Group();camera.add(hands);scene.add(camera);
+ for(const x of [-.31,.31]){const sleeve=b(hands,x,-.4,-.62,.15,.38,.19,black);sleeve.rotation.z=x<0?-.20:.20;const hand=b(hands,x,-.60,-.72,.135,.18,.14,gold);hand.visible=false;}
+ epiVisual.gloves=hands;hands.children.filter(x=>x.position.y<-.50).forEach(x=>x.visible=false);
+ epiVisual.cap=piece(camera,new THREE.TorusGeometry(.42,.026,7,35),black,0,.47,-.54);epiVisual.cap.rotation.x=Math.PI/2;epiVisual.cap.visible=false;
+ refreshEpiHUD();
+}
+function animateEpi(dt){if(!equipMotion)return;equipMotion.time+=dt;
+ if(epiVisual.gloves){const t=equipMotion.time/equipMotion.duration;epiVisual.gloves.position.y=Math.sin(Math.min(t,1)*Math.PI)*.25;}
+ if(equipMotion.time>=equipMotion.duration){if(equipMotion.id==='gloves')epiVisual.gloves.children.filter(x=>x.position.y<-.50).forEach(x=>x.visible=true);epiVisual.gloves.position.y=0;finishEquip()}
+}
+function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e171c');scene.fog=new THREE.Fog('#1e171c',12,28);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.06,90);renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'low-power'});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;$('scene').appendChild(renderer.domElement);scene.add(new THREE.HemisphereLight(0xece2e2,0x2b2530,2.4));ambient=new THREE.AmbientLight(0xffe4c2,.46);scene.add(ambient);box(0,-.12,0,17,.2,22,0x5a4341);box(-8.4,2,0,.3,4,22,0x9d8281);box(8.4,2,0,.3,4,22,0x9d8281);box(0,3.7,0,17,.18,22,0x453a40);for(const segment of [{x:-7.15,w:2.1},{x:-1.95,w:3.9},{x:1.95,w:3.9},{x:7.15,w:2.1}])box(segment.x,2,-10.9,segment.w,4,.3,0x8c6769);box(0,2,-16.35,.27,4,10.7,0x3d3039);box(0,2,10.9,17,4,.3,0x59454c);box(-4.6,.63,-3.7,5,1.22,1.4,0x503539);box(-4.6,1.28,-3.7,4.85,.11,1.55,0xb66c4f);box(-4,2.83,-4.36,2.5,.8,.08,0x131d25);textSign('BILHETERIA',-4.7,3.3,-4.45,2.8);box(3.7,1.2,-4.6,5,1.4,1.4,0x70414b);box(3.7,2,-4.6,5,.15,1.4,0xc47a47);textSign('BOMBONIERE',3.7,3,-5.45,3);textSign('SALA 1 (2D)',-4,2.65,-10.68,2.8);textSign('SALA 2 (3D)',4,2.65,-10.68,2.8);for(let x of [-4,4]){box(x,0.1,-9.7,2,.15,1,0x813c40);for(let k=0;k<4;k++)box(x-1.2+k*.8,.42,-8.3,0.5,.65,.5,0x5e282e)}for(let x of [-6,0,6]){let lamp=box(x,3.57,1,.7,.06,.7,0xf5e4c2);lights.push(lamp)}for(let x of [-2,2])for(let z of [2,5]){box(x,.45,z,1.5,.12,1.2,0x81534b);box(x-.5,.23,z-.35,.1,.45,.1,0x3d2527);box(x+.5,.23,z+.35,.1,.45,.1,0x3d2527)}// Estação de atendimento: monitor, teclado, terminal, impressora e gaveta com formas reconhecíveis.
+ const pos={x:-5.55,z:-3.12};
+ const equipmentStart=scene.children.length;
+ function eqBox(x,y,z,w,h,d,c){return box(x,y,z,w,h,d,c)}
+ function eqMat(color,metalness=0){return new THREE.MeshStandardMaterial({color,roughness:.56,metalness})}
+ function addCyl(x,y,z,r1,r2,h,color,segments=12){const m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,segments),eqMat(color));m.position.set(x,y,z);scene.add(m);return m}
+ function eqLabel(text,x,y,z,w,h,color='#e7f6ff',bg='#17252c'){
+  const can=document.createElement('canvas');can.width=512;can.height=128;const ctx=can.getContext('2d');ctx.fillStyle=bg;ctx.fillRect(0,0,512,128);ctx.fillStyle=color;ctx.font='bold 43px Arial';ctx.textAlign='center';ctx.fillText(text,256,79);
+  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(can),side:THREE.DoubleSide}));mesh.position.set(x,y,z);scene.add(mesh);return mesh;
+ }
+ // Tela tem moldura, superfície brilhante, pedestal e base curva.
+ eqBox(pos.x,1.97,pos.z,.97,.64,.10,0x141b21);
+ eqBox(pos.x,1.97,pos.z+.057,.87,.53,.018,0x293947);
+ const displayCanvas=document.createElement('canvas');displayCanvas.width=512;displayCanvas.height=300;
+ const dctx=displayCanvas.getContext('2d');dctx.fillStyle='#112e42';dctx.fillRect(0,0,512,300);
+ dctx.fillStyle='#a7e6f5';dctx.font='bold 29px Arial';dctx.fillText('CINEGLOBO  |  CAIXA',18,52);
+ dctx.fillStyle='#264f66';dctx.fillRect(16,79,480,158);
+ dctx.fillStyle='#e5f8fc';dctx.font='24px Arial';dctx.fillText('Selecione uma sessão',33,137);dctx.fillText('Iniciar venda  >',33,200);
+ const display=new THREE.Mesh(new THREE.PlaneGeometry(.86,.51),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(displayCanvas),side:THREE.DoubleSide}));display.position.set(pos.x,1.97,pos.z+.069);scene.add(display);
+ eqBox(pos.x,1.57,pos.z-.035,.09,.19,.075,0x202831);
+ const monitorBase=addCyl(pos.x,1.43,pos.z+.02,.29,.24,.045,0x1b2228,24);monitorBase.scale.z=.53;
+ addCyl(pos.x,1.405,pos.z+.015,.025,.025,.012,0x334049,10);
+ // Teclado levemente inclinado sobre a bancada, com teclas reais de baixo custo.
+ eqBox(-5.56,1.365,-2.71,.88,.06,.30,0x151b20);
+ for(let r=0;r<4;r++)for(let c=0;c<15;c++){
+  eqBox(-5.96+c*.057,1.402,-2.82+r*.073,.046,.008,.054,(r===3&&c>4&&c<10)?0x626d74:0x3a4149);
+ }
+ // Mouse oval com roda de rolagem.
+ const mouse=new THREE.Mesh(new THREE.SphereGeometry(.085,12,8),eqMat(0x272e34));mouse.position.set(-4.99,1.405,-2.71);mouse.scale.set(.76,.27,1.22);scene.add(mouse);
+ eqBox(-4.99,1.435,-2.73,.012,.005,.033,0x8da1ad);
+ // Terminal de cartão inclinado e com teclado físico.
+ const pinGroup=new THREE.Group();pinGroup.position.set(-4.49,1.37,-2.83);pinGroup.rotation.x=-.17;scene.add(pinGroup);
+ function pinBox(x,y,z,w,h,d,c){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),eqMat(c));mesh.position.set(x,y,z);pinGroup.add(mesh);return mesh}
+ pinBox(0,.07,0,.21,.14,.33,0x232b31);
+ pinBox(0,.143,-.065,.162,.009,.12,0x76b5c7);
+ for(let r=0;r<3;r++)for(let c=0;c<3;c++)pinBox(-.055+c*.055,.147,.043+r*.055,.038,.008,.035,0xd1d8d8);
+ for(let c=0;c<3;c++)pinBox(-.055+c*.055,.149,.21,.04,.009,.025,[0xb83f3b,0xd1a647,0x3a9874][c]);
+ // Impressora térmica: carcaça arredondada, tampa, saída de papel e recibo.
+ eqBox(-6.55,1.39,-2.95,.46,.19,.39,0x28313a);
+ const rollCover=new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,.39,16),eqMat(0x323d46));rollCover.rotation.z=Math.PI/2;rollCover.position.set(-6.55,1.5,-2.95);scene.add(rollCover);
+ eqBox(-6.55,1.48,-2.738,.34,.023,.035,0x0b1015);
+ eqBox(-6.55,1.54,-2.714,.25,.13,.008,0xe9e6db);
+ // Gaveta de dinheiro com painel e fechadura.
+ eqBox(-4.48,1.335,-3.46,.77,.14,.42,0x2a3138);
+ eqBox(-4.48,1.341,-3.239,.7,.095,.014,0x3e4a54);
+ const keyLock=new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,.009,12),eqMat(0xb7b7b2,.7));keyLock.rotation.x=Math.PI/2;keyLock.position.set(-4.48,1.344,-3.228);scene.add(keyLock);
+ // Girar o conjunto monitor/teclado/periféricos 180 graus para o lado do funcionário.
+ // Rotacionar posições e geometrias juntas mantém coerência espacial do PDV.
+ for(const item of scene.children.slice(equipmentStart)){
+   const ox=item.position.x-pos.x,oz=item.position.z-pos.z;
+   item.position.x=pos.x-ox;item.position.z=pos.z-oz;
+   item.rotation.y+=Math.PI;
+ }
+ // Plaqueta com identificação do caixa na frente do balcão.
+ eqLabel('CAIXA 1',-4.7,.91,-2.987,.83,.21);
+ object('Computador do caixa',-5.55,-2.50,0x2c747f,()=>summonCustomer());
+ // O marcador continua detectável, mas não aparece como bloco flutuante.
+ world[world.length-1].marker.visible=false;object('Mini impressora',-6.55,-2.9,0x686f75,()=>{if(allowRole('caixa'))complete(2,'Mini impressora ligada e conferida.')});object('Televisão do catálogo',-1, -6.9,0x335c82,()=>complete(3,'A televisão de programação foi conferida.'));buildPopcornStation();object('Interruptor do hall',-7.7,3.7,0xe9c17f,()=>{lights.forEach(l=>l.visible=!l.visible);complete(0,'Iluminação do hall acionada.')} );object('Luzes Sala 1',-3.2,-9,0xdcbc71,()=>{if(allowRole('sala'))complete(5,'Conferência da iluminação da Sala 1 registrada.')});object('Ar-condicionado Sala 2',4.9,-9,0x93a7b1,()=>{if(allowRole('sala'))complete(6,'Climatização da Sala 2 conferida.')});object('Leitor de ingressos',-.25,-8,0x62987c,()=>openValidation());addTrainingClients();world.push({name:'Conversar com instrutor',x:.75,z:3.15,callback:trainerAdvice,marker:null,instructor:true});textSign('ENTRADA / HALL',0,2.8,10.65,3.4);
+ makeDoor(-4,'Sala 1');makeDoor(4,'Sala 2');
+ addRoom(-4,'Sala 1',false);addRoom(4,'Sala 2',true);
+ makeTrainer();
+ createCustomerAtCounter();
+ setupWorkers();
+ loadDetailedTrainer();
+ collider(-4.6,-3.7,5,1.7);collider(3.7,-4.6,5.1,1.6);
+ for(let x of [-2,2])for(let z of [2,5])collider(x,z,1.55,1.2);
+ collider(-.25,-7.0,.5,.6);
+ }
+function complete(i,msg){completed.add(i);tasksRender();say(msg)}function close(){ $('modal').classList.remove('visible');if(!isMobile)renderer.domElement.requestPointerLock?.()}function modal(html){$('modalContent').innerHTML=html;$('modal').classList.add('visible');document.exitPointerLock?.()}$('closeModal').onclick=close;$('modalContent').addEventListener('click',e=>{const btn=e.target.closest('[data-room-light]');if(btn){setRoomLights(btn.dataset.room,btn.dataset.roomLight);say(btn.dataset.roomLight==='filme'?'Música encerrada: arandelas apagadas, LEDs de orientação ligados.':btn.dataset.roomLight==='limpeza'?'Luzes gerais acesas para a limpeza após o filme.':'Arandelas ligadas para entrada do público.')}});
+// Banco exclusivamente fictício para demonstração — nunca consulta CPF real.
+const trainingDBKey='cineglobo_demo_tickets_v11';
+let trainingTickets=[];let selectedClient=0;let mission={served:0,rejected:0,attempts:0};
+try{const val=JSON.parse(localStorage.getItem(trainingDBKey)||'[]');if(Array.isArray(val))trainingTickets=val.filter(t=>t&&typeof t.code==='string'&&typeof t.city==='string').slice(-150)}catch{}
+function storeTickets(){try{localStorage.setItem(trainingDBKey,JSON.stringify(trainingTickets.slice(-150)))}catch{}}
+function sessionKey(s,location=city){return [location,s.film,s.time,s.room,s.format].join('|')}
+function trainingCode(){let unique='';do{unique='CG-DEMO-'+Math.random().toString(36).slice(2,10).toUpperCase()}while(trainingTickets.some(t=>t.code===unique));return unique}
+function createTicketBatch(session,seats,category,payment,cpf){const id=sessionKey(session);const created=seats.map(seat=>({code:trainingCode(),city,film:session.film,time:session.time,room:session.room,format:session.format,seat,category,payment,cpf:cpf||'',sessionId:id,status:'novo',createdAt:Date.now()}));trainingTickets.push(...created);storeTickets();return created}
+function purchaseSeatsOccupied(session){return new Set(trainingTickets.filter(t=>t.sessionId===sessionKey(session)).map(t=>t.seat))}
+function renderTicket(t){return `<div class="ticket-row"><b>${escapeHtml(t.film)} · ${escapeHtml(t.time)}</b><p>${escapeHtml(t.city)} · ${escapeHtml(t.room)} · ${escapeHtml(t.format)} · Poltrona ${escapeHtml(t.seat)}</p><p>Código: <code>${escapeHtml(t.code)}</code> · <span class="${t.status==='validado'?'tag-used':'tag-valid'}">${t.status==='validado'?'JÁ VALIDADO':'DISPONÍVEL'}</span></p>${t.cpf?'<p>Compra vinculada a CPF fictício</p>':''}</div>`}
+function clientScenarios(){let mine=trainingTickets.filter(t=>t.city===city);let fresh=mine.find(t=>t.status==='novo');let used=mine.find(t=>t.status==='validado');let wrong=mine.find(t=>t.status==='novo'&&t.room!=='Sala 1');return [
+ {name:'Cliente com ingresso comprado no caixa',description:'Apresenta um QR Code de treinamento.',method:'qr',code:fresh?.code||'',expectedRoom:fresh?.room||'Sala 1',expectedTime:fresh?.time||'',mode:'real'},
+ {name:'Cliente que comprou com CPF',description:'Compra associada a um CPF de teste. Experimente 111.222.333-44 (apenas após emitir um ingresso vinculado).',method:'cpf',code:'11122233344',expectedRoom:'',mode:'cpf'},
+ {name:'Cliente tentando utilizar ingresso repetido',description:'Situação de bloqueio por duplicidade.',method:'qr',code:used?.code||'CG-DEMO-UTILIZADO',expectedRoom:'Sala 1',mode:'used'},
+ {name:'Cliente na entrada da sala incorreta',description:'Situação de conferência de sala. Selecione Sala 1 e um ingresso para Sala 2.',method:'qr',code:wrong?.code||'',expectedRoom:'Sala 1',mode:'wrong'}
+ ]}
+function openValidation(){if(!allowRole('sala'))return;let method='qr',lookup='',expectedRoom='Sala 1',expectedTime='',feedback='',candidate=null;
+ const draw=()=>{const clients=clientScenarios(),cl=clients[selectedClient];modal(`<h2>Controle de acesso — Treinamento</h2><p class="muted">Unidade: ${escapeHtml(city)} · Apenas ingressos fictícios. Nenhum acesso à bilheteria comercial.</p><div class="training-stat"><b>Missão guiada: validar corretamente a entrada</b><p class="small">Aproxime-se do leitor, escolha um cliente e confira o ingresso, a sala e o horário antes de autorizar.</p>Atendimentos corretos: <b>${mission.served}</b> · Bloqueios corretos: <b>${mission.rejected}</b></div><label class="field">Cliente virtual<select id="clientChoice">${clients.map((c,i)=>`<option value="${i}" ${selectedClient===i?'selected':''}>${escapeHtml(c.name)}</option>`).join('')}</select></label><p class="notice">${escapeHtml(cl.description)}</p><label class="field">Entrada em que você está conferindo<select id="validationRoom"><option ${expectedRoom==='Sala 1'?'selected':''}>Sala 1</option><option ${expectedRoom==='Sala 2'?'selected':''}>Sala 2</option></select></label><label class="field">Horário da sessão em conferência (opcional)<input id="validationTime" type="time" value="${escapeHtml(expectedTime)}"></label><div class="rows"><button data-method="qr" class="${method==='qr'?'primary':''}">Leitor de QR Code</button><button data-method="cpf" class="${method==='cpf'?'primary':''}">Consultar CPF</button></div><label class="field">${method==='qr'?'Código QR fictício do ingresso':'CPF de teste (somente dígitos)'}<div class="input-inline"><input id="validationInput" placeholder="${method==='qr'?'CG-DEMO-...':'11122233344'}" value="${escapeHtml(lookup)}"><button class="primary" id="searchTicket">Localizar</button></div></label><div class="screen" id="validationResult">${feedback||'Selecione o ingresso do cliente ou informe o código para buscar.'}</div><h3>Ingressos fictícios da unidade</h3><div class="rows"><button id="seedTickets">Gerar cliente de demonstração</button><button id="showTickets">Meus ingressos</button></div><p class="small">O modo de CPF só encontrará ingressos de teste vinculados durante a venda. Não digite CPF de pessoas reais.</p>`);
+ $('clientChoice').onchange=e=>{selectedClient=Number(e.target.value);const c=clientScenarios()[selectedClient];method=c.method;lookup=c.code;expectedRoom=c.expectedRoom||'Sala 1';expectedTime=c.expectedTime||'';candidate=null;feedback='';draw()};
+ $('validationRoom').onchange=e=>{expectedRoom=e.target.value};$('validationTime').onchange=e=>{expectedTime=e.target.value};
+ document.querySelectorAll('[data-method]').forEach(b=>b.onclick=()=>{method=b.dataset.method;lookup='';candidate=null;feedback='';draw()});
+ $('validationInput').oninput=e=>{lookup=e.target.value};
+ $('searchTicket').onclick=()=>{lookup=$('validationInput').value.trim();expectedRoom=$('validationRoom').value;expectedTime=$('validationTime').value;candidate=null;mission.attempts++;
+  const matches=trainingTickets.filter(t=>t.city===city&&(method==='qr'?t.code.toUpperCase()===lookup.toUpperCase():t.cpf&&t.cpf===lookup.replace(/\D/g,'')));
+  if(matches.length===0){feedback='<p class="notice">Ingresso não encontrado. Não autorize a entrada. Confira os dados ou encaminhe o cliente ao atendimento.</p>';mission.rejected++;say('Nenhum ingresso encontrado. Não libere a entrada sem conferir a compra.');draw();return}
+  feedback=`<p>Encontrados ${matches.length} ingresso(s):</p>`+matches.map(t=>renderTicket(t)+`<button data-pick-ticket="${escapeHtml(t.code)}">Conferir este ingresso</button>`).join('');draw();
+  document.querySelectorAll('[data-pick-ticket]').forEach(b=>b.onclick=()=>{candidate=trainingTickets.find(t=>t.code===b.dataset.pickTicket);const problems=[];if(candidate.status==='validado')problems.push('Ingresso já validado');if(candidate.room!==expectedRoom)problems.push('Sala diferente da entrada selecionada');if(expectedTime&&candidate.time!==expectedTime)problems.push('Horário diferente');feedback=renderTicket(candidate)+(problems.length?`<p class="notice">Atenção: ${problems.join('; ')}. Entrada deve ser negada.</p><button id="rejectTicket" class="primary">Recusar entrada e orientar cliente</button>`:`<p class="tag-valid">Sessão e status conferidos.</p><button id="approveTicket" class="primary">Autorizar entrada fictícia</button>`);draw();const approve=$('approveTicket'),reject=$('rejectTicket');if(approve)approve.onclick=()=>{if(!candidate||candidate.status!=='novo'||candidate.room!==expectedRoom||(expectedTime&&candidate.time!==expectedTime))return;candidate.status='validado';candidate.validatedAt=Date.now();storeTickets();mission.served++;say('Correto. Ingresso conferido e validado apenas na simulação.');candidate=null;feedback='<p class="tag-valid">Entrada autorizada no treinamento. Ingresso marcado como utilizado.</p>';draw()};if(reject)reject.onclick=()=>{mission.rejected++;say('Correto. Não libere entrada com divergência ou ingresso utilizado.');candidate=null;feedback='<p class="tag-valid">Entrada recusada corretamente. Oriente o cliente a procurar atendimento.</p>';draw()};});
+ };
+ $('seedTickets').onclick=()=>{const s=currentSessions()[0]||{film:'Sessão demonstrativa',time:'19:00',room:'Sala 1',format:'2D'};const firstSeat='J'+(Math.floor(Math.random()*12)+1);const made=createTicketBatch(s,[firstSeat],'Inteira','Pix','11122233344');selectedClient=0;method='qr';lookup=made[0].code;expectedRoom=made[0].room;expectedTime=made[0].time;feedback='<p class="tag-valid">Cliente demonstrativo gerado. Código preenchido para sua consulta.</p>';draw()};
+ $('showTickets').onclick=()=>{feedback=trainingTickets.filter(t=>t.city===city).slice(-12).map(renderTicket).join('')||'<p>Venda um ingresso no caixa ou gere um cliente de demonstração.</p>';draw()};
+ };
+ draw();
+}
+function currentSessions(){return data.sessions.filter(s=>s.city===city)}function openCash(){if(!allowRole('caixa'))return;
+ const sessions=currentSessions();
+ const rates={Inteira:30,Meia:15,Promocional:20,...(JSON.parse(localStorage.getItem('cineglobo_pos_prices_v12')||'{}')[city]||{})}; // valores exclusivamente fictícios
+ const occupied=new Set(['A2','B5','C7']); // poltronas ilustrativas indisponíveis
+ const state={step:0,session:null,seats:[],type:'Inteira',payment:'Pix',cash:0,cpf:'',issued:[],done:false};
+ const money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+ const title=()=>state.session?`${escapeHtml(state.session.film)} · ${escapeHtml(state.session.time)} · ${escapeHtml(state.session.room)} (${escapeHtml(state.session.format)})`:'Selecione uma sessão';
+ const amount=()=>state.seats.length*rates[state.type];
+ function show(){
+  const heading='';
+  let body='';
+  if(state.step===0){body=`<div class="cash-step">ETAPA 1/4 · PROGRAMAÇÃO</div><p>Selecione uma sessão da unidade.</p><div class="cash-choices">${sessions.map((s,i)=>`<button data-cash="session" data-value="${i}">${escapeHtml(s.film)}<br><small>${escapeHtml(s.time)} · ${escapeHtml(s.room)} · ${escapeHtml(s.format)}</small></button>`).join('')||'<p>Nenhuma sessão cadastrada nesta cidade. Use Admin para criar uma.</p>'}</div>`}
+  if(state.step===1){body=`<div class="cash-step">ETAPA 2/4 · POLTRONAS</div><h3>${title()}</h3><p>Selecione de 1 a 6 lugares disponíveis.</p><div class="screen-label">TELA DE PROJEÇÃO</div><div class="seat-map">${['A','B','C','D','E','F','G','H','I','J'].flatMap(r=>Array.from({length:12},(_,i)=>{const id=r+(i+1),locked=occupied.has(id)||purchaseSeatsOccupied(state.session).has(id),sel=state.seats.includes(id);return `<button data-cash="seat" data-value="${id}" class="${sel?'selected':''}" ${locked?'disabled':''} aria-pressed="${sel}" title="Poltrona ${id}${locked?' indisponível':''}">${id}</button>`})).join('')}</div><p class="cash-muted">Verde: disponível · dourado: selecionada · vinho: indisponível · fileira E: VIP reclinável</p><button data-cash="back">Voltar às sessões</button> <button class="primary" data-cash="next" ${state.seats.length===0?'disabled':''}>Continuar</button>`}
+  if(state.step===2){body=`<div class="cash-step">ETAPA 3/4 · CATEGORIA E PAGAMENTO</div><h3>${title()}</h3><p>Categoria fictícia dos ingressos:</p><div class="cash-choices">${Object.keys(rates).map(t=>`<button class="${state.type===t?'active':''}" data-cash="type" data-value="${t}">${t} · ${money(rates[t])}</button>`).join('')}</div><label class="field">CPF fictício opcional para localizar na entrada<input id="cashCPF" inputmode="numeric" placeholder="Ex.: 11122233344 (somente teste)" value="${escapeHtml(state.cpf)}"></label><p>Forma de pagamento simulada:</p><div class="cash-choices">${['Pix','Crédito','Débito','Dinheiro'].map(t=>`<button class="${state.payment===t?'active':''}" data-cash="method" data-value="${t}">${t}</button>`).join('')}</div>${state.payment==='Dinheiro'?`<label class="field">Valor fictício recebido (R$)<input id="cashReceived" type="number" inputmode="decimal" min="0" step="0.01" value="${state.cash||''}" placeholder="Ex.: 100.00"></label><p id="changeText" class="cash-muted">Informe o valor recebido para calcular o troco.</p>`:''}<button data-cash="back">Voltar às poltronas</button> <button class="primary" data-cash="next">Conferir venda</button>`}
+  if(state.step===3){body=`<div class="cash-step">ETAPA 4/4 · CONFERÊNCIA</div><h3>Revise os dados antes de finalizar</h3><p>${title()}</p><p>Poltronas: <b>${state.seats.join(', ')}</b></p><p>Categoria: ${state.type} · Pagamento: ${state.payment}</p><p>Total: <strong>${money(amount())}</strong></p>${state.payment==='Dinheiro'?`<p>Recebido: ${money(state.cash)} · Troco: ${money(state.cash-amount())}</p>`:''}<button data-cash="back">Corrigir dados</button> <button class="primary" data-cash="finish">Confirmar venda fictícia</button>`}
+  if(state.step===4){const demoCode='DEMO-'+String(state.session.time).replace(':','')+'-'+state.seats.join('');body=`<div class="cash-step">VENDA DEMONSTRATIVA CONCLUÍDA</div><div class="ticket-slip" id="ticketPrint"><b>CINEGLOBO SIMULATOR</b><p>COMPROVANTE FICTÍCIO · SEM VALIDADE</p><hr><p><b>${escapeHtml(state.session.film)}</b></p><p>${escapeHtml(city)} · ${escapeHtml(state.session.room)} · ${escapeHtml(state.session.format)} · ${escapeHtml(state.session.time)}</p><p>Poltronas: ${state.seats.join(', ')}</p><p>${state.type} · ${state.payment} · <b>${money(amount())}</b></p><p>QR Codes fictícios (representados por códigos):</p>${state.issued.map(t=>`<p><b>${escapeHtml(t.seat)} — ${escapeHtml(t.code)}</b></p>`).join('')}<p>${state.cpf?'Vinculado ao CPF de teste: '+escapeHtml(state.cpf):'Sem CPF vinculado: validar pelo código QR'}</p><small>Não permite acesso real a nenhuma sessão.</small></div><div class="cash-choices"><button data-cash="restart" class="primary">Nova venda simulada</button><button data-cash="print">Imprimir comprovante demonstrativo</button></div>`}
+  const side=`<div class="cash-side"><b>RESUMO DA VENDA</b><p class="cash-muted">${title()}</p><div class="cash-bill"><span>Poltronas</span><b>${state.seats.length?state.seats.join(', '):'—'}</b></div><div class="cash-bill"><span>Categoria</span><b>${state.type}</b></div><div class="cash-bill"><span>Valor unitário</span><b>${money(rates[state.type])}</b></div><hr><div class="cash-total">${money(amount())}</div><p class="cash-muted">Treinamento isolado do caixa real.</p></div>`;
+  modal(`<h2>Computador da bilheteria</h2><div class="pos-shell"><div class="pos-top"><span class="pos-logo">CINE<span>GLOBO</span> • PDV</span><span class="pos-pill">UNIDADE ${escapeHtml(city.toUpperCase())}</span><span class="pos-pill">MODO TREINAMENTO</span></div><div class="pos-content"><div class="cash-layout"><section class="screen">${body}</section>${side}</div></div><div class="pos-foot"><span>SIMULAÇÃO DE CAIXA · SEM TRANSAÇÕES REAIS</span><span>Filmes e preços configuráveis no Admin</span></div></div>`);
+  const cpfInput=$('cashCPF');if(cpfInput)cpfInput.addEventListener('input',()=>{state.cpf=cpfInput.value.replace(/\D/g,'').slice(0,11)});const input=$('cashReceived');if(input){input.addEventListener('input',()=>{state.cash=Number(input.value)||0; $('changeText').textContent=state.cash>=amount()?`Troco fictício: ${money(state.cash-amount())}`:`Faltam ${money(amount()-state.cash)} para completar o pagamento.`})}
+ }
+ function reset(){state.step=0;state.session=null;state.seats=[];state.type='Inteira';state.payment='Pix';state.cash=0;state.cpf='';state.issued=[];show()}
+ const handler=e=>{const btn=e.target.closest('[data-cash]');if(!btn||!$('modal').classList.contains('visible'))return;const cmd=btn.dataset.cash,val=btn.dataset.value;
+ if(cmd==='session'){state.session=sessions[Number(val)];state.seats=[];state.step=1;show()}
+ else if(cmd==='seat'){if(occupied.has(val)||purchaseSeatsOccupied(state.session).has(val))return;state.seats=state.seats.includes(val)?state.seats.filter(x=>x!==val):state.seats.length<6?[...state.seats,val]:state.seats;show()}
+ else if(cmd==='type'){state.type=val;show()}
+ else if(cmd==='method'){state.payment=val;show()}
+ else if(cmd==='back'){state.step=Math.max(0,state.step-1);show()}
+ else if(cmd==='next'){if(state.step===1&&!state.seats.length)return;if(state.step===2&&state.payment==='Dinheiro'&&state.cash<amount()){alert('O valor recebido é insuficiente para esta venda fictícia.');return}state.step++;show()}
+ else if(cmd==='finish'){if(state.session&&state.seats.length&&!state.issued.length){state.issued=createTicketBatch(state.session,state.seats,state.type,state.payment,state.cpf)}if(serviceMission&&serviceMission.city===city&&serviceMission.stage==='selling'&&state.issued.length){serviceMission.feedback.push('Venda emitida: '+state.issued.length+' ingresso(s).');}state.step=4;completed.add(1);tasksRender();say('Venda fictícia concluída. Confira o comprovante antes de iniciar outro atendimento.');show()}
+ else if(cmd==='restart')reset();
+ else if(cmd==='print'){const content=$('ticketPrint')?.innerText||'';const w=window.open('','_blank','width=420,height=580');if(w){w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Comprovante DEMO</title><link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#171018"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="CineGlobo"><link rel="apple-touch-icon" href="./icon-180.png"></head><body><pre style="white-space:pre-wrap;font:14px monospace"></pre></body></html>');w.document.querySelector('pre').textContent=content;w.document.close();w.focus();w.print()}else alert('O navegador bloqueou a janela de impressão.')}};
+ // Registrar o listener uma única vez por abertura e removê-lo ao fechar o caixa.
+ if(window._cashDemoHandler)$('modalContent').removeEventListener('click',window._cashDemoHandler);
+ window._cashDemoHandler=handler;$('modalContent').addEventListener('click',handler);show();
+}
+$('openSchedule').onclick=()=>modal(`<h2>Agenda de sessões — ${city}</h2><p class="muted">Horários fictícios para demonstração. Integração com o site oficial ainda não implementada.</p>${currentSessions().length?currentSessions().map(s=>`<div class="notice"><b>${s.time} · ${s.film}</b><br>${s.room} · ${s.format}</div>`).join(''):'<p>Não há sessões cadastradas para esta unidade.</p>'}`);
+$('openNotices').onclick=()=>modal(`<h2>Avisos internos — ${city}</h2>${data.notices.filter(n=>n.city==='Todas'||n.city===city).map(n=>`<div class="notice">${escapeHtml(n.text)} <span class="badge">${escapeHtml(n.city)}</span></div>`).join('')||'<p>Sem avisos.</p>'}`);function escapeHtml(s){return String(s).replace(/[&<>"']/g,a=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[a]))}
+$('openAdmin').onclick=()=>{modal(`<h2>Painel administrativo demonstrativo</h2><p class="notice"><b>Atenção:</b> não existe login real nesta versão. Os dados são salvos apenas neste navegador. Não insira informações sigilosas.</p><h3>Adicionar sessão fictícia</h3><div class="grid"><label class="field">Unidade<select id="ac">${cities.map(c=>`<option ${c===city?'selected':''}>${c}</option>`).join('')}</select></label><label class="field">Filme<input id="af" placeholder="Título"></label><label class="field">Horário<input id="at" type="time" value="18:00"></label><label class="field">Sala<input id="ar" placeholder="Sala 1"></label><label class="field">Formato<select id="am"><option>2D</option><option>3D</option></select></label></div><button class="primary" id="saveSession">Adicionar sessão</button><h3>Preços de treinamento — por unidade</h3><p class="small">Valores fictícios, alteráveis sem editar o código. Não afetam vendas reais.</p><div class="grid"><label class="field">Unidade para preços<select id="priceCity">${cities.map(c=>`<option ${c===city?'selected':''}>${c}</option>`).join('')}</select></label><label class="field">Inteira (R$)<input id="pInteira" type="number" min="0" step="0.5" value="30"></label><label class="field">Meia (R$)<input id="pMeia" type="number" min="0" step="0.5" value="15"></label><label class="field">Promocional (R$)<input id="pPromocional" type="number" min="0" step="0.5" value="20"></label></div><button class="primary" id="savePrices">Salvar preços do caixa</button><h3>Publicar aviso</h3><label class="field">Destinatário<select id="nc"><option>Todas</option>${cities.map(c=>`<option>${c}</option>`).join('')}</select></label><label class="field">Aviso<textarea id="nt" rows="3" placeholder="Texto do comunicado"></textarea></label><button class="primary" id="saveNotice">Publicar aviso local</button><p class="foot">O painel definitivo terá autenticação, cargos, aprovação, histórico de mudanças e sincronização entre dispositivos.</p>`);$('saveSession').onclick=()=>{if(!$('af').value.trim()||!$('ar').value.trim())return alert('Informe filme e sala.');data.sessions.push({city:$('ac').value,film:$('af').value.trim(),time:$('at').value,room:$('ar').value.trim(),format:$('am').value});save();alert('Sessão demonstrativa salva neste navegador.')};const priceStorageKey='cineglobo_pos_prices_v12';const getPrices=()=>JSON.parse(localStorage.getItem(priceStorageKey)||'{}');const fillPrices=()=>{const c=$('priceCity').value,p=getPrices()[c]||{Inteira:30,Meia:15,Promocional:20};for(const k of ['Inteira','Meia','Promocional'])$('p'+k).value=p[k]};$('priceCity').onchange=fillPrices;fillPrices();$('savePrices').onclick=()=>{const p=getPrices();p[$('priceCity').value]={};for(const k of ['Inteira','Meia','Promocional']){const val=Number($('p'+k).value);if(!Number.isFinite(val)||val<0)return alert('Informe preços válidos.');p[$('priceCity').value][k]=val}localStorage.setItem(priceStorageKey,JSON.stringify(p));alert('Preços fictícios salvos. Abra novamente o caixa para ver os valores atualizados.')};$('saveNotice').onclick=()=>{if(!$('nt').value.trim())return alert('Escreva um aviso.');data.notices.push({city:$('nc').value,text:$('nt').value.trim()});save();alert('Aviso demonstrativo salvo neste navegador.')};};
+$('nextSpeech').onclick=()=>{speechIndex=(speechIndex+1)%speeches.length;say(speeches[speechIndex])};$('askHelp').onclick=trainerAdvice;$('hideHelp').onclick=()=>$('helper').style.display='none';
+function movement(){
+ const dt=Math.min(.05,clock.getDelta());animateEpi(dt);advanceCustomer(dt);if(!paused)updateWorkers(dt);updateTrainerFollow(dt);
+ const blocked=paused||$('modal').classList.contains('visible')||$('start').style.display!=='none';
+ let forward=blocked?0:(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-joy.y;
+ let strafe=blocked?0:(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joy.x;
+ const magnitude=Math.hypot(forward,strafe);if(magnitude>1){forward/=magnitude;strafe/=magnitude}
+ const spd=(keys.ShiftLeft?6.2:3.7)*dt;
+ const dx=(-Math.sin(player.yaw)*forward+Math.cos(player.yaw)*strafe)*spd;
+ const dz=(-Math.cos(player.yaw)*forward-Math.sin(player.yaw)*strafe)*spd;
+ if(!paused&&canStand(player.x+dx,player.z))player.x+=dx;
+ if(!paused&&canStand(player.x,player.z+dz))player.z+=dz;
+ camera.position.set(player.x,1.67,player.z);camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
+ const room=player.z < -11?'sala':'hall';if(room!==roomState){roomState=room;say(room==='sala'?'Você entrou na sala. Observe a tela, as poltronas e os pontos de controle.':'Você voltou ao hall do cinema. Continue explorando os setores.')}
+ let best=null,score=Infinity;
+ const view=new THREE.Vector3();camera.getWorldDirection(view);const gaze=new THREE.Vector2(view.x,view.z).normalize();
+ world.forEach(o=>{const vx=o.x-player.x,vz=o.z-player.z,dist=Math.hypot(vx,vz);if(dist>(o.name==='Computador do caixa'?2.10:1.70)||dist<.05)return;
+ const facing=(vx*gaze.x+vz*gaze.y)/dist;if(facing<(o.name==='Computador do caixa'?.42:.67))return;
+ const priority=o.epiStation?.12:(o.name==='Computador do caixa'?.65:0);const s=dist+(1-facing)*3-priority;
+ if(s<score){best=o;score=s;}
+ });
+ currentTarget=best;$('action').style.display=best&&!blocked?'block':'none';if(best)$('action').textContent='E / AGIR · '+best.name;
+ for(const door of doors){door.hinge.rotation.y+= (door.goal-door.hinge.rotation.y)*Math.min(1,dt*8)}
+ if(trainerMixer&&!paused)trainerMixer.update(dt);
+ if(!paused && performance.now()-lastFrame>=1000/settings.fps){renderer.render(scene,camera);lastFrame=performance.now()}requestAnimationFrame(movement)
+}
+const clock=new THREE.Clock();
+addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='KeyE'&&!e.repeat&&currentTarget&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))currentTarget.callback();if(e.code==='Escape'&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))togglePause()});addEventListener('keyup',e=>keys[e.code]=false);addEventListener('blur',()=>{keys={};joy={x:0,y:0};$('nub').style.transform='none'});document.addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer?.domElement){player.yaw-=e.movementX*settings.mouse*.000035;player.pitch=THREE.MathUtils.clamp(player.pitch-e.movementY*settings.mouse*.000035,-1.15,1.15)}});$('touchInteract').onclick=()=>{if(!paused)currentTarget?.callback()};let touchStart=null;$('look').addEventListener('pointerdown',e=>{touchStart={x:e.clientX,y:e.clientY};$('look').setPointerCapture(e.pointerId)});$('look').addEventListener('pointermove',e=>{if(!touchStart)return;player.yaw-=(e.clientX-touchStart.x)*settings.touch*.000065;player.pitch=THREE.MathUtils.clamp(player.pitch-(e.clientY-touchStart.y)*settings.touch*.000065,-1.2,1.2);touchStart={x:e.clientX,y:e.clientY}});['pointerup','pointercancel','lostpointercapture'].forEach(type=>$('look').addEventListener(type,()=>touchStart=null));let activeJoystickPointer=null;function updateJoystick(e){const r=$('joy').getBoundingClientRect(),x=(e.clientX-r.left-r.width/2)/40,y=(e.clientY-r.top-r.height/2)/40;const length=Math.max(1,Math.hypot(x,y));joy.x=x/length;joy.y=y/length;$('nub').style.transform=`translate(${joy.x*28}px,${joy.y*28}px)`}function clearJoystick(e){if(activeJoystickPointer!==e.pointerId)return;activeJoystickPointer=null;joy={x:0,y:0};$('nub').style.transform='none'}$('joy').addEventListener('pointerdown',e=>{if(activeJoystickPointer!==null)return;activeJoystickPointer=e.pointerId;$('joy').setPointerCapture(e.pointerId);updateJoystick(e)});$('joy').addEventListener('pointermove',e=>{if(activeJoystickPointer===e.pointerId)updateJoystick(e)});['pointerup','pointercancel','lostpointercapture'].forEach(k=>$('joy').addEventListener(k,clearJoystick));
+$('enter').onclick=()=>{$('start').style.display='none';setCity($('startCity').value);setRole($('startRole').value);if(!isMobile)renderer.domElement.requestPointerLock?.()};addEventListener('resize',()=>{if(!renderer)return;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);applyGraphics()});try{build();applyGraphics();movement();renderer.domElement.onclick=()=>{if(!paused&&currentTarget?.name==='Computador do caixa'&&currentRole==='caixa'){currentTarget.callback();return;}if(!isMobile&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))renderer.domElement.requestPointerLock?.()}}catch(e){$('start').querySelector('.dialog').innerHTML+='<p class="notice">Não foi possível iniciar o motor gráfico. Confira a conexão de internet e o suporte WebGL do navegador.</p>';console.error(e)}
+
+function applyGraphics(){if(!renderer)return;renderer.setPixelRatio(Math.min(devicePixelRatio,settings.quality==='low'?.6:settings.quality==='medium'?.85:1));}
+function applyInputs(){for(const [key,id] of [['mouse','mouseSens'],['touch','touchSens'],['quality','quality'],['fps','fps'],['volume','volume']])$(id).value=settings[key];$('mouseText').textContent=settings.mouse+'%';$('touchText').textContent=settings.touch+'%';$('volumeText').textContent=settings.volume+'%'}
+function togglePause(force){paused=typeof force==='boolean'?force:!paused;$('pauseOverlay').classList.toggle('visible',paused);if(paused){document.exitPointerLock?.();keys={};joy={x:0,y:0};applyInputs()}else{lastFrame=0}}
+$('pauseBtn').onclick=()=>togglePause(true);$('resumeBtn').onclick=$('closePause').onclick=()=>togglePause(false);
+$('resetViewBtn').onclick=()=>{player.pitch=0;player.yaw=0};
+for(const [id,key] of [['mouseSens','mouse'],['touchSens','touch'],['quality','quality'],['fps','fps'],['volume','volume']])$(id).addEventListener('input',e=>{settings[key]=['quality'].includes(key)?e.target.value:Number(e.target.value);localStorage.setItem('cineglobo_config',JSON.stringify(settings));applyInputs();if(key==='quality')applyGraphics()});
+</script></body></html>
