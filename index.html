@@ -42,7 +42,7 @@ const $=x=>document.getElementById(x),cities=['Três Passos','Palmeira das Miss�
 const defaults={notices:[{city:'Todas',text:'Bem-vindo ao ambiente demonstrativo. Todos os dados são fictícios.'}],sessions:[{city:'Ijuí',film:'Aventura Estelar (demonstração)',time:'14:00',room:'Sala 1',format:'2D'},{city:'Ijuí',film:'Mistério da Noite (demonstração)',time:'16:30',room:'Sala 2',format:'3D'}],tasks:['Acender as luzes do hall','Ligar o computador do caixa','Ligar a mini impressora','Conferir a televisão do catálogo','Preparar a pipoqueira','Conferir a iluminação da Sala 1','Conferir a climatização da Sala 2']};
 let data;try{data={...defaults,...JSON.parse(localStorage.getItem('cineglobo_demo')||'{}')}}catch{data=structuredClone(defaults)};
 let technicalMonitor=null;
-let settings={mouse:22,touch:22,quality:"low",fps:30,volume:40};try{settings={...settings,...JSON.parse(localStorage.getItem("cineglobo_config")||"{}")}}catch{};let paused=false,lastFrame=0;let roomLighting={},blockers=[],doors=[],trainer=null,trainerParts=[],trainerMixer=null,trainerRealistic=false,roomState='hall';let city='Ijuí',completed=new Set(),currentTarget=null,speechIndex=0,scene,camera,renderer,world=[],player={x:0,z:6,yaw:0,pitch:0},keys={},lookActive=false,isMobile=matchMedia('(pointer:coarse)').matches,joy={x:0,y:0},ambient,lights=[];
+let settings={mouse:22,touch:22,quality:"low",fps:30,volume:40};try{settings={...settings,...JSON.parse(localStorage.getItem("cineglobo_config")||"{}")}}catch{};let paused=false,lastFrame=0;let roomLighting={},roomScenes={},blockers=[],doors=[],trainer=null,trainerParts=[],trainerMixer=null,trainerRealistic=false,roomState='hall';let city='Ijuí',completed=new Set(),currentTarget=null,speechIndex=0,scene,camera,renderer,world=[],player={x:0,z:6,yaw:0,pitch:0},keys={},lookActive=false,isMobile=matchMedia('(pointer:coarse)').matches,joy={x:0,y:0},ambient,lights=[];
 // Escala dinâmica: um jogador por posto, demais setores operados por NPCs.
 let currentRole='caixa',npcTeam=[],npcClock=0,npcCycles={caixa:0,bomboniere:0,sala:0};
 const roleNames={caixa:'Caixa',bomboniere:'Bomboniere e pipoqueiras',sala:'Salas'};
@@ -241,6 +241,7 @@ function setRoomLights(room, mode){
 }
 function roomLightingDialog(label){const mode=roomLighting[label]?.mode||'entrada';modal(`<h2>${label} — Painel de iluminação</h2><p class="notice">Procedimento informado para Ijuí: ao terminar a música após os comerciais, desligar as ARANDELAS e manter os LEDs. As luzes gerais são para limpeza depois do filme.</p><div class="rows"><button data-room-light="entrada" data-room="${label}">Arandelas · entrada</button><button data-room-light="filme" data-room="${label}">Somente LEDs · filme</button><button data-room-light="limpeza" data-room="${label}">Luzes gerais · limpeza</button></div><p id="lightingStatus" class="notice"></p><p class="small">Circuitos independentes: arandelas, LEDs e luzes gerais. Intensidade e iluminação real simuladas no ambiente.</p>`);setRoomLights(label,mode)}
 function addRoom(x,label,is3d){
+ const firstSceneChild=scene.children.length;
  const left=x-3.75,right=x+3.75;
  box(x,-.10,-16.30,7.5,.18,10.8,0x595659);
  box(x,3.77,-16.3,7.5,.16,10.8,0x17181b);
@@ -313,6 +314,22 @@ function addRoom(x,label,is3d){
  object('Painel de iluminação '+label,x+2.9,-12.1,0xe5d1a6,()=>roomLightingDialog(label));
  textSign(is3d?'SALA 2 · 2D / 3D':'SALA 1 · 2D',x,3.2,-12.0,3.2);
  setRoomLights(label,'entrada');
+ // Reparentar geometrias, instâncias e luzes da sala sob um único grupo lógico.
+ // Grupo com identidade evita ocultar o corredor ou os objetos do caixa.
+ const roomGroup=new THREE.Group();
+ roomGroup.name='Cenário da '+label;
+ scene.add(roomGroup);
+ for(const obj of scene.children.slice(firstSceneChild,scene.children.length-1))roomGroup.add(obj);
+ roomScenes[label]={group:roomGroup,centerX:x};
+}
+
+function updateVisibleRooms(){
+ for(const [label,room] of Object.entries(roomScenes)){
+   const inside=player.z < -11.05 && (label==='Sala 1'?player.x<-.32:player.x>.32);
+   const door=doors.find(d=>Math.abs(d.x-room.centerX)<.1);
+   // Uma porta aberta mantém a sala visível. Jogador dentro nunca fica no escuro.
+   room.group.visible=inside||Boolean(door?.open);
+ }
 }
 
 // Cliente interativo com balão 3D leve, associado ao caixa fictício.
@@ -712,6 +729,7 @@ function movement(){
  currentTarget=best;$('action').style.display=best&&!blocked?'block':'none';if(best)$('action').textContent='E / AGIR · '+best.name;
  for(const door of doors){door.hinge.rotation.y+= (door.goal-door.hinge.rotation.y)*Math.min(1,dt*8)}
  if(trainerMixer&&!paused)trainerMixer.update(dt);
+ updateVisibleRooms();
  renderer.render(scene,camera);
  technicalMonitor?.record(performance.now());
 }
