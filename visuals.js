@@ -37,5 +37,35 @@ export function finishCinema(scene){
  const poster=new THREE.Mesh(new THREE.PlaneGeometry(1.16,1.74),new THREE.MeshBasicMaterial({map:t}));poster.position.set(8.12,2,z);poster.rotation.y=-Math.PI/2;scene.add(poster);
  }
  const glow=new THREE.InstancedMesh(unit,warm,4);for(let i=0;i<4;i++){m.position.set(-6+i*4,3.58,0);m.scale.set(.04,.025,18);m.updateMatrix();glow.setMatrixAt(i,m.matrix)}glow.computeBoundingSphere();scene.add(glow);
- return {decorativeDrawCalls:8};
+ // Etapa visual v2.1: detalhes de profundidade com geometria compartilhada.
+ // Usamos instancing para reduzir o custo por objeto no iPhone.
+ const trimMat=new THREE.MeshStandardMaterial({color:'#8c643f',metalness:.42,roughness:.55});
+ const pathMat=new THREE.MeshStandardMaterial({color:'#30272b',roughness:.82});
+ const trimParts=[];
+ for(const side of [-1,1]){
+   // Rodapés e guias embutidas, sem interferir em colisões.
+   trimParts.push([side*7.92,.12,0,.075,.22,21.2]);
+   trimParts.push([side*7.92,3.62,0,.075,.055,21.2]);
+ }
+ for(const z of [-8,-4,0,4,8])trimParts.push([0,.012,z,10,.015,.035]);
+ const details=new THREE.InstancedMesh(unit,trimMat,trimParts.length);
+ details.name='Acabamentos do hall';
+ trimParts.forEach((p,i)=>{m.position.set(p[0],p[1],p[2]);m.scale.set(p[3],p[4],p[5]);m.rotation.set(0,0,0);m.updateMatrix();details.setMatrixAt(i,m.matrix);});
+ details.instanceMatrix.needsUpdate=true;
+ details.computeBoundingSphere();scene.add(details);
+ const carpet=new THREE.Mesh(new THREE.PlaneGeometry(2.35,13),pathMat);
+ carpet.rotation.x=-Math.PI/2;carpet.position.set(0,.021,0);
+ carpet.name='Passadeira de orientação';scene.add(carpet);
+ // Placas 2D pequenas reutilizam a mesma textura para ambos os lados do hall.
+ const cv=document.createElement('canvas');cv.width=512;cv.height=128;
+ const cx=cv.getContext('2d');cx.fillStyle='#141920';cx.fillRect(0,0,512,128);
+ cx.strokeStyle='#b48a50';cx.lineWidth=5;cx.strokeRect(7,7,498,114);
+ cx.font='bold 35px sans-serif';cx.fillStyle='#f1d4a3';cx.textAlign='center';
+ cx.fillText('CINE GLOBO',256,54);cx.font='23px sans-serif';
+ cx.fillText('TREINAMENTO INTERATIVO',256,92);
+ const st=new THREE.CanvasTexture(cv);st.colorSpace=THREE.SRGBColorSpace;
+ const signMat=new THREE.MeshBasicMaterial({map:st,side:THREE.DoubleSide});
+ const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.9,.72),signMat);
+ sign.position.set(0,3.16,-9.7);sign.name='Identificação do cinema';scene.add(sign);
+ return {decorativeDrawCalls:11};
 }
