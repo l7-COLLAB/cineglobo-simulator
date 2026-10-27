@@ -1,0 +1,26 @@
+name: Validar jogo no navegador
+on:
+  push:
+    branches: [main, perf/mobile-training-foundation]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save @playwright/test@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evidencias-navegador
+          path: |
+            playwright-report
+            test-results

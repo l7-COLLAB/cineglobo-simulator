@@ -1,0 +1,40 @@
+const {test,expect}=require('@playwright/test');
+const fs=require('fs');
+test('atendimento completo em viewport móvel',async({page})=>{
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ // Exposição apenas na resposta do servidor de teste; não altera o jogo publicado.
+ await page.route('**/index.html',async route=>{
+ let html=fs.readFileSync('index.html','utf8');
+ html=html.replace('function applyGraphics(){','window.__testGame={summonCustomer,openCash,openCustomerDialogue,tickets:()=>trainingTickets};\nfunction applyGraphics(){');
+ await route.fulfill({contentType:'text/html',body:html});
+ });
+ await page.goto('/index.html');
+ await expect(page.locator('#scene canvas')).toBeVisible({timeout:45000});
+ await page.locator('#enter').click();
+ await page.evaluate(()=>window.__testGame.summonCustomer());
+ await expect(page.locator('[data-customer-choice="hello"]')).toBeVisible({timeout:15000});
+ await page.locator('[data-customer-choice="hello"]').click();
+ await page.locator('[data-customer-choice="check"]').click();
+ await page.locator('[data-customer-choice="open"]').click();
+ await expect(page.getByText('Pedido do cliente',{exact:true})).toBeVisible();
+ await page.locator('[data-cash="session"]').first().click();
+ await page.locator('[data-cash="seat"][data-value="A3"]').click();
+ await page.locator('[data-cash="seat"][data-value="A4"]').click();
+ await page.locator('[data-cash="next"]').click();
+ await page.locator('[data-cash="next"]').click();
+ await page.locator('[data-cash="finish"]').click();
+ await expect(page.locator('#ticketPrint')).toBeVisible();
+ await page.locator('[data-cash="deliver"]').click();
+ await expect(page.getByText('Obrigado pelo atendimento! Agora vou guardar meus ingressos.',{exact:true})).toBeVisible();
+ await page.locator('[data-customer-choice="reset"]').click();
+ await page.evaluate(()=>window.__testGame.summonCustomer());
+ await expect(page.locator('[data-customer-choice="hello"]')).toBeVisible({timeout:15000});
+ await page.locator('[data-customer-choice="hello"]').click();
+ await page.locator('[data-customer-choice="check"]').click();
+ await page.locator('[data-customer-choice="open"]').click();
+ await page.locator('#closeModal').click();
+ await page.evaluate(()=>window.__testGame.openCustomerDialogue());
+ await expect(page.getByText('Ainda não encontrei meus dois ingressos desta sessão. Podemos conferir?',{exact:true})).toBeVisible();
+ expect(errors).toEqual([]);
+ await page.screenshot({path:'test-results/atendimento.png',fullPage:true});
+});
