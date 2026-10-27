@@ -322,6 +322,7 @@ function summonCustomer(){
  if(!queueCustomer){openCash();return}
  newServiceMission();checkoutVisual?.reset();customerWalkTime=0;customerApproaching=true;queueArrivalPending=true;
  queueCustomer.visible=true;
+ queueCustomer.userData.updateSpeech?.('Olá, boa tarde!', 'Estou chegando ao caixa');
  queueCustomer.position.set(-1.6,0,2.65);
  queueCustomerTarget=new THREE.Vector3(-4.65,0,-1.65);
  say('Você assumiu o caixa. Um cliente está se aproximando. Receba-o, confirme o pedido e realize a venda no computador.');
@@ -333,9 +334,12 @@ function advanceCustomer(dt){
  if(distance>.065){const step=Math.min(distance,dt*1.75);queueCustomer.position.addScaledVector(delta.normalize(),step);
  queueCustomer.rotation.y=Math.atan2(-delta.x,-delta.z);
  queueCustomer.position.y=Math.sin(customerWalkTime*9)*.015;
+ for(const limb of queueCustomer.userData.walkingLimbs||[]){const wave=Math.sin(customerWalkTime*8)*limb.side;limb.leg.rotation.x=wave*.24;limb.arm.rotation.x=-wave*.19;}
  }else{
  customerApproaching=false;customerAtCounter=true;queueCustomer.position.copy(queueCustomerTarget);
  queueCustomer.rotation.y=0;
+ for(const limb of queueCustomer.userData.walkingLimbs||[]){limb.leg.rotation.x=0;limb.arm.rotation.x=0;}
+ queueCustomer.userData.updateSpeech?.('Gostaria de ingressos', 'Pode confirmar minha sessão?');
  if(queueArrivalPending){queueArrivalPending=false;openCustomerDialogue()}
  }
 }
@@ -346,13 +350,13 @@ function openCustomerDialogue(){
  if(!customerAtCounter){say('O cliente ainda não chegou ao balcão.');return}
  const m=serviceMission&&serviceMission.city===city?serviceMission:newServiceMission();
  const chat=(message,choices,detail='')=>{modal(`<h2>Atendimento ao cliente · ${escapeHtml(city)}</h2><p class="small">Missão demonstrativa: comunique-se com o cliente e registre a venda correta no caixa.</p><div class="customer-dialog"><div class="customer-portrait" aria-hidden="true">👤</div><div><b>CLIENTE VIRTUAL</b><div class="customer-message">${escapeHtml(message)}</div></div></div>${detail}<div id="customerReplies">${choices.map(([label,cmd])=>`<button class="customer-option" data-customer-choice="${cmd}">${escapeHtml(label)}</button>`).join('')}</div><p class="small">O cliente utiliza balões de texto. Não é necessário microfone neste treinamento.</p>`);document.querySelectorAll('[data-customer-choice]').forEach(btn=>btn.onclick=()=>action(btn.dataset.customerChoice))};
- const action=cmd=>{if(cmd==='hello'){m.stage='request';chat(`Boa tarde! Gostaria de ${m.count} ingressos para ${m.session.film}, às ${m.session.time}. Você pode me ajudar?`,[['Claro! Vou confirmar a sala e os lugares.','check'],['Escolha qualquer lugar, depois vemos.','incorrect'],['Não sei atender esse pedido.','help']]);return}
+ const action=cmd=>{if(cmd==='hello'){m.stage='request';queueCustomer?.userData.updateSpeech?.('Meu pedido',m.count+' ingressos para '+m.session.time);chat(`Boa tarde! Gostaria de ${m.count} ingressos para ${m.session.film}, às ${m.session.time}. Você pode me ajudar?`,[['Claro! Vou confirmar a sala e os lugares.','check'],['Escolha qualquer lugar, depois vemos.','incorrect'],['Não sei atender esse pedido.','help']]);return}
  if(cmd==='check'){m.stage='confirmed';m.score+=1;chat(`Obrigado! A sessão é ${m.session.format}, na ${m.session.room}. Queremos ingressos inteiros e dois lugares juntos.`,[['Sim. Vou conferir o mapa de poltronas no computador.','open'],['Pode entrar sem comprar ingresso.','incorrect']]);return}
- if(cmd==='open'){m.stage='selling';say(`Missão do cliente: venda ${m.count} ingressos para ${m.session.film}, ${m.session.time}, ${m.session.room}.`);openCash();return}
+ if(cmd==='open'){m.stage='selling';queueCustomer?.userData.updateSpeech?.('Aguardando minha compra','Conferir lugares e pagamento');say(`Missão do cliente: venda ${m.count} ingressos para ${m.session.film}, ${m.session.time}, ${m.session.room}.`);openCash();return}
  if(cmd==='help'){chat('Sem problemas. Você pode consultar a programação, confirmar a sala e usar o computador do caixa para fazer a venda.',[['Entendi. Vamos continuar.','hello'],['Abrir o computador do caixa','open']]);return}
  if(cmd==='incorrect'){m.feedback.push('É necessário conferir o pedido e concluir a venda antes de autorizar a entrada.');chat('Você poderia conferir minha sessão e me orientar corretamente?', [['Desculpe. Vou conferir filme, horário e sala antes da venda.','check'],['Pedir ajuda ao instrutor','help'] ],'<div class="customer-score customer-bad">O instrutor identificou uma resposta inadequada. Você pode corrigir o atendimento.</div>');return}
  if(cmd==='reset'){checkoutVisual?.reset();customerAtCounter=false;customerApproaching=false;queueCustomer.visible=false;queueCustomer.position.set(-1.6,0,2.65);serviceMission=null;close();say('Atendimento encerrado. Volte ao computador para chamar o próximo cliente.');return}
- if(cmd==='finish'){if(!m.handoffCompleted){chat('Antes de concluir, preciso receber os ingressos. Você pode entregá-los?', [['Vou entregar os ingressos no computador.','open']],'<div class="customer-score customer-bad">Entrega pendente: concluir a venda não substitui a entrega ao cliente.</div>');return;}const issued=trainingTickets.filter(t=>m.issuedCodes.includes(t.code)&&t.city===city&&t.film===m.session.film&&t.time===m.session.time&&t.room===m.session.room&&t.status==='novo');const passed=issued.length===m.count;chat(passed?'Obrigado pelo atendimento! Agora vou guardar meus ingressos.':'Ainda não encontrei meus dois ingressos desta sessão. Podemos conferir?',[[passed?'Atender próximo cliente':'Voltar à bilheteria',passed?'reset':'open']],`<div class="customer-score ${passed?'':'customer-bad'}">${passed?'Treinamento concluído: os ingressos deste atendimento correspondem ao pedido.':'Faltam ingressos compatíveis. A missão permanece pendente.'}</div>`)}
+ if(cmd==='finish'){if(!m.handoffCompleted){chat('Antes de concluir, preciso receber os ingressos. Você pode entregá-los?', [['Vou entregar os ingressos no computador.','open']],'<div class="customer-score customer-bad">Entrega pendente: concluir a venda não substitui a entrega ao cliente.</div>');return;}const issued=trainingTickets.filter(t=>m.issuedCodes.includes(t.code)&&t.city===city&&t.film===m.session.film&&t.time===m.session.time&&t.room===m.session.room&&t.status==='novo');const passed=issued.length===m.count;if(passed)queueCustomer?.userData.updateSpeech?.('Obrigado pelo atendimento!', 'Ingressos recebidos');chat(passed?'Obrigado pelo atendimento! Agora vou guardar meus ingressos.':'Ainda não encontrei meus dois ingressos desta sessão. Podemos conferir?',[[passed?'Atender próximo cliente':'Voltar à bilheteria',passed?'reset':'open']],`<div class="customer-score ${passed?'':'customer-bad'}">${passed?'Treinamento concluído: os ingressos deste atendimento correspondem ao pedido.':'Faltam ingressos compatíveis. A missão permanece pendente.'}</div>`)}
  };
  if(m.stage==='selling'){action('finish');return}
  if(m.stage==='confirmed'){action('open');return}
@@ -365,10 +369,14 @@ function createCustomerAtCounter(){
  const torso=new THREE.Mesh(new THREE.CylinderGeometry(.19,.25,.77,9),shirt);torso.position.y=1.18;g.add(torso);
  const head=new THREE.Mesh(new THREE.SphereGeometry(.165,12,8),skin);head.position.y=1.74;g.add(head);
  const hair=new THREE.Mesh(new THREE.SphereGeometry(.169,12,6,0,Math.PI*2,0,Math.PI*.44),new THREE.MeshStandardMaterial({color:0x26201e}));hair.position.y=1.76;g.add(hair);
- for(const x of [-.14,.14]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.072,.083,.8,7),pants);leg.position.set(x,.4,0);g.add(leg);const arm=new THREE.Mesh(new THREE.CylinderGeometry(.055,.063,.65,7),skin);arm.position.set(x*.0+(x<0?-.28:.28),1.05,0);arm.rotation.z=x<0?-.13:.13;g.add(arm)}
+ const walkingLimbs=[];
+ for(const x of [-.14,.14]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.072,.083,.8,7),pants);leg.position.set(x,.4,0);g.add(leg);const arm=new THREE.Mesh(new THREE.CylinderGeometry(.055,.063,.65,7),skin);arm.position.set(x<0?-.28:.28,1.05,0);arm.rotation.z=x<0?-.13:.13;g.add(arm);walkingLimbs.push({leg,arm,side:x<0?-1:1})}
+ g.userData.walkingLimbs=walkingLimbs;
  // Balão renderizado como uma placa voltada ao jogador, sem fontes de luz adicionais.
  const cv=document.createElement('canvas');cv.width=512;cv.height=142;const ct=cv.getContext('2d');ct.fillStyle='#ffffff';ct.beginPath();ct.roundRect(9,8,494,116,22);ct.fill();ct.fillStyle='#202c39';ct.font='bold 29px Arial';ct.textAlign='center';ct.fillText('Olá! Preciso de ingressos.',256,61);ct.font='24px Arial';ct.fillText('Pressione E para atender',256,97);
- const balloon=new THREE.Mesh(new THREE.PlaneGeometry(2.45,.7),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthTest:false,side:THREE.DoubleSide}));balloon.position.set(0,2.48,0);balloon.renderOrder=9;g.add(balloon);
+ const balloonTexture=new THREE.CanvasTexture(cv);
+ const balloon=new THREE.Mesh(new THREE.PlaneGeometry(2.45,.7),new THREE.MeshBasicMaterial({map:balloonTexture,transparent:true,depthTest:false,side:THREE.DoubleSide}));
+ g.userData.updateSpeech=(first,second)=>{ct.clearRect(0,0,512,142);ct.fillStyle='#fff';ct.beginPath();ct.roundRect(9,8,494,116,22);ct.fill();ct.fillStyle='#202c39';ct.textAlign='center';ct.font='bold 28px Arial';ct.fillText(String(first).slice(0,35),256,61);ct.font='22px Arial';ct.fillText(String(second).slice(0,43),256,97);balloonTexture.needsUpdate=true;};balloon.position.set(0,2.48,0);balloon.renderOrder=9;g.add(balloon);
  object('Atender cliente',-4.65,-1.65,0x557d86,()=>{if(customerAtCounter)openCustomerDialogue();else say('Ative o computador por trás do balcão para chamar o próximo cliente.')});world[world.length-1].marker.visible=false;
  return balloon;
 }
