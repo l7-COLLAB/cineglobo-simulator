@@ -37,12 +37,12 @@ import { saleError } from './training-rules.mjs';
 import { createPerformanceMonitor } from './performance-monitor.js';
 import { createCheckoutZone } from './checkout-zone.js';
 import { createCinemaCharacter } from './character-kit.js';
-import { batchStaticBoxes } from './static-batching.js';
+import { batchStaticBoxes, mergeStaticDetails } from './static-batching.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
 const $=x=>document.getElementById(x),cities=['Três Passos','Palmeira das Missões','Santa Rosa','Frederico Westphalen','Cruz Alta','Ijuí','Horizontina'];
 const defaults={notices:[{city:'Todas',text:'Bem-vindo ao ambiente demonstrativo. Todos os dados são fictícios.'}],sessions:[{city:'Ijuí',film:'Aventura Estelar (demonstração)',time:'14:00',room:'Sala 1',format:'2D'},{city:'Ijuí',film:'Mistério da Noite (demonstração)',time:'16:30',room:'Sala 2',format:'3D'}],tasks:['Acender as luzes do hall','Ligar o computador do caixa','Ligar a mini impressora','Conferir a televisão do catálogo','Preparar a pipoqueira','Conferir a iluminação da Sala 1','Conferir a climatização da Sala 2']};
 let data;try{data={...defaults,...JSON.parse(localStorage.getItem('cineglobo_demo')||'{}')}}catch{data=structuredClone(defaults)};
-let technicalMonitor=null,staticBatchReport=null;
+let technicalMonitor=null,staticBatchReport=null,staticDetailReport=null;
 let settings={mouse:22,touch:22,quality:"low",fps:30,volume:40};try{settings={...settings,...JSON.parse(localStorage.getItem("cineglobo_config")||"{}")}}catch{};let paused=false,lastFrame=0;let roomLighting={},roomScenes={},blockers=[],doors=[],trainer=null,trainerParts=[],trainerMixer=null,trainerRealistic=false,roomState='hall';let city='Ijuí',completed=new Set(),currentTarget=null,speechIndex=0,scene,camera,renderer,world=[],player={x:0,z:6,yaw:0,pitch:0},keys={},lookActive=false,isMobile=matchMedia('(pointer:coarse)').matches,joy={x:0,y:0},ambient,lights=[];
 // Escala dinâmica: um jogador por posto, demais setores operados por NPCs.
 let currentRole='caixa',npcTeam=[],npcClock=0,npcCycles={caixa:0,bomboniere:0,sala:0};
@@ -602,11 +602,20 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
  const keyLock=new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,.009,12),eqMat(0xb7b7b2,.7));keyLock.rotation.x=Math.PI/2;keyLock.position.set(-4.48,1.344,-3.228);scene.add(keyLock);
  // Girar o conjunto monitor/teclado/periféricos 180 graus para o lado do funcionário.
  // Rotacionar posições e geometrias juntas mantém coerência espacial do PDV.
- for(const item of scene.children.slice(equipmentStart)){
+ const posEquipment=scene.children.slice(equipmentStart);
+ for(const item of posEquipment){
    const ox=item.position.x-pos.x,oz=item.position.z-pos.z;
    item.position.x=pos.x-ox;item.position.z=pos.z-oz;
    item.rotation.y+=Math.PI;
  }
+ // Componentes rígidos do PDV podem compartilhar um único desenho sem
+ // alterar tela interativa, teclado instanciado, emissão nem entrega fictícia.
+ const posRoot=new THREE.Group();posRoot.name='Equipamentos fixos do caixa';scene.add(posRoot);
+ for(const item of posEquipment)posRoot.add(item);
+ staticDetailReport={
+   caixa:mergeStaticDetails(posRoot),
+   terminal:mergeStaticDetails(pinGroup)
+ };
  // Plaqueta com identificação do caixa na frente do balcão.
  eqLabel('CAIXA 1',-4.7,.91,-2.987,.83,.21);
  object('Computador do caixa',-5.55,-5.03,0x2c747f,()=>summonCustomer());
