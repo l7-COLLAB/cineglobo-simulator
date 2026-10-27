@@ -36,6 +36,7 @@ import { finishCinema, upholsteredGeometry } from './visuals.js';
 import { saleError } from './training-rules.mjs';
 import { createPerformanceMonitor } from './performance-monitor.js';
 import { createCheckoutZone } from './checkout-zone.js';
+import { createCinemaCharacter } from './character-kit.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
 const $=x=>document.getElementById(x),cities=['Três Passos','Palmeira das Missões','Santa Rosa','Frederico Westphalen','Cruz Alta','Ijuí','Horizontina'];
 const defaults={notices:[{city:'Todas',text:'Bem-vindo ao ambiente demonstrativo. Todos os dados são fictícios.'}],sessions:[{city:'Ijuí',film:'Aventura Estelar (demonstração)',time:'14:00',room:'Sala 1',format:'2D'},{city:'Ijuí',film:'Mistério da Noite (demonstração)',time:'16:30',room:'Sala 2',format:'3D'}],tasks:['Acender as luzes do hall','Ligar o computador do caixa','Ligar a mini impressora','Conferir a televisão do catálogo','Preparar a pipoqueira','Conferir a iluminação da Sala 1','Conferir a climatização da Sala 2']};
@@ -48,7 +49,11 @@ const roleNames={caixa:'Caixa',bomboniere:'Bomboniere e pipoqueiras',sala:'Salas
 function allowRole(role){if(currentRole===role)return true;say('Este posto está sob responsabilidade da equipe virtual. Sua função atual é '+roleNames[currentRole]+'. Reinicie o turno para trocar de função.');return false}
 function roleHUD(){const el=$('rolePanel');if(!el)return;el.innerHTML='<b>Turno · '+roleNames[currentRole]+'</b>'+Object.keys(roleNames).map(k=>'<div class="epi-line">'+(k===currentRole?'● Você: ':'✓ Funcionário virtual: ')+roleNames[k]+' <span class="small">'+(k===currentRole?'treinamento ativo':'em operação')+'</span></div>').join('')+'<div class="small">Ações automáticas da equipe: '+Object.entries(npcCycles).filter(([k])=>k!==currentRole).reduce((n,[k,v])=>n+v,0)+'</div>'}
 function setRole(role){currentRole=roleNames[role]?role:'caixa';document.querySelector('#epiProgress').style.display=currentRole==='bomboniere'?'block':'none';roleHUD();say('Você vai treinar em '+roleNames[currentRole]+'. O instrutor caminhará com você; aproxime-se e use E/AGIR para conversar. Os outros postos ficam com funcionários virtuais.');}
-function makeWorker(role,x,z,color){const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);const shirt=mat(color),skin=mat(0xc0906e),pants=mat(0x20252b);const torso=new THREE.Mesh(new THREE.CylinderGeometry(.19,.25,.72,10),shirt);torso.position.y=1.23;g.add(torso);const head=new THREE.Mesh(new THREE.SphereGeometry(.16,12,9),skin);head.position.y=1.74;g.add(head);const brim=new THREE.Mesh(new THREE.CylinderGeometry(.19,.19,.08,14),mat(0x17191e));brim.position.y=1.88;g.add(brim);for(const side of [-1,1]){let leg=new THREE.Mesh(new THREE.CylinderGeometry(.075,.085,.8,8),pants);leg.position.set(side*.12,.44,0);g.add(leg);let arm=new THREE.Group();arm.position.set(side*.25,1.43,0);const sleeve=new THREE.Mesh(new THREE.CylinderGeometry(.065,.075,.50,8),shirt);sleeve.position.y=-.23;arm.add(sleeve);g.add(arm);g.userData['arm'+side]=arm;}g.visible=role!==currentRole;npcTeam.push({role,g,origin:{x,z},phase:Math.random()*6.28});}
+function makeWorker(role,x,z,color){
+ const g=createCinemaCharacter({role,uniformColor:color});
+ g.position.set(x,0,z);g.visible=role!==currentRole;scene.add(g);
+ npcTeam.push({role,g,origin:{x,z},phase:Math.random()*6.28});
+}
 function setupWorkers(){makeWorker('caixa',-5.25,-4.02,0x4b545d);makeWorker('bomboniere',3.9,-3.53,0x733840);makeWorker('sala',-.1,-8.15,0x3c5967);updateWorkers()}
 function updateWorkers(dt=0){npcClock+=dt;for(const n of npcTeam){n.g.visible=n.role!==currentRole;if(!n.g.visible)continue;const t=npcClock+n.phase;n.g.position.x=n.origin.x+Math.sin(t*.37)*.12;n.g.position.z=n.origin.z+Math.cos(t*.4)*.10;n.g.rotation.y=Math.sin(t*.3)*.23;n.g.userData['arm-1'].rotation.x=Math.sin(t*2)*.23;n.g.userData['arm1'].rotation.x=-Math.sin(t*2)*.23;}if(dt&&Math.floor(npcClock/20)!==Math.floor((npcClock-dt)/20)){for(const k of Object.keys(npcCycles))if(k!==currentRole)npcCycles[k]++;roleHUD()}}
 const speeches=['Bem-vindo! Este é um cinema virtual de treinamento. Comece explorando o hall e interagindo com equipamentos.','Aproxime-se de um objeto identificado e pressione E, ou AGIR no celular. Cada ação simula um procedimento.','Para treinar no caixa, caminhe para trás do balcão e use o computador voltado ao funcionário. Um cliente virá até você; também é possível clicar diretamente quando o monitor estiver selecionado. Depois confira o filme, a sessão, as poltronas e o pagamento.','Na agenda você verá sessões fictícias da unidade selecionada. No painel Admin poderá modificar horários e comunicados.'];
@@ -365,14 +370,8 @@ function openCustomerDialogue(){
  chat('Olá! Preciso comprar ingressos, você pode me atender?', [['Boa tarde! Claro, para qual filme e horário?','hello'],['O caixa está ali, faça você mesmo.','incorrect'],['Vou pedir ajuda ao instrutor.','help']]);
 }
 function createCustomerAtCounter(){
- const g=new THREE.Group();g.position.set(-1.6,0,2.65);g.visible=false;scene.add(g);queueCustomer=g;
- const shirt=new THREE.MeshStandardMaterial({color:0x46647a,roughness:.93});const skin=new THREE.MeshStandardMaterial({color:0xb98264,roughness:.85});const pants=new THREE.MeshStandardMaterial({color:0x242832,roughness:.96});
- const torso=new THREE.Mesh(new THREE.CylinderGeometry(.19,.25,.77,9),shirt);torso.position.y=1.18;g.add(torso);
- const head=new THREE.Mesh(new THREE.SphereGeometry(.165,12,8),skin);head.position.y=1.74;g.add(head);
- const hair=new THREE.Mesh(new THREE.SphereGeometry(.169,12,6,0,Math.PI*2,0,Math.PI*.44),new THREE.MeshStandardMaterial({color:0x26201e}));hair.position.y=1.76;g.add(hair);
- const walkingLimbs=[];
- for(const x of [-.14,.14]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.072,.083,.8,7),pants);leg.position.set(x,.4,0);g.add(leg);const arm=new THREE.Mesh(new THREE.CylinderGeometry(.055,.063,.65,7),skin);arm.position.set(x<0?-.28:.28,1.05,0);arm.rotation.z=x<0?-.13:.13;g.add(arm);walkingLimbs.push({leg,arm,side:x<0?-1:1})}
- g.userData.walkingLimbs=walkingLimbs;
+ const g=createCinemaCharacter({role:'cliente',uniformColor:0x46647a,skinColor:0xb98264});
+ g.position.set(-1.6,0,2.65);g.visible=false;scene.add(g);queueCustomer=g;
  // Balão renderizado como uma placa voltada ao jogador, sem fontes de luz adicionais.
  const cv=document.createElement('canvas');cv.width=512;cv.height=142;const ct=cv.getContext('2d');ct.fillStyle='#ffffff';ct.beginPath();ct.roundRect(9,8,494,116,22);ct.fill();ct.fillStyle='#202c39';ct.font='bold 29px Arial';ct.textAlign='center';ct.fillText('Olá! Preciso de ingressos.',256,61);ct.font='24px Arial';ct.fillText('Pressione E para atender',256,97);
  const balloonTexture=new THREE.CanvasTexture(cv);
@@ -420,12 +419,24 @@ function buildPopcornStation(){
  const glass=new THREE.MeshPhysicalMaterial({color:0xe6f5ff,transparent:true,opacity:.17,roughness:.07,metalness:.1,depthWrite:false,side:THREE.DoubleSide});
  const gold=new THREE.MeshStandardMaterial({color:0xd5ad57,metalness:.57,roughness:.36});
  function piece(parent,geo,material,x,y,z){const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);parent.add(m);return m}
- function b(parent,x,y,z,w,h,d,m){return piece(parent,new THREE.BoxGeometry(w,h,d),m,x,y,z)}
+ const sharedBox=new THREE.BoxGeometry(1,1,1);
+ function b(parent,x,y,z,w,h,d,m){const obj=piece(parent,sharedBox,m,x,y,z);obj.scale.set(w,h,d);return obj}
  function cyl(parent,x,y,z,rTop,rBottom,h,m,segments=20){return piece(parent,new THREE.CylinderGeometry(rTop,rBottom,h,segments),m,x,y,z)}
  // Substitui a caixa genérica por duas vitrines independentes com caldeirão suspenso.
  for(const [offset,name,color] of [[-1.05,'SALGADA',0xead176],[1.05,'DOCE',0x915536]]){
   const g=new THREE.Group();g.position.set(3.8+offset,0,-5.72);scene.add(g);
   b(g,0,.69,0,1.94,.20,1.23,red);b(g,0,2.66,0,2.02,.19,1.31,red);
+  // Identificação legível no rodapé: painel original rasterizado uma vez por máquina.
+  const plate=document.createElement('canvas');plate.width=512;plate.height=128;
+  const px=plate.getContext('2d');px.fillStyle='#1a1d22';px.fillRect(0,0,512,128);
+  px.fillStyle=name==='SALGADA'?'#dfc17d':'#b47d5e';px.fillRect(0,0,11,128);
+  px.strokeStyle='#9a8872';px.lineWidth=3;px.strokeRect(8,8,495,111);
+  px.textAlign='center';px.fillStyle='#f0e2ce';px.font='bold 34px Arial';
+  px.fillText('PIPOCA '+name,256,56);px.font='22px Arial';
+  px.fillText('SIMULAÇÃO · SEM AQUECIMENTO REAL',256,96);
+  const plateTexture=new THREE.CanvasTexture(plate);plateTexture.colorSpace=THREE.SRGBColorSpace;
+  const panel=new THREE.Mesh(new THREE.PlaneGeometry(1.53,.29),new THREE.MeshBasicMaterial({map:plateTexture,side:THREE.DoubleSide}));
+  panel.position.set(0,.69,.628);g.add(panel);
   b(g,0,.81,.57,1.84,.07,.065,silver);b(g,0,.81,-.57,1.84,.07,.065,silver);
   for(const xx of [-.91,.91])for(const zz of [-.54,.54])b(g,xx,1.73,zz,.055,1.78,.06,silver);
   b(g,0,1.73,-.57,1.83,1.73,.025,glass);b(g,0,1.73,.57,1.83,1.73,.023,glass);
@@ -447,6 +458,17 @@ function buildPopcornStation(){
   for(const xx of [-.79,.79])b(g,xx,1.7,.618,.028,1.56,.03,silver);
   b(g,.66,1.30,.675,.19,.035,.09,black);
   b(g,0,.53,.33,1.72,.15,.44,black);
+  // Relevos do aro e guias usam uma única geometria instanciada por máquina.
+  const accents=new THREE.InstancedMesh(sharedBox,gold,8);
+  const guide=new THREE.Object3D();
+  const bars=[
+   [-.83,2.6,.60,.02,.11,.02],[.83,2.6,.60,.02,.11,.02],
+   [-.83,.68,.61,.02,.11,.02],[.83,.68,.61,.02,.11,.02],
+   [-.72,2.49,.60,.025,.05,.025],[.72,2.49,.60,.025,.05,.025],
+   [-.69,.83,.62,.02,.08,.02],[.69,.83,.62,.02,.08,.02]
+  ];
+  bars.forEach((p,i)=>{guide.position.set(p[0],p[1],p[2]);guide.scale.set(p[3],p[4],p[5]);guide.updateMatrix();accents.setMatrixAt(i,guide.matrix)});
+  accents.instanceMatrix.needsUpdate=true;accents.computeBoundingSphere();g.add(accents);
   // Saída inferior de grãos, pés e aro da panela.
   cyl(g,0,1.75,0,.44,.42,.025,black,28);
   for(const xx of [-.71,.71])for(const zz of [-.45,.45])b(g,xx,.35,zz,.10,.34,.10,silver);
