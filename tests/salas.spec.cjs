@@ -16,7 +16,7 @@ test('sala: recepção, ingresso válido, bloqueio de duplicidade, filme e limpe
  await page.evaluate(()=>window.__roomTest.panel('Sala 1'));
  await expect(page.getByText('Sala 1 — rotina interativa')).toBeVisible();
  await page.locator('[data-room-action="film"]').click();
- await expect(page.getByText(/Valide ao menos um ingresso|exige a fase de recepção/)).toBeVisible();
+ await expect(page.locator('#modalContent [role="status"]')).toContainText(/Valide ao menos um ingresso|exige a fase de recepção/);
  await page.locator('[data-room-action="admission"]').click();
  expect(await page.evaluate(()=>window.__roomTest.routines()['Sala 1'].phase)).toBe('entrada');
  await page.evaluate(()=>window.__roomTest.reader());
