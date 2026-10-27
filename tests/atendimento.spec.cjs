@@ -5,7 +5,7 @@ test('atendimento completo em viewport móvel',async({page})=>{
  // Exposição apenas na resposta do servidor de teste; não altera o jogo publicado.
  await page.route('**/index.html',async route=>{
  let html=fs.readFileSync('index.html','utf8');
- html=html.replace('function applyGraphics(){','window.__testGame={summonCustomer,openCash,openCustomerDialogue,tickets:()=>trainingTickets};\nfunction applyGraphics(){');
+ html=html.replace('function applyGraphics(){','window.__testGame={summonCustomer,openCash,openCustomerDialogue,tickets:()=>trainingTickets,mission:()=>serviceMission};\nfunction applyGraphics(){');
  await route.fulfill({contentType:'text/html',body:html});
  });
  await page.goto('/index.html');
@@ -24,8 +24,10 @@ test('atendimento completo em viewport móvel',async({page})=>{
  await page.locator('[data-cash="next"]').click();
  await page.locator('[data-cash="finish"]').click();
  await expect(page.locator('#ticketPrint')).toBeVisible();
+ expect(await page.evaluate(()=>window.__testGame.mission().handoffCompleted)).toBe(false);
  await page.locator('[data-cash="deliver"]').click();
- await expect(page.getByText('Obrigado pelo atendimento! Agora vou guardar meus ingressos.',{exact:true})).toBeVisible();
+ await expect(page.getByText('Obrigado pelo atendimento! Agora vou guardar meus ingressos.',{exact:true})).toBeVisible({timeout:15000});
+ expect(await page.evaluate(()=>window.__testGame.mission().handoffCompleted)).toBe(true);
  await page.locator('[data-customer-choice="reset"]').click();
  await page.evaluate(()=>window.__testGame.summonCustomer());
  await expect(page.locator('[data-customer-choice="hello"]')).toBeVisible({timeout:15000});
