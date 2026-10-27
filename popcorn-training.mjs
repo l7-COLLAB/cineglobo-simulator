@@ -27,6 +27,13 @@ function requireLoading(s){return ['loading','heated','mixing'].includes(s.phase
 export function applyPopcornAction(s,action){
  if(!s||!KINDS.has(s.kind)||!actions[s.kind].includes(action))return fail(s||createPopcornBatch('salgada'),'Controle indisponível nesta pipoqueira.');
  if(action==='reset')return ok(createPopcornBatch(s.kind),'Batelada reiniciada, sem ingredientes transferidos.');
+ if(action==='salt'){
+  // Ordem ainda não aprovada: apenas anota o ingrediente, sem erro nem nota.
+  if(s.phase==='idle'||s.phase==='popping'||s.phase==='slow'||s.phase==='stopped'||s.completed)
+   return ok(s,'O momento do sal ainda não foi confirmado; esta ação é informativa e não vale erro.');
+  if(has(s,'salt'))return ok(s,'Sal registrado anteriormente. O momento exato não está sendo avaliado.');
+  return ok(add(s,'salt'),'1 colher rasa de sal especial registrada sem avaliação da sequência.');
+ }
  if(s.completed)return fail(s,'Batelada pronta. Reinicie a máquina para treinar outra produção.');
  if(action==='begin'){
   if(s.phase!=='idle')return fail(s,'O preparo já foi iniciado.');
@@ -55,13 +62,6 @@ export function applyPopcornAction(s,action){
   if(has(s,action))return fail(s,'Este copo de ingrediente já foi adicionado.');
   // Pipoca salgada: mistura + milho. Doce: milho + óleo previamente adicionado + chocolate.
   return ok(add(s,action),recipeLabels[s.kind][action]+' registrado.');
- }
- if(action==='salt'){
-  // Ordem ainda não aprovada: apenas anota o ingrediente, sem erro nem nota.
-  if(s.phase==='idle'||s.phase==='popping'||s.phase==='slow'||s.phase==='stopped'||s.completed)
-   return ok(s,'O momento do sal ainda não foi confirmado; esta ação é informativa e não vale erro.');
-  if(has(s,'salt'))return ok(s,'Sal registrado anteriormente. O momento exato não está sendo avaliado.');
-  return ok(add(s,'salt'),'1 colher rasa de sal especial registrada sem avaliação da sequência.');
  }
  if(action==='lid'){
   if(s.phase!=='mixing'||!s.motor)return fail(s,'Antes da tampa, ligue o misturador e prepare os ingredientes.');
