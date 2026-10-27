@@ -1,0 +1,1 @@
+module.exports={testDir:'./tests',timeout:90000,use:{baseURL:'http://127.0.0.1:8765',viewport:{width:844,height:390},hasTouch:true,isMobile:true,trace:'retain-on-failure',launchOptions:{args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}},webServer:{command:'python3 -m http.server 8765',port:8765},reporter:[['list'],['html',{open:'never'}]]};
