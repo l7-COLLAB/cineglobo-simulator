@@ -16,3 +16,6 @@ Workflow em .github/workflows/pages.yml. Ative Settings > Pages > Build and depl
 
 ## Observações
 O computador pessoal não precisa ficar ligado; depende da publicação em hospedagem estática. Modo offline não é garantido. Validar em iPhone físico antes de uso operacional.
+## Roteiro de execução
+
+O plano de quatro etapas, as metas não comprovadas de desempenho e os requisitos de treinamento ficam registrados em [docs/ROTEIRO_EXECUCAO_2026-10-27.md](docs/ROTEIRO_EXECUCAO_2026-10-27.md). As melhorias são submetidas a PR e não são consideradas aprovadas até os testes necessários, inclusive no iPhone físico.
