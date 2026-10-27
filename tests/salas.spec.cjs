@@ -1,0 +1,52 @@
+const {test,expect}=require('@playwright/test');
+const fs=require('node:fs');
+
+test('sala: recepção, ingresso válido, bloqueio de duplicidade, filme e limpeza no celular',async({page})=>{
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.route('**/index.html',async route=>{
+  let html=fs.readFileSync('index.html','utf8');
+  html=html.replace('function applyGraphics(){',
+   "window.__roomTest={setRole,reader:openValidation,panel:roomLightingDialog,routines:()=>roomRoutines,tickets:()=>trainingTickets,lighting:()=>roomLighting,missions:()=>mission};\nfunction applyGraphics(){");
+  await route.fulfill({contentType:'text/html',body:html});
+ });
+ await page.goto('/index.html');
+ await expect(page.locator('#scene canvas')).toBeVisible({timeout:45000});
+ await page.locator('#enter').click();
+ await page.evaluate(()=>window.__roomTest.setRole('sala'));
+ await page.evaluate(()=>window.__roomTest.panel('Sala 1'));
+ await expect(page.getByText('Sala 1 — rotina interativa')).toBeVisible();
+ await page.locator('[data-room-action="film"]').click();
+ await expect(page.getByText(/Valide ao menos um ingresso|exige a fase de recepção/)).toBeVisible();
+ await page.locator('[data-room-action="admission"]').click();
+ expect(await page.evaluate(()=>window.__roomTest.routines()['Sala 1'].phase)).toBe('entrada');
+ await page.evaluate(()=>window.__roomTest.reader());
+ await expect(page.locator('#validationSession')).toBeVisible();
+ await page.locator('#seedTickets').click();
+ const code=await page.locator('#validationInput').inputValue();
+ expect(code).toMatch(/^CG-DEMO-/);
+ await page.locator('#searchTicket').click();
+ await page.locator('[data-pick-ticket]').first().click();
+ await expect(page.locator('#approveTicket')).toBeVisible();
+ await page.locator('#approveTicket').click();
+ await expect(page.getByText(/marcado como utilizado/)).toBeVisible();
+ expect(await page.evaluate(()=>window.__roomTest.routines()['Sala 1'].ticketsValidated)).toBe(1);
+ await page.locator('#searchTicket').click();
+ await page.locator('[data-pick-ticket]').first().click();
+ await expect(page.locator('#rejectTicket')).toBeVisible();
+ await expect(page.locator('#validationResult')).toContainText('já validado');
+ await page.locator('#rejectTicket').click();
+ expect(await page.evaluate(()=>window.__roomTest.missions().rejected)).toBeGreaterThan(0);
+ await page.evaluate(()=>window.__roomTest.panel('Sala 1'));
+ await page.locator('[data-room-action="film"]').click();
+ expect(await page.evaluate(()=>window.__roomTest.routines()['Sala 1'].mode)).toBe('filme');
+ await page.locator('[data-room-action="cleaning"]').click();
+ expect(await page.evaluate(()=>window.__roomTest.routines()['Sala 1'].mode)).toBe('limpeza');
+ await page.locator('[data-room-action="finish"]').click();
+ await expect(page.getByText(/Conferências pendentes/)).toBeVisible();
+ for(const action of ['seats','floor','items'])await page.locator('[data-room-action="'+action+'"]').click();
+ await page.locator('[data-room-action="finish"]').click();
+ expect(await page.evaluate(()=>window.__roomTest.routines()['Sala 1'].completed)).toBe(true);
+ expect(await page.evaluate(()=>window.__roomTest.lighting()['Sala 1'].cleanLight.intensity)).toBeGreaterThan(0);
+ expect(errors).toEqual([]);
+ await page.screenshot({path:'test-results/rotina-salas-mobile.png',fullPage:true});
+});
