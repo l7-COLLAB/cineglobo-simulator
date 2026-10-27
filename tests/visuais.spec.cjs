@@ -55,6 +55,11 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
  expect(metrics.details.caixa.mergedDraws).toBeLessThanOrEqual(3);
  expect(metrics.details.caixa.originalDraws).toBeGreaterThan(metrics.details.caixa.mergedDraws+7);
  expect(metrics.details.terminal.mergedDraws).toBe(1);
+ expect(metrics.batches.epiRack.objectsReplaced).toBeGreaterThanOrEqual(3);
+ // O agrupamento não apaga os alvos individuais de segurança.
+ const epiStatus=await page.evaluate(()=>window.__visualTest.world().filter(o=>o.epiStation).map(o=>({name:o.name,markerExists:!!o.marker,parentExists:!!o.marker?.parent})));
+ expect(epiStatus.length).toBeGreaterThanOrEqual(5);
+ expect(epiStatus.every(m=>m.markerExists&&m.parentExists)).toBe(true);
  expect(metrics.batches.hall.objectsReplaced).toBeGreaterThan(4);
  for(const flavor of ['SALGADA','DOCE']){
    expect(metrics.batches['Pipoqueira '+flavor].objectsReplaced).toBeGreaterThan(12);
