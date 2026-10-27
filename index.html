@@ -32,6 +32,7 @@ button,select,input,textarea{touch-action:manipulation}
 (()=>{const b=document.getElementById('mobileHudToggle');if(matchMedia('(pointer:coarse)').matches){document.body.classList.add('hud-closed')}b.addEventListener('click',()=>{const hidden=document.body.classList.toggle('hud-closed');b.setAttribute('aria-expanded',String(!hidden));b.textContent=hidden?'☰ Tarefas':'✕ Fechar tarefas';});if('serviceWorker' in navigator && location.protocol==='https:')window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));})();
 </script><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js"}}</script><script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js';
+import { finishCinema, upholsteredGeometry } from './visuals.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
 const $=x=>document.getElementById(x),cities=['Três Passos','Palmeira das Missões','Santa Rosa','Frederico Westphalen','Cruz Alta','Ijuí','Horizontina'];
 const defaults={notices:[{city:'Todas',text:'Bem-vindo ao ambiente demonstrativo. Todos os dados são fictícios.'}],sessions:[{city:'Ijuí',film:'Aventura Estelar (demonstração)',time:'14:00',room:'Sala 1',format:'2D'},{city:'Ijuí',film:'Mistério da Noite (demonstração)',time:'16:30',room:'Sala 2',format:'3D'}],tasks:['Acender as luzes do hall','Ligar o computador do caixa','Ligar a mini impressora','Conferir a televisão do catálogo','Preparar a pipoqueira','Conferir a iluminação da Sala 1','Conferir a climatização da Sala 2']};
@@ -249,11 +250,11 @@ function addRoom(x,label,is3d){
  // 120 poltronas (A-J, 12 por fileira), corredores laterais. Assentos orientados para a tela em Z negativo.
  // Instancing evita centenas de chamadas gráficas independentes.
  const seatDefs=[
-  {kind:'base',geo:new THREE.BoxGeometry(.425,.20,.48),material:mat(0x17191c)},
-  {kind:'back',geo:new THREE.BoxGeometry(.43,.68,.18),material:mat(0x24272b)},
+  {kind:'base',geo:upholsteredGeometry(.425,.20,.48),material:mat(0x75212f)},
+  {kind:'back',geo:upholsteredGeometry(.43,.68,.18),material:mat(0x8d2433)},
   {kind:'arms',geo:new THREE.BoxGeometry(.065,.30,.52),material:mat(0x292a2e)},
   {kind:'vip',geo:new THREE.BoxGeometry(.42,.19,.52),material:mat(0x45372f)},
-  {kind:'vipback',geo:new THREE.BoxGeometry(.43,.65,.19),material:mat(0x514039)},
+  {kind:'vipback',geo:upholsteredGeometry(.43,.65,.19),material:mat(0x923c35)},
   {kind:'vipleg',geo:new THREE.BoxGeometry(.42,.09,.37),material:mat(0x45372f)}];
  const meshes=seatDefs.map(d=>{let m=new THREE.InstancedMesh(d.geo,d.material,d.kind.startsWith('vip')?12:120);m.instanceMatrix.setUsage(THREE.StaticDrawUsage);scene.add(m);return m});
  const counters=meshes.map(()=>0),dummy=new THREE.Object3D();
@@ -551,6 +552,7 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
  makeTrainer();
  createCustomerAtCounter();
  setupWorkers();
+ finishCinema(scene);
  loadDetailedTrainer();
  collider(-4.6,-3.7,5,1.7);collider(3.7,-4.6,5.1,1.6);
  for(let x of [-2,2])for(let z of [2,5])collider(x,z,1.55,1.2);
