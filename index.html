@@ -424,7 +424,7 @@ function buildPopcornStation(){
  function cyl(parent,x,y,z,rTop,rBottom,h,m,segments=20){return piece(parent,new THREE.CylinderGeometry(rTop,rBottom,h,segments),m,x,y,z)}
  // Substitui a caixa genérica por duas vitrines independentes com caldeirão suspenso.
  for(const [offset,name,color] of [[-1.05,'SALGADA',0xead176],[1.05,'DOCE',0x915536]]){
-  const g=new THREE.Group();g.position.set(3.8+offset,0,-5.72);scene.add(g);
+  const g=new THREE.Group();g.name='Pipoqueira visual · '+name;g.position.set(3.8+offset,0,-5.72);scene.add(g);
   b(g,0,.69,0,1.94,.20,1.23,red);b(g,0,2.66,0,2.02,.19,1.31,red);
   // Identificação legível no rodapé: painel original rasterizado uma vez por máquina.
   const plate=document.createElement('canvas');plate.width=512;plate.height=128;
