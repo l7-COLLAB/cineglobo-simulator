@@ -6,7 +6,7 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
  await page.route('**/index.html',async route=>{
    let html=fs.readFileSync('index.html','utf8');
    // Dados técnicos temporários apenas na resposta do teste: não expostos na versão pública.
-   html=html.replace('function applyGraphics(){',`window.__visualTest={scene:()=>scene,workers:()=>npcTeam,client:()=>queueCustomer,checkout:()=>checkoutVisual,renderer:()=>renderer,rooms:()=>roomScenes,doors:()=>doors,refreshRooms:()=>updateVisibleRooms(),position:(x,z)=>{player.x=x;player.z=z;player.yaw=0;player.pitch=0;}};\nfunction applyGraphics(){`);
+   html=html.replace('function applyGraphics(){',`window.__visualTest={scene:()=>scene,workers:()=>npcTeam,client:()=>queueCustomer,checkout:()=>checkoutVisual,renderer:()=>renderer,batches:()=>staticBatchReport,world:()=>world,lights:()=>lights,rooms:()=>roomScenes,doors:()=>doors,refreshRooms:()=>updateVisibleRooms(),position:(x,z)=>{player.x=x;player.z=z;player.yaw=0;player.pitch=0;}};\nfunction applyGraphics(){`);
    await route.fulfill({contentType:'text/html',body:html});
  });
  await page.goto('/index.html');
@@ -19,7 +19,7 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
    const machines=['SALGADA','DOCE'].map(flavor=>{
      const root=scene().getObjectByName('Pipoqueira visual · '+flavor);
      const meshes=[];root?.traverse(o=>{if(o.isMesh&&o.geometry?.type==='BoxGeometry')meshes.push(o)});
-     return {exists:!!root,boxMeshes:meshes.length,distinctBoxGeometries:new Set(meshes.map(m=>m.geometry.uuid)).size};
+     return {exists:!!root,boxMeshes:meshes.length,instancedBoxGroups:meshes.filter(m=>m.isInstancedMesh).length,distinctBoxGeometries:new Set(meshes.map(m=>m.geometry.uuid)).size};
    });
    return {
      workers:workers().length,
@@ -29,6 +29,9 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
      staffHasIndependentArms:!!staff.userData['arm-1']&&!!staff.userData['arm1'],
      customerCanSpeak:typeof customer.userData.updateSpeech==='function',
      machines,
+     batches:window.__visualTest.batches(),
+     equipmentMarkersPresent:window.__visualTest.world().some(o=>o.name==='Computador do caixa'&&o.marker?.visible===false),
+     lightingMeshesPreserved:window.__visualTest.lights().every(o=>o.parent===scene()),
      drawCalls:renderer().info.render.calls,
      triangles:renderer().info.render.triangles
    };
@@ -41,9 +44,17 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
  expect(metrics.customerCanSpeak).toBe(true);
  for(const m of metrics.machines){
    expect(m.exists).toBe(true);
-   expect(m.boxMeshes).toBeGreaterThan(10);
-   expect(m.distinctBoxGeometries).toBe(1);
+   expect(m.instancedBoxGroups).toBeGreaterThanOrEqual(2);
+   expect(m.boxMeshes).toBeLessThan(20);
+   expect(m.distinctBoxGeometries).toBeLessThanOrEqual(2);
  }
+ expect(metrics.batches.hall.objectsReplaced).toBeGreaterThan(4);
+ for(const flavor of ['SALGADA','DOCE']){
+   expect(metrics.batches['Pipoqueira '+flavor].objectsReplaced).toBeGreaterThan(12);
+   expect(metrics.batches['Pipoqueira '+flavor].originalDraws).toBeGreaterThan(metrics.batches['Pipoqueira '+flavor].batchDraws);
+ }
+ expect(metrics.equipmentMarkersPresent).toBe(true);
+ expect(metrics.lightingMeshesPreserved).toBe(true);
  // Porta fechada oculta a sala; abrir a porta ou entrar mantém o ambiente disponível.
  const roomsCheck=await page.evaluate(()=>{
    const api=window.__visualTest,rooms=api.rooms(),doors=api.doors();
@@ -59,7 +70,7 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
  });
  expect(roomsCheck).toEqual({initialClosed:true,opens:true,remainsVisibleInside:true});
  console.log('Métricas em Chromium simulado (não representam Safari físico):',JSON.stringify({
-  drawCalls:metrics.drawCalls,triangles:metrics.triangles,machines:metrics.machines
+  drawCalls:metrics.drawCalls,triangles:metrics.triangles,machines:metrics.machines,batches:metrics.batches
  }));
  await page.evaluate(()=>{
    window.__visualTest.position(0,1.5);
