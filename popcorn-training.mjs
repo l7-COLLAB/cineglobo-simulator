@@ -57,9 +57,11 @@ export function applyPopcornAction(s,action){
   return ok(add(s,action),recipeLabels[s.kind][action]+' registrado.');
  }
  if(action==='salt'){
-  if(s.kind!=='salgada'||!requireLoading(s)||s.lid)return fail(s,'O sal não pode ser adicionado nesta fase da simulação.');
-  if(has(s,'salt'))return fail(s,'A colher de sal já foi registrada.');
-  return ok(add(s,'salt'),'Sal especial registrado. A etapa exata ainda depende de confirmação e não gera nota.');
+  // Ordem ainda não aprovada: apenas anota o ingrediente, sem erro nem nota.
+  if(s.phase==='idle'||s.phase==='popping'||s.phase==='slow'||s.phase==='stopped'||s.completed)
+   return ok(s,'O momento do sal ainda não foi confirmado; esta ação é informativa e não vale erro.');
+  if(has(s,'salt'))return ok(s,'Sal registrado anteriormente. O momento exato não está sendo avaliado.');
+  return ok(add(s,'salt'),'1 colher rasa de sal especial registrada sem avaliação da sequência.');
  }
  if(action==='lid'){
   if(s.phase!=='mixing'||!s.motor)return fail(s,'Antes da tampa, ligue o misturador e prepare os ingredientes.');
