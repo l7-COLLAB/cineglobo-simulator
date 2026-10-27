@@ -28,7 +28,7 @@ button,select,input,textarea{touch-action:manipulation}
 @media(pointer:coarse){#joy,#touchInteract,#look{display:block}#joy{left:calc(18px + env(safe-area-inset-left));bottom:calc(19px + env(safe-area-inset-bottom));height:112px;width:112px}#nub{top:38px;left:38px}#touchInteract{right:calc(19px + env(safe-area-inset-right));bottom:calc(27px + env(safe-area-inset-bottom));height:76px;width:76px;font-weight:800;box-shadow:0 4px 22px #000a}#look{top:calc(70px + env(safe-area-inset-top));bottom:calc(115px + env(safe-area-inset-bottom))}#mobileHudToggle{display:block}#hud{top:calc(115px + env(safe-area-inset-top));left:calc(8px + env(safe-area-inset-left));width:min(270px,64vw);max-height:55dvh;overflow:auto;transition:opacity .15s}body.hud-closed #hud{display:none}#helper{bottom:calc(139px + env(safe-area-inset-bottom));max-height:40dvh;overflow:auto;width:min(520px,90vw)}#action{bottom:calc(202px + env(safe-area-inset-bottom))}#top{padding-top:calc(8px + env(safe-area-inset-top));padding-left:calc(9px + env(safe-area-inset-left));padding-right:calc(9px + env(safe-area-inset-right))}#start .dialog{max-height:85dvh}#rotateHint{display:block}}
 @media(pointer:coarse) and (orientation:landscape){#hud{max-height:58dvh}#joy{width:94px;height:94px}#nub{top:30px;left:30px}#touchInteract{width:65px;height:65px}#helper{bottom:calc(6px + env(safe-area-inset-bottom));left:56%;width:min(410px,55vw);max-height:45dvh}#action{bottom:calc(87px + env(safe-area-inset-bottom))}#rotateHint{display:none}}
 @media(pointer:coarse) and (orientation:portrait){#helper{bottom:calc(145px + env(safe-area-inset-bottom))}#start .dialog{max-height:87dvh}#rotateHint{display:block}}
-</style><link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#171018"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="CineGlobo"><link rel="apple-touch-icon" href="./icon.svg"></head><body><div id="scene"></div><button id="mobileHudToggle" type="button" aria-expanded="false" aria-controls="hud">☰ Tarefas</button><div id="rotateHint">Dica: gire o iPhone na horizontal para ampliar a visão do cinema.</div><div id="cross">+</div><div id="top"><div class="brand">◉ CINE<span>GLOBO</span> SIMULATOR</div><span class="tag">v2.0 · iPHONE</span><span class="spacer"></span><select id="city" aria-label="Unidade"></select><button id="openSchedule">Agenda</button><button id="openNotices">Avisos</button><button id="openAdmin">Admin</button><button id="pauseBtn" aria-label="Pausar jogo">☰ Pausa</button></div><aside id="hud"><div class="panel"><strong id="siteName">Cine Globo · Ijuí</strong><div class="small">Treinamento: abertura de turno</div></div><div class="panel"><strong>Checklist de abertura</strong><div id="tasks" class="tasks"></div><div id="progress" class="small"></div></div><div class="panel" id="rolePanel"></div><div class="panel" id="epiProgress"></div></aside><div id="action"></div><div id="helper"><strong>INSTRUTOR VIRTUAL</strong><p id="speech">Bem-vindo ao CineGlobo Simulator. Vou acompanhar seu primeiro turno.</p><div class="rows"><button id="nextSpeech" class="primary">Continuar</button><button id="askHelp">Pedir orientação</button><button id="hideHelp">Ocultar</button></div></div><div id="joy"><div id="nub"></div></div><div id="look"></div><button id="touchInteract">AGIR</button><div class="overlay" id="pauseOverlay"><div class="dialog" style="max-width:560px"><h2>Jogo pausado</h2><p class="muted">CineGlobo Simulator · Configurações de navegação e áudio</p><div class="rows"><button id="resumeBtn" class="primary">▶ Continuar</button><button id="resetViewBtn">↺ Centralizar câmera</button><button id="techBtn" type="button" aria-pressed="false">Métricas técnicas: desligadas</button></div><h3>Configurações</h3><label class="field">Sensibilidade do mouse: <strong id="mouseText"></strong><input id="mouseSens" type="range" min="1" max="100" value="22"></label><label class="field">Sensibilidade ao tocar/arrastar: <strong id="touchText"></strong><input id="touchSens" type="range" min="1" max="100" value="22"></label><label class="field">Qualidade gráfica<select id="quality"><option value="low">Econômica · mais leve</option><option value="medium">Equilibrada</option><option value="high">Alta</option></select></label><label class="field">Limite de quadros por segundo<select id="fps"><option value="30">30 FPS · econômico</option><option value="45">45 FPS · equilibrado</option><option value="60">60 FPS · fluido</option></select></label><label class="field">Volume geral: <strong id="volumeText"></strong><input id="volume" type="range" min="0" max="100" value="40"></label><p class="small">Esta demonstração não possui trilha sonora; o volume fica configurado para sons introduzidos futuramente. No celular: joystick à esquerda, olhar arrastando à direita e AGIR. ESC abre a pausa no computador.</p><button id="closePause" class="primary">Salvar e continuar</button></div></div><div class="overlay" id="modal"><div class="dialog"><button class="exit" id="closeModal">Fechar ✕</button><div id="modalContent"></div></div></div><div id="start"><div class="dialog"><h2>CineGlobo Simulator</h2><p>Protótipo imersivo 3D para demonstração comercial. Você pode caminhar pelo cinema, interagir com equipamentos, acompanhar o instrutor e testar a simulação de bilheteria.</p><p class="notice">O ambiente ainda é <b>conceitual</b>, não reproduz a planta real de Ijuí. Programação, ingressos e procedimentos são fictícios.</p><div class="field"><label>Escolha a unidade</label><select id="startCity"></select></div><div class="field"><label>Escolha sua função neste turno</label><select id="startRole"><option value="caixa">Caixa e atendimento</option><option value="bomboniere">Bomboniere e pipoqueiras</option><option value="sala">Salas e controle de ingressos</option></select></div><p class="notice">Os outros setores serão atendidos por funcionários virtuais. Você poderá escolher outra função ao iniciar um novo turno.</p><p class="small"><b>Novidades:</b> cliente que caminha até o caixa quando o computador é acionado; monitor voltado para o funcionário; missão espacial de EPIs com movimentos animados; estação de duas pipoqueiras com vitrines, caldeirões e controles; menu de pausa com sensibilidade e qualidade ajustáveis; separação física das salas; portas interativas, salas exploráveis e instrutor visível no modo local e GLB opcional quando hospedado e alternativa geométrica. <b>Computador:</b> WASD para andar, mouse para olhar, E para interagir, ESC para liberar o cursor. <b>Celular:</b> joystick à esquerda, arrastar à direita e botão AGIR.</p><button class="primary" id="enter">Entrar no cinema virtual</button></div></div><script>
+</style><link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#171018"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="CineGlobo"><link rel="apple-touch-icon" href="./icon.svg"></head><body><div id="scene"></div><button id="mobileHudToggle" type="button" aria-expanded="false" aria-controls="hud">☰ Tarefas</button><div id="rotateHint">Dica: gire o iPhone na horizontal para ampliar a visão do cinema.</div><div id="cross">+</div><div id="top"><div class="brand">◉ CINE<span>GLOBO</span> SIMULATOR</div><span class="tag">v2.0 · iPHONE</span><span class="spacer"></span><select id="city" aria-label="Unidade"></select><button id="openSchedule">Agenda</button><button id="openNotices">Avisos</button><button id="openAdmin">Admin</button><button id="pauseBtn" aria-label="Pausar jogo">☰ Pausa</button></div><aside id="hud"><div class="panel"><strong id="siteName">Cine Globo · Ijuí</strong><div class="small">Treinamento: abertura de turno</div></div><div class="panel"><strong>Checklist de abertura</strong><div id="tasks" class="tasks"></div><div id="progress" class="small"></div></div><div class="panel" id="rolePanel"></div><div class="panel" id="epiProgress"></div></aside><div id="action"></div><div id="helper"><strong>INSTRUTOR VIRTUAL</strong><p id="speech">Bem-vindo ao CineGlobo Simulator. Vou acompanhar seu primeiro turno.</p><div class="rows"><button id="nextSpeech" class="primary">Continuar</button><button id="askHelp">Pedir orientação</button><button id="hideHelp">Ocultar</button></div></div><div id="joy"><div id="nub"></div></div><div id="look"></div><button id="touchInteract">AGIR</button><div class="overlay" id="pauseOverlay"><div class="dialog" style="max-width:560px"><h2>Jogo pausado</h2><p class="muted">CineGlobo Simulator · Configurações de navegação e áudio</p><div class="rows"><button id="resumeBtn" class="primary">▶ Continuar</button><button id="resetViewBtn">↺ Centralizar câmera</button><button id="techBtn" type="button" aria-pressed="false">Métricas técnicas: desligadas</button><button id="exportTechBtn" type="button">Compartilhar relatório técnico</button></div><p id="techStatus" class="small" role="status" aria-live="polite">Ative as métricas, percorra as áreas e compartilhe o relatório neste menu. Nada é enviado automaticamente.</p><h3>Configurações</h3><label class="field">Sensibilidade do mouse: <strong id="mouseText"></strong><input id="mouseSens" type="range" min="1" max="100" value="22"></label><label class="field">Sensibilidade ao tocar/arrastar: <strong id="touchText"></strong><input id="touchSens" type="range" min="1" max="100" value="22"></label><label class="field">Qualidade gráfica<select id="quality"><option value="low">Econômica · mais leve</option><option value="medium">Equilibrada</option><option value="high">Alta</option></select></label><label class="field">Limite de quadros por segundo<select id="fps"><option value="30">30 FPS · econômico</option><option value="45">45 FPS · equilibrado</option><option value="60">60 FPS · fluido</option></select></label><label class="field">Volume geral: <strong id="volumeText"></strong><input id="volume" type="range" min="0" max="100" value="40"></label><p class="small">Esta demonstração não possui trilha sonora; o volume fica configurado para sons introduzidos futuramente. No celular: joystick à esquerda, olhar arrastando à direita e AGIR. ESC abre a pausa no computador.</p><button id="closePause" class="primary">Salvar e continuar</button></div></div><div class="overlay" id="modal"><div class="dialog"><button class="exit" id="closeModal">Fechar ✕</button><div id="modalContent"></div></div></div><div id="start"><div class="dialog"><h2>CineGlobo Simulator</h2><p>Protótipo imersivo 3D para demonstração comercial. Você pode caminhar pelo cinema, interagir com equipamentos, acompanhar o instrutor e testar a simulação de bilheteria.</p><p class="notice">O ambiente ainda é <b>conceitual</b>, não reproduz a planta real de Ijuí. Programação, ingressos e procedimentos são fictícios.</p><div class="field"><label>Escolha a unidade</label><select id="startCity"></select></div><div class="field"><label>Escolha sua função neste turno</label><select id="startRole"><option value="caixa">Caixa e atendimento</option><option value="bomboniere">Bomboniere e pipoqueiras</option><option value="sala">Salas e controle de ingressos</option></select></div><p class="notice">Os outros setores serão atendidos por funcionários virtuais. Você poderá escolher outra função ao iniciar um novo turno.</p><p class="small"><b>Novidades:</b> cliente que caminha até o caixa quando o computador é acionado; monitor voltado para o funcionário; missão espacial de EPIs com movimentos animados; estação de duas pipoqueiras com vitrines, caldeirões e controles; menu de pausa com sensibilidade e qualidade ajustáveis; separação física das salas; portas interativas, salas exploráveis e instrutor visível no modo local e GLB opcional quando hospedado e alternativa geométrica. <b>Computador:</b> WASD para andar, mouse para olhar, E para interagir, ESC para liberar o cursor. <b>Celular:</b> joystick à esquerda, arrastar à direita e botão AGIR.</p><button class="primary" id="enter">Entrar no cinema virtual</button></div></div><script>
 (()=>{const b=document.getElementById('mobileHudToggle');if(matchMedia('(pointer:coarse)').matches){document.body.classList.add('hud-closed')}b.addEventListener('click',()=>{const hidden=document.body.classList.toggle('hud-closed');b.setAttribute('aria-expanded',String(!hidden));b.textContent=hidden?'☰ Tarefas':'✕ Fechar tarefas';});if('serviceWorker' in navigator && location.protocol==='https:')window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));})();
 </script><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js"}}</script><script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js';
@@ -37,12 +37,12 @@ import { saleError } from './training-rules.mjs';
 import { createPerformanceMonitor } from './performance-monitor.js';
 import { createCheckoutZone } from './checkout-zone.js';
 import { createCinemaCharacter } from './character-kit.js';
-import { batchStaticBoxes } from './static-batching.js';
+import { batchStaticBoxes, mergeStaticDetails } from './static-batching.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
 const $=x=>document.getElementById(x),cities=['Três Passos','Palmeira das Missões','Santa Rosa','Frederico Westphalen','Cruz Alta','Ijuí','Horizontina'];
 const defaults={notices:[{city:'Todas',text:'Bem-vindo ao ambiente demonstrativo. Todos os dados são fictícios.'}],sessions:[{city:'Ijuí',film:'Aventura Estelar (demonstração)',time:'14:00',room:'Sala 1',format:'2D'},{city:'Ijuí',film:'Mistério da Noite (demonstração)',time:'16:30',room:'Sala 2',format:'3D'}],tasks:['Acender as luzes do hall','Ligar o computador do caixa','Ligar a mini impressora','Conferir a televisão do catálogo','Preparar a pipoqueira','Conferir a iluminação da Sala 1','Conferir a climatização da Sala 2']};
 let data;try{data={...defaults,...JSON.parse(localStorage.getItem('cineglobo_demo')||'{}')}}catch{data=structuredClone(defaults)};
-let technicalMonitor=null,staticBatchReport=null;
+let technicalMonitor=null,staticBatchReport=null,staticDetailReport=null;
 let settings={mouse:22,touch:22,quality:"low",fps:30,volume:40};try{settings={...settings,...JSON.parse(localStorage.getItem("cineglobo_config")||"{}")}}catch{};let paused=false,lastFrame=0;let roomLighting={},roomScenes={},blockers=[],doors=[],trainer=null,trainerParts=[],trainerMixer=null,trainerRealistic=false,roomState='hall';let city='Ijuí',completed=new Set(),currentTarget=null,speechIndex=0,scene,camera,renderer,world=[],player={x:0,z:6,yaw:0,pitch:0},keys={},lookActive=false,isMobile=matchMedia('(pointer:coarse)').matches,joy={x:0,y:0},ambient,lights=[];
 // Escala dinâmica: um jogador por posto, demais setores operados por NPCs.
 let currentRole='caixa',npcTeam=[],npcClock=0,npcCycles={caixa:0,bomboniere:0,sala:0};
@@ -538,6 +538,10 @@ function buildPopcornStation(){
  for(const x of [-.31,.31]){const sleeve=b(hands,x,-.4,-.62,.15,.38,.19,black);sleeve.rotation.z=x<0?-.20:.20;const hand=b(hands,x,-.60,-.72,.135,.18,.14,gold);hand.visible=false;}
  epiVisual.gloves=hands;hands.children.filter(x=>x.position.y<-.50).forEach(x=>x.visible=false);
  epiVisual.cap=piece(camera,new THREE.TorusGeometry(.42,.026,7,35),black,0,.47,-.54);epiVisual.cap.rotation.x=Math.PI/2;epiVisual.cap.visible=false;
+ // Agrupa apenas componentes estruturais, preservando os EPIs manipuláveis.
+ // As partes de boné, luvas, cabelo e uniforme continuam separadas no mundo.
+ const epiMarkers=world.filter(item=>item.epiStation).map(item=>item.marker).filter(Boolean);
+ rack.userData.staticBatchReport=batchStaticBoxes(rack,{exclude:epiMarkers});
  refreshEpiHUD();
 }
 function animateEpi(dt){if(!equipMotion)return;equipMotion.time+=dt;
@@ -602,11 +606,20 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
  const keyLock=new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,.009,12),eqMat(0xb7b7b2,.7));keyLock.rotation.x=Math.PI/2;keyLock.position.set(-4.48,1.344,-3.228);scene.add(keyLock);
  // Girar o conjunto monitor/teclado/periféricos 180 graus para o lado do funcionário.
  // Rotacionar posições e geometrias juntas mantém coerência espacial do PDV.
- for(const item of scene.children.slice(equipmentStart)){
+ const posEquipment=scene.children.slice(equipmentStart);
+ for(const item of posEquipment){
    const ox=item.position.x-pos.x,oz=item.position.z-pos.z;
    item.position.x=pos.x-ox;item.position.z=pos.z-oz;
    item.rotation.y+=Math.PI;
  }
+ // Componentes rígidos do PDV podem compartilhar um único desenho sem
+ // alterar tela interativa, teclado instanciado, emissão nem entrega fictícia.
+ const posRoot=new THREE.Group();posRoot.name='Equipamentos fixos do caixa';scene.add(posRoot);
+ for(const item of posEquipment)posRoot.add(item);
+ staticDetailReport={
+   caixa:mergeStaticDetails(posRoot),
+   terminal:mergeStaticDetails(pinGroup)
+ };
  // Plaqueta com identificação do caixa na frente do balcão.
  eqLabel('CAIXA 1',-4.7,.91,-2.987,.83,.21);
  object('Computador do caixa',-5.55,-5.03,0x2c747f,()=>summonCustomer());
@@ -622,7 +635,8 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
  // Otimização após a aplicação dos materiais definitivos: evita substituir
  // objetos dinâmicos e garante que móveis, portas e luzes permaneçam editáveis.
  const excluded=new Set([...lights,...world.map(item=>item.marker).filter(Boolean)]);
- staticBatchReport={};
+ const epiRack=scene.children.find(node=>node.userData.staticBatchReport);
+ staticBatchReport={epiRack:epiRack?.userData.staticBatchReport||null};
  staticBatchReport.hall=batchStaticBoxes(scene,{exclude:[...excluded]});
  for(const [name,room] of Object.entries(roomScenes)){
    staticBatchReport[name]=batchStaticBoxes(room.group,{exclude:[...excluded]});
@@ -756,6 +770,36 @@ function togglePause(force){paused=typeof force==='boolean'?force:!paused;techni
 $('pauseBtn').onclick=()=>togglePause(true);$('resumeBtn').onclick=$('closePause').onclick=()=>togglePause(false);
 $('resetViewBtn').onclick=()=>{player.pitch=0;player.yaw=0};
 $('techBtn').onclick=()=>{if(!technicalMonitor)return;const on=technicalMonitor.setEnabled(!technicalMonitor.isEnabled());$('techBtn').textContent='Métricas técnicas: '+(on?'ligadas':'desligadas');$('techBtn').setAttribute('aria-pressed',String(on));};
+$('exportTechBtn').onclick=async()=>{
+ const report=technicalMonitor?.getReport();
+ const status=$('techStatus');
+ if(!report||!Object.keys(report.areas).length){status.textContent='Nenhuma amostra registrada. Ative as métricas e caminhe pelo cinema antes de exportar.';return}
+ const data=JSON.stringify(report,null,2);
+ const filename='cineglobo-diagnostico-'+new Date().toISOString().slice(0,10)+'.json';
+ try{
+   const file=new File([data],filename,{type:'application/json'});
+   if(navigator.share&&navigator.canShare?.({files:[file]})){
+     await navigator.share({files:[file],title:'Diagnóstico CineGlobo Simulator'});
+     status.textContent='Relatório disponibilizado pelo compartilhamento do dispositivo.';
+     return;
+   }
+ }catch(e){if(e?.name==='AbortError'){status.textContent='Compartilhamento cancelado; o relatório permanece no aparelho.';return;}}
+ try{
+   if(navigator.clipboard?.writeText){
+     await navigator.clipboard.writeText(data);
+     status.textContent='Relatório copiado em JSON. Cole-o em uma nota ou nesta conversa.';
+     return;
+   }
+ }catch{}
+ try{
+   const blob=new Blob([data],{type:'application/json'});
+   const url=URL.createObjectURL(blob);
+   const a=document.createElement('a');
+   a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),1500);
+   status.textContent='Solicitação de arquivo JSON enviada ao navegador. Verifique Downloads.';
+ }catch{status.textContent='Não foi possível exportar o relatório neste navegador.';}
+};
 document.addEventListener('visibilitychange',()=>technicalMonitor?.reset());
 for(const [id,key] of [['mouseSens','mouse'],['touchSens','touch'],['quality','quality'],['fps','fps'],['volume','volume']])$(id).addEventListener('input',e=>{settings[key]=['quality'].includes(key)?e.target.value:Number(e.target.value);localStorage.setItem('cineglobo_config',JSON.stringify(settings));applyInputs();if(key==='quality')applyGraphics()});
 </script></body></html>

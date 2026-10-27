@@ -69,3 +69,70 @@ export function batchStaticBoxes(parent,{exclude=[],minCount=2}={}){
  }
  return report;
 }
+
+
+/**
+ * Consolidação conservadora de detalhes estáticos com geometrias distintas.
+ * Usa cores por vértice e mantém o mesmo material para cada grupo;
+ * preserva qualquer elemento animado, texturizado, emissivo ou referenciado.
+ * Não chamar em hierarquias de personagens, EPIs, portas ou pipoqueiras móveis.
+ */
+export function mergeStaticDetails(parent,{exclude=[],minCount=3,maxVertices=36000}={}){
+ const ignored=new Set(exclude);
+ const bins=new Map();
+ for(const mesh of [...parent.children]){
+  if(!mesh.isMesh||mesh.isInstancedMesh||mesh.isSkinnedMesh||mesh.children.length||ignored.has(mesh)||mesh.userData.keepSeparate)continue;
+  if(mesh.visible===false||mesh.renderOrder!==0||mesh.castShadow||mesh.receiveShadow)continue;
+  const mat=mesh.material;
+  if(!mat?.isMeshStandardMaterial||Array.isArray(mat)||mat.transparent||mat.opacity!==1||mat.side!==THREE.FrontSide)continue;
+  if(mat.emissive.getHex()!==0||mat.alphaTest!==0||mat.vertexColors||mat.wireframe)continue;
+  if(mat.map||mat.normalMap||mat.roughnessMap||mat.metalnessMap||mat.aoMap||mat.emissiveMap||mat.alphaMap||mat.envMap||mat.lightMap||mat.bumpMap||mat.displacementMap)continue;
+  const geo=mesh.geometry;
+  if(!geo?.isBufferGeometry||!geo.attributes.position||!geo.attributes.normal||geo.morphAttributes?.position?.length)continue;
+  if(![mesh.scale.x,mesh.scale.y,mesh.scale.z].every(n=>Number.isFinite(n)&&n>0))continue;
+  const count=geo.index?geo.index.count:geo.attributes.position.count;
+  if(count%3!==0||count<3||count>maxVertices)continue;
+  const key=materialKey(mat)+':'+mat.side+':'+mat.blending+':'+mat.vertexColors;
+  if(!bins.has(key))bins.set(key,[]);
+  bins.get(key).push({mesh,count});
+ }
+ const report={originalDraws:0,mergedDraws:0,objectsReplaced:0,vertices:0};
+ for(const rows of bins.values()){
+  if(rows.length<minCount)continue;
+  // Limita a quantidade de dados gerados em uma única operação de inicialização.
+  const selected=[];let n=0;
+  for(const row of rows){if(n+row.count>maxVertices)break;selected.push(row);n+=row.count}
+  if(selected.length<minCount)continue;
+  const positions=new Float32Array(n*3),normals=new Float32Array(n*3),colors=new Float32Array(n*3);
+  let offset=0;
+  for(const {mesh,count} of selected){
+   mesh.updateMatrix();
+   let g=mesh.geometry.clone();
+   if(g.index){const converted=g.toNonIndexed();g.dispose();g=converted}
+   g.applyMatrix4(mesh.matrix);
+   const p=g.getAttribute('position'),normal=g.getAttribute('normal');
+   if(p.count!==count||normal.count!==count){g.dispose();return report}
+   const color=mesh.material.color;
+   for(let i=0;i<count;i++){
+     const dst=(offset+i)*3;
+     positions[dst]=p.getX(i);positions[dst+1]=p.getY(i);positions[dst+2]=p.getZ(i);
+     normals[dst]=normal.getX(i);normals[dst+1]=normal.getY(i);normals[dst+2]=normal.getZ(i);
+     colors[dst]=color.r;colors[dst+1]=color.g;colors[dst+2]=color.b;
+   }
+   offset+=count;
+   g.dispose();
+  }
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));
+  geometry.setAttribute('normal',new THREE.BufferAttribute(normals,3));
+  geometry.setAttribute('color',new THREE.BufferAttribute(colors,3));
+  geometry.computeBoundingSphere();
+  const material=selected[0].mesh.material.clone();material.color.set(0xffffff);material.vertexColors=true;
+  const merged=new THREE.Mesh(geometry,material);
+  merged.name='Detalhes estáticos consolidados · '+parent.name;
+  selected.forEach(({mesh})=>parent.remove(mesh));
+  parent.add(merged);
+  report.originalDraws+=selected.length;report.mergedDraws++;report.objectsReplaced+=selected.length;report.vertices+=n;
+ }
+ return report;
+}
