@@ -413,6 +413,7 @@ function refreshEpiHUD(){
  let panel=$('epiProgress');if(!panel)return;
  const list=[['Boné',epi.cap],['Cabelo preso / curto',epi.hair],['Uniforme',epi.uniform],['Luvas adequadas',epi.gloves],['Verificação final',epi.checked]];
  panel.innerHTML='<b>Missão 01 · Segurança da bomboniere</b>'+list.map(([name,ok])=>`<div class="epi-line">${ok?'✓':'○'} ${name}</div>`).join('')+`<div class="small">Erros: ${epi.errors} · ${epi.finished?'Aprovada':'Em treinamento'}</div>`;
+ refreshPopcornHUD();
 }
 function startEpi(){if(!allowRole('bomboniere'))return;epi.started=true;epiNotice('Missão 01: prepare-se na bancada de EPIs. Olhe para cada peça, aproxime-se e pressione E ou AGIR. A animação deverá terminar para a etapa ser validada.')}
 function equip(id){if(!allowRole('bomboniere'))return;
