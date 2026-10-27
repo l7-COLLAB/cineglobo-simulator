@@ -37,11 +37,12 @@ import { saleError } from './training-rules.mjs';
 import { createPerformanceMonitor } from './performance-monitor.js';
 import { createCheckoutZone } from './checkout-zone.js';
 import { createCinemaCharacter } from './character-kit.js';
+import { batchStaticBoxes } from './static-batching.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
 const $=x=>document.getElementById(x),cities=['Três Passos','Palmeira das Missões','Santa Rosa','Frederico Westphalen','Cruz Alta','Ijuí','Horizontina'];
 const defaults={notices:[{city:'Todas',text:'Bem-vindo ao ambiente demonstrativo. Todos os dados são fictícios.'}],sessions:[{city:'Ijuí',film:'Aventura Estelar (demonstração)',time:'14:00',room:'Sala 1',format:'2D'},{city:'Ijuí',film:'Mistério da Noite (demonstração)',time:'16:30',room:'Sala 2',format:'3D'}],tasks:['Acender as luzes do hall','Ligar o computador do caixa','Ligar a mini impressora','Conferir a televisão do catálogo','Preparar a pipoqueira','Conferir a iluminação da Sala 1','Conferir a climatização da Sala 2']};
 let data;try{data={...defaults,...JSON.parse(localStorage.getItem('cineglobo_demo')||'{}')}}catch{data=structuredClone(defaults)};
-let technicalMonitor=null;
+let technicalMonitor=null,staticBatchReport=null;
 let settings={mouse:22,touch:22,quality:"low",fps:30,volume:40};try{settings={...settings,...JSON.parse(localStorage.getItem("cineglobo_config")||"{}")}}catch{};let paused=false,lastFrame=0;let roomLighting={},roomScenes={},blockers=[],doors=[],trainer=null,trainerParts=[],trainerMixer=null,trainerRealistic=false,roomState='hall';let city='Ijuí',completed=new Set(),currentTarget=null,speechIndex=0,scene,camera,renderer,world=[],player={x:0,z:6,yaw:0,pitch:0},keys={},lookActive=false,isMobile=matchMedia('(pointer:coarse)').matches,joy={x:0,y:0},ambient,lights=[];
 // Escala dinâmica: um jogador por posto, demais setores operados por NPCs.
 let currentRole='caixa',npcTeam=[],npcClock=0,npcCycles={caixa:0,bomboniere:0,sala:0};
@@ -618,6 +619,18 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
  checkoutVisual=createCheckoutZone(scene);
  setupWorkers();
  finishCinema(scene);
+ // Otimização após a aplicação dos materiais definitivos: evita substituir
+ // objetos dinâmicos e garante que móveis, portas e luzes permaneçam editáveis.
+ const excluded=new Set([...lights,...world.map(item=>item.marker).filter(Boolean)]);
+ staticBatchReport={};
+ staticBatchReport.hall=batchStaticBoxes(scene,{exclude:[...excluded]});
+ for(const [name,room] of Object.entries(roomScenes)){
+   staticBatchReport[name]=batchStaticBoxes(room.group,{exclude:[...excluded]});
+ }
+ for(const flavor of ['SALGADA','DOCE']){
+   const cabinet=scene.getObjectByName('Pipoqueira visual · '+flavor);
+   if(cabinet)staticBatchReport['Pipoqueira '+flavor]=batchStaticBoxes(cabinet);
+ }
  loadDetailedTrainer();
  collider(-4.6,-3.7,5,1.7);collider(3.7,-4.6,5.1,1.6);
  for(let x of [-2,2])for(let z of [2,5])collider(x,z,1.55,1.2);
