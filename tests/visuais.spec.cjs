@@ -6,7 +6,7 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
  await page.route('**/index.html',async route=>{
    let html=fs.readFileSync('index.html','utf8');
    // Dados técnicos temporários apenas na resposta do teste: não expostos na versão pública.
-   html=html.replace('function applyGraphics(){',`window.__visualTest={scene:()=>scene,workers:()=>npcTeam,client:()=>queueCustomer,checkout:()=>checkoutVisual,renderer:()=>renderer,position:(x,z)=>{player.x=x;player.z=z;player.yaw=0;player.pitch=0;}};\nfunction applyGraphics(){`);
+   html=html.replace('function applyGraphics(){',`window.__visualTest={scene:()=>scene,workers:()=>npcTeam,client:()=>queueCustomer,checkout:()=>checkoutVisual,renderer:()=>renderer,rooms:()=>roomScenes,doors:()=>doors,refreshRooms:()=>updateVisibleRooms(),position:(x,z)=>{player.x=x;player.z=z;player.yaw=0;player.pitch=0;}};\nfunction applyGraphics(){`);
    await route.fulfill({contentType:'text/html',body:html});
  });
  await page.goto('/index.html');
@@ -44,6 +44,20 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
    expect(m.boxMeshes).toBeGreaterThan(10);
    expect(m.distinctBoxGeometries).toBe(1);
  }
+ // Porta fechada oculta a sala; abrir a porta ou entrar mantém o ambiente disponível.
+ const roomsCheck=await page.evaluate(()=>{
+   const api=window.__visualTest,rooms=api.rooms(),doors=api.doors();
+   api.refreshRooms();
+   const initialClosed=!rooms['Sala 1'].group.visible&&!rooms['Sala 2'].group.visible;
+   const door=doors.find(d=>d.x===-4);
+   door.open=true;api.refreshRooms();
+   const opens=rooms['Sala 1'].group.visible&&!rooms['Sala 2'].group.visible;
+   door.open=false;api.position(-4,-13.5);api.refreshRooms();
+   const remainsVisibleInside=rooms['Sala 1'].group.visible;
+   api.position(0,1.5);api.refreshRooms();
+   return {initialClosed,opens,remainsVisibleInside};
+ });
+ expect(roomsCheck).toEqual({initialClosed:true,opens:true,remainsVisibleInside:true});
  console.log('Métricas em Chromium simulado (não representam Safari físico):',JSON.stringify({
   drawCalls:metrics.drawCalls,triangles:metrics.triangles,machines:metrics.machines
  }));
