@@ -34,6 +34,7 @@ button,select,input,textarea{touch-action:manipulation}
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js';
 import { finishCinema, upholsteredGeometry } from './visuals.js';
 import { saleError } from './training-rules.mjs';
+import { ticketIssues,createRoomRoutine,applyRoomAction } from './room-training.mjs';
 import { createPopcornBatch,applyPopcornAction,advancePopcornBatch,createMixedTub,applyMixedTubAction } from './popcorn-training.mjs';
 import { createPerformanceMonitor } from './performance-monitor.js';
 import { createCheckoutZone } from './checkout-zone.js';
@@ -44,6 +45,8 @@ const $=x=>document.getElementById(x),cities=['Três Passos','Palmeira das Miss�
 const defaults={notices:[{city:'Todas',text:'Bem-vindo ao ambiente demonstrativo. Todos os dados são fictícios.'}],sessions:[{city:'Ijuí',film:'Aventura Estelar (demonstração)',time:'14:00',room:'Sala 1',format:'2D'},{city:'Ijuí',film:'Mistério da Noite (demonstração)',time:'16:30',room:'Sala 2',format:'3D'}],tasks:['Acender as luzes do hall','Ligar o computador do caixa','Ligar a mini impressora','Conferir a televisão do catálogo','Preparar a pipoqueira','Conferir a iluminação da Sala 1','Conferir a climatização da Sala 2']};
 let data;try{data={...defaults,...JSON.parse(localStorage.getItem('cineglobo_demo')||'{}')}}catch{data=structuredClone(defaults)};
 let technicalMonitor=null,staticBatchReport=null,staticDetailReport=null;
+const roomRoutines={'Sala 1':createRoomRoutine('Sala 1'),'Sala 2':createRoomRoutine('Sala 2')};
+const roomSessionChoice={'Sala 1':'','Sala 2':''};
 let settings={mouse:22,touch:22,quality:"low",fps:30,volume:40};try{settings={...settings,...JSON.parse(localStorage.getItem("cineglobo_config")||"{}")}}catch{};let paused=false,lastFrame=0;let roomLighting={},roomScenes={},blockers=[],doors=[],trainer=null,trainerParts=[],trainerMixer=null,trainerRealistic=false,roomState='hall';let city='Ijuí',completed=new Set(),currentTarget=null,speechIndex=0,scene,camera,renderer,world=[],player={x:0,z:6,yaw:0,pitch:0},keys={},lookActive=false,isMobile=matchMedia('(pointer:coarse)').matches,joy={x:0,y:0},ambient,lights=[];
 // Escala dinâmica: um jogador por posto, demais setores operados por NPCs.
 let currentRole='caixa',npcTeam=[],npcClock=0,npcCycles={caixa:0,bomboniere:0,sala:0};
@@ -76,7 +79,7 @@ function updateTrainerFollow(dt){if(!trainer||paused||$('start').style.display!=
  if(!trainerRealistic){trainer.position.y=Math.sin(performance.now()*.005)*(d>.2?.028:.008);for(const a of trainerParts)a.pivot.rotation.x=Math.sin(performance.now()*.011+a.side)*(d>.2?.26:.03);}
 }
 function say(t){$('helper').style.display='block';$('speech').textContent=t}function save(){localStorage.setItem('cineglobo_demo',JSON.stringify(data))}function fillCities(){['city','startCity'].forEach(id=>{$(id).innerHTML=cities.map(c=>`<option ${c==='Ijuí'?'selected':''}>${c}</option>`).join('')})}fillCities();
-function setCity(c){city=c;$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${t}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
+function setCity(c){city=c;for(const name of Object.keys(roomRoutines)){roomRoutines[name]=createRoomRoutine(name);roomSessionChoice[name]='';if(roomLighting[name])setRoomLights(name,'entrada');}$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${t}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
 function mat(color){return new THREE.MeshStandardMaterial({color,roughness:.75})}function box(x,y,z,w,h,d,color){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));m.position.set(x,y,z);scene.add(m);return m}function textSign(t,x,y,z,w=2,color='#ffffff'){let c=document.createElement('canvas');c.width=512;c.height=100;let ctx=c.getContext('2d');ctx.fillStyle='#20191d';ctx.fillRect(0,0,512,100);ctx.fillStyle=color;ctx.font='bold 38px Arial';ctx.textAlign='center';ctx.fillText(t,256,66);const m=new THREE.Mesh(new THREE.PlaneGeometry(w,w*100/512),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),side:THREE.DoubleSide}));m.position.set(x,y,z);scene.add(m)}function object(name,x,z,color,callback){let marker=box(x,1.05,z,.5,.6,.45,color);world.push({name,x,z,callback,marker});}
 function collider(x,z,w,d){blockers.push({x,z,w,d})}
 function canStand(x,z){
@@ -241,7 +244,48 @@ function setRoomLights(room, mode){
  L.leds.forEach(o=>{o.visible=true;});
  const status=document.getElementById('lightingStatus');if(status)status.textContent=mode==='entrada'?'ARANDELAS ACESAS — iluminação suave para recepção e comerciais; LEDs ligados.':mode==='filme'?'FILME — arandelas apagadas, luzes gerais apagadas; somente LEDs de orientação ligados.':'LIMPEZA — luzes gerais acesas para a equipe limpar a sala; LEDs ligados.';
 }
-function roomLightingDialog(label){const mode=roomLighting[label]?.mode||'entrada';modal(`<h2>${label} — Painel de iluminação</h2><p class="notice">Procedimento informado para Ijuí: ao terminar a música após os comerciais, desligar as ARANDELAS e manter os LEDs. As luzes gerais são para limpeza depois do filme.</p><div class="rows"><button data-room-light="entrada" data-room="${label}">Arandelas · entrada</button><button data-room-light="filme" data-room="${label}">Somente LEDs · filme</button><button data-room-light="limpeza" data-room="${label}">Luzes gerais · limpeza</button></div><p id="lightingStatus" class="notice"></p><p class="small">Circuitos independentes: arandelas, LEDs e luzes gerais. Intensidade e iluminação real simuladas no ambiente.</p>`);setRoomLights(label,mode)}
+
+function roomLightingDialog(label,feedback='',error=false){
+ if(!allowRole('sala'))return;
+ const s=roomRoutines[label],sessions=currentSessions().filter(t=>t.room===label);
+ const selected=s.session||sessions.find(t=>[t.film,t.time,t.room,t.format].join('|')===roomSessionChoice[label])||sessions[0];
+ const chosenKey=selected?[selected.film,selected.time,selected.room,selected.format].join('|'):'';
+ const esc=escapeHtml;
+ const options=sessions.map(t=>{const key=[t.film,t.time,t.room,t.format].join('|');return '<option value="'+esc(key)+'" '+(chosenKey===key?'selected':'')+'>'+esc(t.film)+' · '+esc(t.time)+' · '+esc(t.format)+'</option>'}).join('');
+ const actions=[
+  ['admission','1. Iniciar recepção / acender arandelas'],['film','2. Encerrar comerciais / somente LEDs'],
+  ['cleaning','3. Acender luzes gerais para limpeza'],['seats','Conferir poltronas A–J'],
+  ['floor','Inspecionar piso e corredores'],['items','Conferir resíduos e objetos esquecidos'],
+  ['glasses','Recolher óculos 3D (somente sessão 3D)'],['finish','Finalizar conferência'],
+  ['reset','Reiniciar exercício']];
+ const history='<div class="small">Ingressos conferidos nesta rotina: '+s.ticketsValidated+
+ ' · Poltronas: '+(s.seatCheck?'✓':'○')+' · Piso: '+(s.floorCheck?'✓':'○')+
+ ' · Objetos: '+(s.itemsCollected?'✓':'○')+' · Óculos 3D: '+(s.glassesCollected?'✓':'○')+
+ ' · Erros: '+s.errors+'</div>';
+ modal('<h2>'+esc(label)+' — rotina interativa</h2>'+
+ '<p class="small">Modelo demonstrativo da unidade Ijuí. Em outras unidades, a planta e os procedimentos precisam de confirmação local.</p>'+
+ '<label class="field">Sessão da sala<select id="roomSessionSelect" '+(s.session?'disabled':'')+'>'+options+'</select></label>'+
+ '<div class="notice">Fase: <b>'+esc(s.phase)+'</b> · Iluminação: '+esc(s.mode)+'</div>'+history+
+ (feedback?'<p class="notice" role="status" style="color:'+(error?'#f3a69f':'#cfebc4')+'">'+esc(feedback)+'</p>':'')+
+ '<div class="rows">'+actions.map(([a,t])=>'<button type="button" data-room-action="'+a+'" data-room-name="'+esc(label)+'" style="min-height:44px">'+t+'</button>').join('')+'</div>'+
+ '<p class="small">É necessário validar ingresso fictício no leitor antes de simular o início do filme. A limpeza é uma conferência visual; não há produtos químicos nem procedimentos técnicos de limpeza avaliados.</p>');
+ if($('roomSessionSelect'))$('roomSessionSelect').onchange=e=>{roomSessionChoice[label]=e.target.value};
+ setRoomLights(label,s.mode);
+}
+function runRoomAction(label,action){
+ if(!allowRole('sala'))return;
+ const options=currentSessions().filter(t=>t.room===label);
+ const key=$('roomSessionSelect')?.value||roomSessionChoice[label];
+ const session=roomRoutines[label].session||options.find(t=>[t.film,t.time,t.room,t.format].join('|')===key)||options[0];
+ const result=applyRoomAction(roomRoutines[label],action,{session,city});
+ roomRoutines[label]=result.state;
+ if(!result.error){
+  if(['admission','film','cleaning'].includes(action))setRoomLights(label,result.state.mode);
+  if(result.state.completed)say('Rotina de '+label+' concluída. Poltronas e corredores conferidos.');
+  else say(result.message);
+ }else say(result.message);
+ roomLightingDialog(label,result.message,Boolean(result.error));
+}
 function addRoom(x,label,is3d){
  const firstSceneChild=scene.children.length;
  const left=x-3.75,right=x+3.75;
@@ -746,7 +790,7 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
  for(let x of [-2,2])for(let z of [2,5])collider(x,z,1.55,1.2);
  collider(-.25,-7.0,.5,.6);
  }
-function complete(i,msg){completed.add(i);tasksRender();say(msg)}function close(){ $('modal').classList.remove('visible');if(!isMobile)renderer.domElement.requestPointerLock?.()}function modal(html){$('modalContent').innerHTML=html;$('modal').classList.add('visible');document.exitPointerLock?.()}$('closeModal').onclick=close;$('modalContent').addEventListener('click',e=>{const pop=e.target.closest('[data-popcorn-action]');if(pop){if(pop.dataset.popcornKind==='misto')operateMixedTub(pop.dataset.popcornAction);else operatePopcorn(pop.dataset.popcornKind,pop.dataset.popcornAction);return;}const btn=e.target.closest('[data-room-light]');if(btn){setRoomLights(btn.dataset.room,btn.dataset.roomLight);say(btn.dataset.roomLight==='filme'?'Música encerrada: arandelas apagadas, LEDs de orientação ligados.':btn.dataset.roomLight==='limpeza'?'Luzes gerais acesas para a limpeza após o filme.':'Arandelas ligadas para entrada do público.')}});
+function complete(i,msg){completed.add(i);tasksRender();say(msg)}function close(){ $('modal').classList.remove('visible');if(!isMobile)renderer.domElement.requestPointerLock?.()}function modal(html){$('modalContent').innerHTML=html;$('modal').classList.add('visible');document.exitPointerLock?.()}$('closeModal').onclick=close;$('modalContent').addEventListener('click',e=>{const roomAction=e.target.closest('[data-room-action]');if(roomAction){runRoomAction(roomAction.dataset.roomName,roomAction.dataset.roomAction);return;}const pop=e.target.closest('[data-popcorn-action]');if(pop){if(pop.dataset.popcornKind==='misto')operateMixedTub(pop.dataset.popcornAction);else operatePopcorn(pop.dataset.popcornKind,pop.dataset.popcornAction);return;}const btn=e.target.closest('[data-room-light]');if(btn){setRoomLights(btn.dataset.room,btn.dataset.roomLight);say(btn.dataset.roomLight==='filme'?'Música encerrada: arandelas apagadas, LEDs de orientação ligados.':btn.dataset.roomLight==='limpeza'?'Luzes gerais acesas para a limpeza após o filme.':'Arandelas ligadas para entrada do público.')}});
 // Banco exclusivamente fictício para demonstração — nunca consulta CPF real.
 const trainingDBKey='cineglobo_demo_tickets_v11';
 let trainingTickets=[];let selectedClient=0;let mission={served:0,rejected:0,attempts:0};
@@ -763,21 +807,115 @@ function clientScenarios(){let mine=trainingTickets.filter(t=>t.city===city);let
  {name:'Cliente tentando utilizar ingresso repetido',description:'Situação de bloqueio por duplicidade.',method:'qr',code:used?.code||'CG-DEMO-UTILIZADO',expectedRoom:'Sala 1',mode:'used'},
  {name:'Cliente na entrada da sala incorreta',description:'Situação de conferência de sala. Selecione Sala 1 e um ingresso para Sala 2.',method:'qr',code:wrong?.code||'',expectedRoom:'Sala 1',mode:'wrong'}
  ]}
-function openValidation(){if(!allowRole('sala'))return;let method='qr',lookup='',expectedRoom='Sala 1',expectedTime='',feedback='',candidate=null;
- const draw=()=>{const clients=clientScenarios(),cl=clients[selectedClient];modal(`<h2>Controle de acesso — Treinamento</h2><p class="muted">Unidade: ${escapeHtml(city)} · Apenas ingressos fictícios. Nenhum acesso à bilheteria comercial.</p><div class="training-stat"><b>Missão guiada: validar corretamente a entrada</b><p class="small">Aproxime-se do leitor, escolha um cliente e confira o ingresso, a sala e o horário antes de autorizar.</p>Atendimentos corretos: <b>${mission.served}</b> · Bloqueios corretos: <b>${mission.rejected}</b></div><label class="field">Cliente virtual<select id="clientChoice">${clients.map((c,i)=>`<option value="${i}" ${selectedClient===i?'selected':''}>${escapeHtml(c.name)}</option>`).join('')}</select></label><p class="notice">${escapeHtml(cl.description)}</p><label class="field">Entrada em que você está conferindo<select id="validationRoom"><option ${expectedRoom==='Sala 1'?'selected':''}>Sala 1</option><option ${expectedRoom==='Sala 2'?'selected':''}>Sala 2</option></select></label><label class="field">Horário da sessão em conferência (opcional)<input id="validationTime" type="time" value="${escapeHtml(expectedTime)}"></label><div class="rows"><button data-method="qr" class="${method==='qr'?'primary':''}">Leitor de QR Code</button><button data-method="cpf" class="${method==='cpf'?'primary':''}">Consultar CPF</button></div><label class="field">${method==='qr'?'Código QR fictício do ingresso':'CPF de teste (somente dígitos)'}<div class="input-inline"><input id="validationInput" placeholder="${method==='qr'?'CG-DEMO-...':'11122233344'}" value="${escapeHtml(lookup)}"><button class="primary" id="searchTicket">Localizar</button></div></label><div class="screen" id="validationResult">${feedback||'Selecione o ingresso do cliente ou informe o código para buscar.'}</div><h3>Ingressos fictícios da unidade</h3><div class="rows"><button id="seedTickets">Gerar cliente de demonstração</button><button id="showTickets">Meus ingressos</button></div><p class="small">O modo de CPF só encontrará ingressos de teste vinculados durante a venda. Não digite CPF de pessoas reais.</p>`);
- $('clientChoice').onchange=e=>{selectedClient=Number(e.target.value);const c=clientScenarios()[selectedClient];method=c.method;lookup=c.code;expectedRoom=c.expectedRoom||'Sala 1';expectedTime=c.expectedTime||'';candidate=null;feedback='';draw()};
- $('validationRoom').onchange=e=>{expectedRoom=e.target.value};$('validationTime').onchange=e=>{expectedTime=e.target.value};
- document.querySelectorAll('[data-method]').forEach(b=>b.onclick=()=>{method=b.dataset.method;lookup='';candidate=null;feedback='';draw()});
- $('validationInput').oninput=e=>{lookup=e.target.value};
- $('searchTicket').onclick=()=>{lookup=$('validationInput').value.trim();expectedRoom=$('validationRoom').value;expectedTime=$('validationTime').value;candidate=null;mission.attempts++;
-  const matches=trainingTickets.filter(t=>t.city===city&&(method==='qr'?t.code.toUpperCase()===lookup.toUpperCase():t.cpf&&t.cpf===lookup.replace(/\D/g,'')));
-  if(matches.length===0){feedback='<p class="notice">Ingresso não encontrado. Não autorize a entrada. Confira os dados ou encaminhe o cliente ao atendimento.</p>';mission.rejected++;say('Nenhum ingresso encontrado. Não libere a entrada sem conferir a compra.');draw();return}
-  feedback=`<p>Encontrados ${matches.length} ingresso(s):</p>`+matches.map(t=>renderTicket(t)+`<button data-pick-ticket="${escapeHtml(t.code)}">Conferir este ingresso</button>`).join('');draw();
-  document.querySelectorAll('[data-pick-ticket]').forEach(b=>b.onclick=()=>{candidate=trainingTickets.find(t=>t.code===b.dataset.pickTicket);const problems=[];if(candidate.status==='validado')problems.push('Ingresso já validado');if(candidate.room!==expectedRoom)problems.push('Sala diferente da entrada selecionada');if(expectedTime&&candidate.time!==expectedTime)problems.push('Horário diferente');feedback=renderTicket(candidate)+(problems.length?`<p class="notice">Atenção: ${problems.join('; ')}. Entrada deve ser negada.</p><button id="rejectTicket" class="primary">Recusar entrada e orientar cliente</button>`:`<p class="tag-valid">Sessão e status conferidos.</p><button id="approveTicket" class="primary">Autorizar entrada fictícia</button>`);draw();const approve=$('approveTicket'),reject=$('rejectTicket');if(approve)approve.onclick=()=>{if(!candidate||candidate.status!=='novo'||candidate.room!==expectedRoom||(expectedTime&&candidate.time!==expectedTime))return;candidate.status='validado';candidate.validatedAt=Date.now();storeTickets();mission.served++;say('Correto. Ingresso conferido e validado apenas na simulação.');candidate=null;feedback='<p class="tag-valid">Entrada autorizada no treinamento. Ingresso marcado como utilizado.</p>';draw()};if(reject)reject.onclick=()=>{mission.rejected++;say('Correto. Não libere entrada com divergência ou ingresso utilizado.');candidate=null;feedback='<p class="tag-valid">Entrada recusada corretamente. Oriente o cliente a procurar atendimento.</p>';draw()};});
- };
- $('seedTickets').onclick=()=>{const s=currentSessions()[0]||{film:'Sessão demonstrativa',time:'19:00',room:'Sala 1',format:'2D'};const firstSeat='J'+(Math.floor(Math.random()*12)+1);const made=createTicketBatch(s,[firstSeat],'Inteira','Pix','11122233344');selectedClient=0;method='qr';lookup=made[0].code;expectedRoom=made[0].room;expectedTime=made[0].time;feedback='<p class="tag-valid">Cliente demonstrativo gerado. Código preenchido para sua consulta.</p>';draw()};
- $('showTickets').onclick=()=>{feedback=trainingTickets.filter(t=>t.city===city).slice(-12).map(renderTicket).join('')||'<p>Venda um ingresso no caixa ou gere um cliente de demonstração.</p>';draw()};
- };
+
+function openValidation(){
+ if(!allowRole('sala'))return;
+ let method='qr',lookup='',feedback='',selectedClientIndex=selectedClient,selectedSessionIndex=0,candidate=null;
+ const available=currentSessions();
+ const key=t=>t?[t.film,t.time,t.room,t.format].join('|'):'';
+ const active=()=>available[selectedSessionIndex]||null;
+ const esc=escapeHtml;
+ function chooseFromTicket(ticket){
+  if(!ticket)return;
+  const index=available.findIndex(t=>key(t)===key(ticket));
+  if(index>=0)selectedSessionIndex=index;
+ }
+ const scenario=clientScenarios()[selectedClientIndex];
+ if(scenario){
+  method=scenario.method;lookup=scenario.code||'';
+  const match=trainingTickets.find(t=>t.code===lookup&&t.city===city);
+  if(scenario.mode==='wrong'){
+   const idx=available.findIndex(t=>t.room==='Sala 1');if(idx>=0)selectedSessionIndex=idx;
+  }else chooseFromTicket(match);
+ }
+ function draw(){
+  const clients=clientScenarios(),current=clients[selectedClientIndex]||clients[0];
+  const options=available.map((t,i)=>'<option value="'+i+'" '+(i===selectedSessionIndex?'selected':'')+'>'+
+   esc(t.film)+' · '+esc(t.time)+' · '+esc(t.room)+' · '+esc(t.format)+'</option>').join('');
+  const clientOptions=clients.map((c,i)=>'<option value="'+i+'" '+(i===selectedClientIndex?'selected':'')+'>'+esc(c.name)+'</option>').join('');
+  modal('<h2>Controle de acesso — Treinamento</h2>'+
+   '<p class="small">Unidade: '+esc(city)+' · Bilhetes fictícios. Nenhuma conexão com bilheteria comercial.</p>'+
+   '<div class="training-stat">Atendimentos autorizados: <b>'+mission.served+'</b> · Bloqueios: <b>'+mission.rejected+
+   '</b> · Tentativas de busca: <b>'+mission.attempts+'</b></div>'+
+   '<label class="field">Cliente virtual<select id="clientChoice">'+clientOptions+'</select></label>'+
+   '<p class="notice">'+esc(current?.description||'Confirme o ingresso antes da entrada.')+'</p>'+
+   '<label class="field">Sessão EXATA da entrada<select id="validationSession">'+(options||'<option>Nenhuma sessão cadastrada</option>')+'</select></label>'+
+   '<p class="small">Confirme o filme, horário, sala e formato 2D/3D da sessão. Selecionar somente a sala não valida um ingresso.</p>'+
+   '<div class="rows"><button data-method="qr" class="'+(method==='qr'?'primary':'')+'">Leitor QR fictício</button>'+
+   '<button data-method="cpf" class="'+(method==='cpf'?'primary':'')+'">Buscar CPF de teste</button></div>'+
+   '<label class="field">'+(method==='qr'?'Código de ingresso de demonstração':'CPF fictício vinculado à venda')+
+   '<div class="input-inline"><input id="validationInput" value="'+esc(lookup)+'" placeholder="'+(method==='qr'?'CG-DEMO-...':'11122233344')+'">'+
+   '<button class="primary" id="searchTicket">Localizar</button></div></label>'+
+   '<div id="validationResult" class="screen">'+(feedback||'Escolha a sessão e localize o ingresso fictício.')+'</div>'+
+   '<div class="rows"><button id="seedTickets">Gerar ingresso demonstrativo</button><button id="showTickets">Meus ingressos</button>'+
+   '<button id="goRoomPanel">Painel da sessão</button></div>'+
+   '<p class="small">Não digite CPFs reais. Para contabilizar entradas na rotina de sala, inicie primeiro a fase de recepção no painel.</p>');
+  $('clientChoice').onchange=e=>{
+   selectedClientIndex=Number(e.target.value);selectedClient=selectedClientIndex;
+   const c=clientScenarios()[selectedClientIndex];
+   method=c.method;lookup=c.code||'';candidate=null;feedback='';
+   const match=trainingTickets.find(t=>t.code===lookup&&t.city===city);
+   if(c.mode==='wrong'){const i=available.findIndex(t=>t.room==='Sala 1');if(i>=0)selectedSessionIndex=i}
+   else chooseFromTicket(match);
+   draw();
+  };
+  $('validationSession').onchange=e=>{selectedSessionIndex=Number(e.target.value);candidate=null;feedback='';draw()};
+  document.querySelectorAll('[data-method]').forEach(btn=>btn.onclick=()=>{
+   method=btn.dataset.method;lookup='';feedback='';candidate=null;draw();
+  });
+  $('validationInput').oninput=e=>{lookup=e.target.value};
+  $('searchTicket').onclick=()=>{
+   lookup=$('validationInput').value.trim();mission.attempts++;candidate=null;
+   const matches=trainingTickets.filter(t=>t.city===city&&
+    (method==='qr'?t.code.toUpperCase()===lookup.toUpperCase():Boolean(t.cpf)&&t.cpf===lookup.replace(/\D/g,'')));
+   if(!matches.length){
+    feedback='<p class="notice">Não localizado. Entrada bloqueada; confira a compra ou encaminhe ao atendimento.</p>';
+    mission.rejected++;say('Ingresso não localizado. Não autorize entrada.');draw();return;
+   }
+   feedback='<p>Ingressos fictícios encontrados: '+matches.length+'</p>'+
+    matches.map(t=>renderTicket(t)+'<button data-pick-ticket="'+esc(t.code)+'">Conferir este ingresso</button>').join('');
+   draw();
+  };
+  $('validationResult').onclick=e=>{
+   const select=e.target.closest('[data-pick-ticket]');
+   if(select){
+    candidate=trainingTickets.find(t=>t.code===select.dataset.pickTicket&&t.city===city)||null;
+    const issues=ticketIssues(candidate,{city,session:active()});
+    feedback=renderTicket(candidate)+(issues.length?
+     '<p class="notice">BLOQUEAR: '+issues.map(esc).join('; ')+'</p><button id="rejectTicket" class="primary">Recusar entrada e orientar</button>':
+     '<p class="tag-valid">Unidade, filme, horário, sala, formato, poltrona e status válidos.</p><button id="approveTicket" class="primary">Autorizar entrada fictícia</button>');
+    draw();return;
+   }
+   if(e.target.closest('#approveTicket')){
+    const ticket=candidate;const session=active();
+    const issues=ticketIssues(ticket,{city,session});
+    if(issues.length){feedback='<p class="notice">Validação interrompida: '+issues.map(esc).join('; ')+'</p>';draw();return}
+    ticket.status='validado';ticket.validatedAt=Date.now();storeTickets();mission.served++;
+    const routine=roomRoutines[session.room];
+    if(routine.phase==='entrada'&&routine.session&&key(routine.session)===key(session)){
+     const result=applyRoomAction(routine,'validate',{session,city});
+     if(!result.error)roomRoutines[session.room]=result.state;
+    }
+    feedback='<p class="tag-valid">Entrada autorizada no simulador. Ingresso marcado como utilizado e bloqueado para reutilização.</p>';
+    candidate=null;say('Ingresso conferido: entrada autorizada apenas no jogo.');draw();return;
+   }
+   if(e.target.closest('#rejectTicket')){
+    const problems=ticketIssues(candidate,{city,session:active()});
+    if(!problems.length){feedback='<p class="notice">O ingresso está válido para esta sessão. Confira antes de recusar.</p>';draw();return}
+    mission.rejected++;candidate=null;feedback='<p class="tag-valid">Entrada corretamente recusada e cliente orientado.</p>';
+    say('Correto: ingresso divergente ou já utilizado não pode liberar entrada.');draw();
+   }
+  };
+  $('seedTickets').onclick=()=>{
+   const session=active();if(!session){feedback='<p class="notice">Cadastre uma sessão fictícia antes de gerar ingressos.</p>';draw();return}
+   const code=createTicketBatch(session,['J'+(1+Math.floor(Math.random()*12))],'Inteira','Pix','11122233344')[0].code;
+   lookup=code;method='qr';feedback='<p class="tag-valid">Ingresso fictício criado. Use Localizar para conferir.</p>';draw();
+  };
+  $('showTickets').onclick=()=>{
+   feedback=trainingTickets.filter(t=>t.city===city).slice(-12).map(renderTicket).join('')||'<p>Nenhum ingresso demonstrativo disponível.</p>';draw()
+  };
+  $('goRoomPanel').onclick=()=>{if(active())roomLightingDialog(active().room);else say('Selecione uma sessão primeiro.')};
+ }
  draw();
 }
 function validateCustomerSale(m,session,seats,type,payment,received,prices,occupiedSeats){
