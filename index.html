@@ -807,21 +807,115 @@ function clientScenarios(){let mine=trainingTickets.filter(t=>t.city===city);let
  {name:'Cliente tentando utilizar ingresso repetido',description:'Situação de bloqueio por duplicidade.',method:'qr',code:used?.code||'CG-DEMO-UTILIZADO',expectedRoom:'Sala 1',mode:'used'},
  {name:'Cliente na entrada da sala incorreta',description:'Situação de conferência de sala. Selecione Sala 1 e um ingresso para Sala 2.',method:'qr',code:wrong?.code||'',expectedRoom:'Sala 1',mode:'wrong'}
  ]}
-function openValidation(){if(!allowRole('sala'))return;let method='qr',lookup='',expectedRoom='Sala 1',expectedTime='',feedback='',candidate=null;
- const draw=()=>{const clients=clientScenarios(),cl=clients[selectedClient];modal(`<h2>Controle de acesso — Treinamento</h2><p class="muted">Unidade: ${escapeHtml(city)} · Apenas ingressos fictícios. Nenhum acesso à bilheteria comercial.</p><div class="training-stat"><b>Missão guiada: validar corretamente a entrada</b><p class="small">Aproxime-se do leitor, escolha um cliente e confira o ingresso, a sala e o horário antes de autorizar.</p>Atendimentos corretos: <b>${mission.served}</b> · Bloqueios corretos: <b>${mission.rejected}</b></div><label class="field">Cliente virtual<select id="clientChoice">${clients.map((c,i)=>`<option value="${i}" ${selectedClient===i?'selected':''}>${escapeHtml(c.name)}</option>`).join('')}</select></label><p class="notice">${escapeHtml(cl.description)}</p><label class="field">Entrada em que você está conferindo<select id="validationRoom"><option ${expectedRoom==='Sala 1'?'selected':''}>Sala 1</option><option ${expectedRoom==='Sala 2'?'selected':''}>Sala 2</option></select></label><label class="field">Horário da sessão em conferência (opcional)<input id="validationTime" type="time" value="${escapeHtml(expectedTime)}"></label><div class="rows"><button data-method="qr" class="${method==='qr'?'primary':''}">Leitor de QR Code</button><button data-method="cpf" class="${method==='cpf'?'primary':''}">Consultar CPF</button></div><label class="field">${method==='qr'?'Código QR fictício do ingresso':'CPF de teste (somente dígitos)'}<div class="input-inline"><input id="validationInput" placeholder="${method==='qr'?'CG-DEMO-...':'11122233344'}" value="${escapeHtml(lookup)}"><button class="primary" id="searchTicket">Localizar</button></div></label><div class="screen" id="validationResult">${feedback||'Selecione o ingresso do cliente ou informe o código para buscar.'}</div><h3>Ingressos fictícios da unidade</h3><div class="rows"><button id="seedTickets">Gerar cliente de demonstração</button><button id="showTickets">Meus ingressos</button></div><p class="small">O modo de CPF só encontrará ingressos de teste vinculados durante a venda. Não digite CPF de pessoas reais.</p>`);
- $('clientChoice').onchange=e=>{selectedClient=Number(e.target.value);const c=clientScenarios()[selectedClient];method=c.method;lookup=c.code;expectedRoom=c.expectedRoom||'Sala 1';expectedTime=c.expectedTime||'';candidate=null;feedback='';draw()};
- $('validationRoom').onchange=e=>{expectedRoom=e.target.value};$('validationTime').onchange=e=>{expectedTime=e.target.value};
- document.querySelectorAll('[data-method]').forEach(b=>b.onclick=()=>{method=b.dataset.method;lookup='';candidate=null;feedback='';draw()});
- $('validationInput').oninput=e=>{lookup=e.target.value};
- $('searchTicket').onclick=()=>{lookup=$('validationInput').value.trim();expectedRoom=$('validationRoom').value;expectedTime=$('validationTime').value;candidate=null;mission.attempts++;
-  const matches=trainingTickets.filter(t=>t.city===city&&(method==='qr'?t.code.toUpperCase()===lookup.toUpperCase():t.cpf&&t.cpf===lookup.replace(/\D/g,'')));
-  if(matches.length===0){feedback='<p class="notice">Ingresso não encontrado. Não autorize a entrada. Confira os dados ou encaminhe o cliente ao atendimento.</p>';mission.rejected++;say('Nenhum ingresso encontrado. Não libere a entrada sem conferir a compra.');draw();return}
-  feedback=`<p>Encontrados ${matches.length} ingresso(s):</p>`+matches.map(t=>renderTicket(t)+`<button data-pick-ticket="${escapeHtml(t.code)}">Conferir este ingresso</button>`).join('');draw();
-  document.querySelectorAll('[data-pick-ticket]').forEach(b=>b.onclick=()=>{candidate=trainingTickets.find(t=>t.code===b.dataset.pickTicket);const problems=[];if(candidate.status==='validado')problems.push('Ingresso já validado');if(candidate.room!==expectedRoom)problems.push('Sala diferente da entrada selecionada');if(expectedTime&&candidate.time!==expectedTime)problems.push('Horário diferente');feedback=renderTicket(candidate)+(problems.length?`<p class="notice">Atenção: ${problems.join('; ')}. Entrada deve ser negada.</p><button id="rejectTicket" class="primary">Recusar entrada e orientar cliente</button>`:`<p class="tag-valid">Sessão e status conferidos.</p><button id="approveTicket" class="primary">Autorizar entrada fictícia</button>`);draw();const approve=$('approveTicket'),reject=$('rejectTicket');if(approve)approve.onclick=()=>{if(!candidate||candidate.status!=='novo'||candidate.room!==expectedRoom||(expectedTime&&candidate.time!==expectedTime))return;candidate.status='validado';candidate.validatedAt=Date.now();storeTickets();mission.served++;say('Correto. Ingresso conferido e validado apenas na simulação.');candidate=null;feedback='<p class="tag-valid">Entrada autorizada no treinamento. Ingresso marcado como utilizado.</p>';draw()};if(reject)reject.onclick=()=>{mission.rejected++;say('Correto. Não libere entrada com divergência ou ingresso utilizado.');candidate=null;feedback='<p class="tag-valid">Entrada recusada corretamente. Oriente o cliente a procurar atendimento.</p>';draw()};});
- };
- $('seedTickets').onclick=()=>{const s=currentSessions()[0]||{film:'Sessão demonstrativa',time:'19:00',room:'Sala 1',format:'2D'};const firstSeat='J'+(Math.floor(Math.random()*12)+1);const made=createTicketBatch(s,[firstSeat],'Inteira','Pix','11122233344');selectedClient=0;method='qr';lookup=made[0].code;expectedRoom=made[0].room;expectedTime=made[0].time;feedback='<p class="tag-valid">Cliente demonstrativo gerado. Código preenchido para sua consulta.</p>';draw()};
- $('showTickets').onclick=()=>{feedback=trainingTickets.filter(t=>t.city===city).slice(-12).map(renderTicket).join('')||'<p>Venda um ingresso no caixa ou gere um cliente de demonstração.</p>';draw()};
- };
+
+function openValidation(){
+ if(!allowRole('sala'))return;
+ let method='qr',lookup='',feedback='',selectedClientIndex=selectedClient,selectedSessionIndex=0,candidate=null;
+ const available=currentSessions();
+ const key=t=>t?[t.film,t.time,t.room,t.format].join('|'):'';
+ const active=()=>available[selectedSessionIndex]||null;
+ const esc=escapeHtml;
+ function chooseFromTicket(ticket){
+  if(!ticket)return;
+  const index=available.findIndex(t=>key(t)===key(ticket));
+  if(index>=0)selectedSessionIndex=index;
+ }
+ const scenario=clientScenarios()[selectedClientIndex];
+ if(scenario){
+  method=scenario.method;lookup=scenario.code||'';
+  const match=trainingTickets.find(t=>t.code===lookup&&t.city===city);
+  if(scenario.mode==='wrong'){
+   const idx=available.findIndex(t=>t.room==='Sala 1');if(idx>=0)selectedSessionIndex=idx;
+  }else chooseFromTicket(match);
+ }
+ function draw(){
+  const clients=clientScenarios(),current=clients[selectedClientIndex]||clients[0];
+  const options=available.map((t,i)=>'<option value="'+i+'" '+(i===selectedSessionIndex?'selected':'')+'>'+
+   esc(t.film)+' · '+esc(t.time)+' · '+esc(t.room)+' · '+esc(t.format)+'</option>').join('');
+  const clientOptions=clients.map((c,i)=>'<option value="'+i+'" '+(i===selectedClientIndex?'selected':'')+'>'+esc(c.name)+'</option>').join('');
+  modal('<h2>Controle de acesso — Treinamento</h2>'+
+   '<p class="small">Unidade: '+esc(city)+' · Bilhetes fictícios. Nenhuma conexão com bilheteria comercial.</p>'+
+   '<div class="training-stat">Atendimentos autorizados: <b>'+mission.served+'</b> · Bloqueios: <b>'+mission.rejected+
+   '</b> · Tentativas de busca: <b>'+mission.attempts+'</b></div>'+
+   '<label class="field">Cliente virtual<select id="clientChoice">'+clientOptions+'</select></label>'+
+   '<p class="notice">'+esc(current?.description||'Confirme o ingresso antes da entrada.')+'</p>'+
+   '<label class="field">Sessão EXATA da entrada<select id="validationSession">'+(options||'<option>Nenhuma sessão cadastrada</option>')+'</select></label>'+
+   '<p class="small">Confirme o filme, horário, sala e formato 2D/3D da sessão. Selecionar somente a sala não valida um ingresso.</p>'+
+   '<div class="rows"><button data-method="qr" class="'+(method==='qr'?'primary':'')+'">Leitor QR fictício</button>'+
+   '<button data-method="cpf" class="'+(method==='cpf'?'primary':'')+'">Buscar CPF de teste</button></div>'+
+   '<label class="field">'+(method==='qr'?'Código de ingresso de demonstração':'CPF fictício vinculado à venda')+
+   '<div class="input-inline"><input id="validationInput" value="'+esc(lookup)+'" placeholder="'+(method==='qr'?'CG-DEMO-...':'11122233344')+'">'+
+   '<button class="primary" id="searchTicket">Localizar</button></div></label>'+
+   '<div id="validationResult" class="screen">'+(feedback||'Escolha a sessão e localize o ingresso fictício.')+'</div>'+
+   '<div class="rows"><button id="seedTickets">Gerar ingresso demonstrativo</button><button id="showTickets">Meus ingressos</button>'+
+   '<button id="goRoomPanel">Painel da sessão</button></div>'+
+   '<p class="small">Não digite CPFs reais. Para contabilizar entradas na rotina de sala, inicie primeiro a fase de recepção no painel.</p>');
+  $('clientChoice').onchange=e=>{
+   selectedClientIndex=Number(e.target.value);selectedClient=selectedClientIndex;
+   const c=clientScenarios()[selectedClientIndex];
+   method=c.method;lookup=c.code||'';candidate=null;feedback='';
+   const match=trainingTickets.find(t=>t.code===lookup&&t.city===city);
+   if(c.mode==='wrong'){const i=available.findIndex(t=>t.room==='Sala 1');if(i>=0)selectedSessionIndex=i}
+   else chooseFromTicket(match);
+   draw();
+  };
+  $('validationSession').onchange=e=>{selectedSessionIndex=Number(e.target.value);candidate=null;feedback='';draw()};
+  document.querySelectorAll('[data-method]').forEach(btn=>btn.onclick=()=>{
+   method=btn.dataset.method;lookup='';feedback='';candidate=null;draw();
+  });
+  $('validationInput').oninput=e=>{lookup=e.target.value};
+  $('searchTicket').onclick=()=>{
+   lookup=$('validationInput').value.trim();mission.attempts++;candidate=null;
+   const matches=trainingTickets.filter(t=>t.city===city&&
+    (method==='qr'?t.code.toUpperCase()===lookup.toUpperCase():Boolean(t.cpf)&&t.cpf===lookup.replace(/\D/g,'')));
+   if(!matches.length){
+    feedback='<p class="notice">Não localizado. Entrada bloqueada; confira a compra ou encaminhe ao atendimento.</p>';
+    mission.rejected++;say('Ingresso não localizado. Não autorize entrada.');draw();return;
+   }
+   feedback='<p>Ingressos fictícios encontrados: '+matches.length+'</p>'+
+    matches.map(t=>renderTicket(t)+'<button data-pick-ticket="'+esc(t.code)+'">Conferir este ingresso</button>').join('');
+   draw();
+  };
+  $('validationResult').onclick=e=>{
+   const select=e.target.closest('[data-pick-ticket]');
+   if(select){
+    candidate=trainingTickets.find(t=>t.code===select.dataset.pickTicket&&t.city===city)||null;
+    const issues=ticketIssues(candidate,{city,session:active()});
+    feedback=renderTicket(candidate)+(issues.length?
+     '<p class="notice">BLOQUEAR: '+issues.map(esc).join('; ')+'</p><button id="rejectTicket" class="primary">Recusar entrada e orientar</button>':
+     '<p class="tag-valid">Unidade, filme, horário, sala, formato, poltrona e status válidos.</p><button id="approveTicket" class="primary">Autorizar entrada fictícia</button>');
+    draw();return;
+   }
+   if(e.target.closest('#approveTicket')){
+    const ticket=candidate;const session=active();
+    const issues=ticketIssues(ticket,{city,session});
+    if(issues.length){feedback='<p class="notice">Validação interrompida: '+issues.map(esc).join('; ')+'</p>';draw();return}
+    ticket.status='validado';ticket.validatedAt=Date.now();storeTickets();mission.served++;
+    const routine=roomRoutines[session.room];
+    if(routine.phase==='entrada'&&routine.session&&key(routine.session)===key(session)){
+     const result=applyRoomAction(routine,'validate',{session,city});
+     if(!result.error)roomRoutines[session.room]=result.state;
+    }
+    feedback='<p class="tag-valid">Entrada autorizada no simulador. Ingresso marcado como utilizado e bloqueado para reutilização.</p>';
+    candidate=null;say('Ingresso conferido: entrada autorizada apenas no jogo.');draw();return;
+   }
+   if(e.target.closest('#rejectTicket')){
+    const problems=ticketIssues(candidate,{city,session:active()});
+    if(!problems.length){feedback='<p class="notice">O ingresso está válido para esta sessão. Confira antes de recusar.</p>';draw();return}
+    mission.rejected++;candidate=null;feedback='<p class="tag-valid">Entrada corretamente recusada e cliente orientado.</p>';
+    say('Correto: ingresso divergente ou já utilizado não pode liberar entrada.');draw();
+   }
+  };
+  $('seedTickets').onclick=()=>{
+   const session=active();if(!session){feedback='<p class="notice">Cadastre uma sessão fictícia antes de gerar ingressos.</p>';draw();return}
+   const code=createTicketBatch(session,['J'+(1+Math.floor(Math.random()*12))],'Inteira','Pix','11122233344')[0].code;
+   lookup=code;method='qr';feedback='<p class="tag-valid">Ingresso fictício criado. Use Localizar para conferir.</p>';draw();
+  };
+  $('showTickets').onclick=()=>{
+   feedback=trainingTickets.filter(t=>t.city===city).slice(-12).map(renderTicket).join('')||'<p>Nenhum ingresso demonstrativo disponível.</p>';draw()
+  };
+  $('goRoomPanel').onclick=()=>{if(active())roomLightingDialog(active().room);else say('Selecione uma sessão primeiro.')};
+ }
  draw();
 }
 function validateCustomerSale(m,session,seats,type,payment,received,prices,occupiedSeats){
