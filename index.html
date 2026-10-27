@@ -538,6 +538,10 @@ function buildPopcornStation(){
  for(const x of [-.31,.31]){const sleeve=b(hands,x,-.4,-.62,.15,.38,.19,black);sleeve.rotation.z=x<0?-.20:.20;const hand=b(hands,x,-.60,-.72,.135,.18,.14,gold);hand.visible=false;}
  epiVisual.gloves=hands;hands.children.filter(x=>x.position.y<-.50).forEach(x=>x.visible=false);
  epiVisual.cap=piece(camera,new THREE.TorusGeometry(.42,.026,7,35),black,0,.47,-.54);epiVisual.cap.rotation.x=Math.PI/2;epiVisual.cap.visible=false;
+ // Agrupa apenas componentes estruturais, preservando os EPIs manipuláveis.
+ // As partes de boné, luvas, cabelo e uniforme continuam separadas no mundo.
+ const epiMarkers=world.filter(item=>item.epiStation).map(item=>item.marker).filter(Boolean);
+ rack.userData.staticBatchReport=batchStaticBoxes(rack,{exclude:epiMarkers});
  refreshEpiHUD();
 }
 function animateEpi(dt){if(!equipMotion)return;equipMotion.time+=dt;
@@ -631,7 +635,8 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
  // Otimização após a aplicação dos materiais definitivos: evita substituir
  // objetos dinâmicos e garante que móveis, portas e luzes permaneçam editáveis.
  const excluded=new Set([...lights,...world.map(item=>item.marker).filter(Boolean)]);
- staticBatchReport={};
+ const epiRack=scene.children.find(node=>node.userData.staticBatchReport);
+ staticBatchReport={epiRack:epiRack?.userData.staticBatchReport||null};
  staticBatchReport.hall=batchStaticBoxes(scene,{exclude:[...excluded]});
  for(const [name,room] of Object.entries(roomScenes)){
    staticBatchReport[name]=batchStaticBoxes(room.group,{exclude:[...excluded]});
