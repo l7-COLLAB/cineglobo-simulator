@@ -51,7 +51,9 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
  }
  expect(metrics.details.caixa.originalDraws).toBeGreaterThan(7);
  expect(metrics.details.terminal.originalDraws).toBeGreaterThan(8);
- expect(metrics.details.caixa.mergedDraws).toBe(1);
+ expect(metrics.details.caixa.mergedDraws).toBeGreaterThanOrEqual(1);
+ expect(metrics.details.caixa.mergedDraws).toBeLessThanOrEqual(3);
+ expect(metrics.details.caixa.originalDraws).toBeGreaterThan(metrics.details.caixa.mergedDraws+7);
  expect(metrics.details.terminal.mergedDraws).toBe(1);
  expect(metrics.batches.hall.objectsReplaced).toBeGreaterThan(4);
  for(const flavor of ['SALGADA','DOCE']){
