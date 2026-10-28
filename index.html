@@ -320,7 +320,7 @@ function makeTrainer(){
    const upper=part(new THREE.CylinderGeometry(.105,.091,.39,10),shirt,side*.078,-.17,0,side*.18,pivot);
    sphere(1,.099,.103,.101,shirt,side*.041,-.025,0).visible=false;
    part(new THREE.CylinderGeometry(.082,.066,.35,10),skin,side*.13,-.52,.045,side*.08,pivot);
-   const hand=part(new THREE.SphereGeometry(.073,10,8),skin,side*.14,-.71,.063);hand.scale.set(.85,1.30,.73);
+   const hand=part(new THREE.SphereGeometry(.073,10,8),skin,side*.14,-.71,.063,0,pivot);hand.scale.set(.85,1.30,.73);
    arms.push({pivot,side});
  }
  // Pernas, calçados e solas claras.
@@ -345,6 +345,11 @@ function makeTrainer(){
  object('Conversar com instrutor',1.25,1.25,0x93433f,()=>say('Sou seu instrutor do Cine Globo. Posso demonstrar o funcionamento do caixa, a validação dos ingressos e as rotinas das salas.'));
  // Controle de gestos compartilhado com animação econômica no ciclo principal.
  trainerParts=arms;
+ // Componente rígido compartilhado no torso e em cada braço; mantém pivôs
+ // de animação, logotipo, balão e pontos de conversa totalmente separados.
+ const trunk=mergeStaticDetails(group,{minCount:2});
+ const armsCombined=arms.map(({pivot})=>mergeStaticDetails(pivot,{minCount:2}));
+ trainer.userData.optimization={trunk,arms:armsCombined};
 }
 
 
