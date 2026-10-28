@@ -1,4 +1,4 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><title>CineGlobo Simulator | iPhone · v2.2 visual</title><style>.epi-line{font-size:12px;padding:3px 0;color:#f0d6ad}#epiProgress{max-height:200px;overflow:auto} 
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><title>CineGlobo Simulator | iPhone · v2.4 revisão técnica</title><style>.epi-line{font-size:12px;padding:3px 0;color:#f0d6ad}#epiProgress{max-height:200px;overflow:auto} 
 :root{font-family:Inter,system-ui,-apple-system,Arial,sans-serif;color:#f8f5f0;background:#101017}*{box-sizing:border-box}body{margin:0;overflow:hidden}button,select,input,textarea{font:inherit}button{cursor:pointer}#scene{position:fixed;inset:0}#top{position:fixed;top:0;left:0;right:0;padding:13px 17px;background:linear-gradient(#101017eb,#10101720);display:flex;gap:12px;align-items:center;z-index:3;flex-wrap:wrap}.brand{font-weight:850;letter-spacing:.06em}.brand span{color:#ec9046}.tag{font-size:11px;border:1px solid #8b8590;border-radius:40px;padding:5px 9px;color:#ddd}.spacer{flex:1}select,button,input,textarea{background:#282733;color:white;border:1px solid #555361;border-radius:9px;padding:9px 12px}button:hover{background:#3b3642}.primary{background:#ab4a32;border-color:#dc6d48}.primary:hover{background:#c35c3e}#hud{position:fixed;z-index:3;top:85px;left:15px;width:min(325px,calc(100vw - 30px));pointer-events:none}#hud>div{pointer-events:auto}.panel{background:#17171fdc;border:1px solid #5b4851;border-radius:14px;padding:14px;box-shadow:0 12px 35px #0004;backdrop-filter:blur(12px);margin-bottom:9px}.small{font-size:12px;color:#c4bfc4}.tasks{max-height:220px;overflow:auto}.task{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:12px}.task.done{text-decoration:line-through;color:#a6c9b0}#helper{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);width:min(590px,calc(100vw - 24px));background:#191720ee;border:1px solid #ac6253;border-radius:16px;padding:14px;z-index:5;box-shadow:0 12px 35px #0008}#helper strong{color:#f5ba81}#helper p{margin:7px 0;line-height:1.45;font-size:14px}#helper button{margin:4px 5px 0 0;font-size:12px}#cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#fff9;font-size:26px;pointer-events:none;text-shadow:0 0 5px #000}#action{position:fixed;bottom:155px;left:50%;transform:translateX(-50%);background:#1c1824df;padding:10px 16px;border-radius:12px;border:1px solid #b76b4d;z-index:3;text-align:center;display:none}.overlay{position:fixed;inset:0;background:#09080bcc;display:none;align-items:center;justify-content:center;z-index:10;padding:15px}.overlay.visible{display:flex}.dialog{background:#1c1b24;border:1px solid #7e5554;border-radius:17px;padding:21px;width:min(720px,100%);max-height:90vh;overflow:auto;box-shadow:0 25px 65px #000b}h2{margin:0 0 9px}h3{margin:14px 0 8px}.muted{color:#bbb5c0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px}.field{display:flex;flex-direction:column;gap:5px;margin:9px 0;font-size:13px}.field input,.field select,.field textarea{width:100%}.screen{border-radius:12px;background:#0d1a20;border:1px solid #42616a;padding:16px;margin:13px 0}.rows{display:flex;gap:8px;flex-wrap:wrap}.exit{float:right}.badge{font-size:11px;border:1px solid #695b63;border-radius:30px;padding:4px 9px}.notice{padding:12px;border-left:3px solid #e78a50;background:#2c2429;margin:7px 0;font-size:13px}.foot{font-size:11px;color:#b3aab0}#joy{position:fixed;bottom:25px;left:22px;width:105px;height:105px;border-radius:50%;background:#ffffff20;border:1px solid #fff6;display:none;z-index:4;touch-action:none}#nub{position:absolute;top:34px;left:34px;width:35px;height:35px;border-radius:50%;background:#fff9}#touchInteract{display:none;position:fixed;bottom:45px;right:22px;border-radius:50%;height:70px;width:70px;z-index:4;background:#a34d3a}#look{position:fixed;right:0;top:70px;bottom:145px;width:48%;touch-action:none;z-index:2;display:none}#start{position:fixed;inset:0;background:linear-gradient(110deg,#161018fa,#331d20e8);z-index:20;display:flex;align-items:center;justify-content:center;padding:22px}#start .dialog{width:min(620px,100%)}@media(max-width:750px){#top{padding:7px 9px;gap:5px}.brand{font-size:12px}.tag{display:none}#hud{top:66px;width:210px}.panel{padding:9px}.tasks{max-height:95px}.task{font-size:11px}#helper{bottom:124px;padding:9px}#helper p{font-size:12px}#joy,#touchInteract,#look{display:block}#action{bottom:225px;font-size:12px}button{padding:7px 8px;font-size:12px}}
 
 /* Missão de validação v1.1 */
@@ -90,8 +90,33 @@ button,select,input,textarea{touch-action:manipulation}
  #top button{padding:5px 6px;font-size:11px}
  #top select{max-width:22vw}
 }
-</style><link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#171018"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="CineGlobo"><link rel="apple-touch-icon" href="./icon.svg"></head><body><div id="scene"></div><button id="mobileHudToggle" type="button" aria-expanded="false" aria-controls="hud">☰ Tarefas</button><div id="rotateHint">Dica: gire o iPhone na horizontal para ampliar a visão do cinema.</div><div id="cross">+</div><div id="top"><div class="brand">◉ CINE<span>GLOBO</span> SIMULATOR</div><span class="tag">v2.2 · iPHONE</span><span class="spacer"></span><select id="city" aria-label="Unidade"></select><button id="openSchedule">Agenda</button><button id="openNotices">Avisos</button><button id="openAdmin">Admin</button><button id="pauseBtn" aria-label="Pausar jogo">☰ Pausa</button></div><aside id="hud"><div class="panel"><strong id="siteName">Cine Globo · Ijuí</strong><div class="small">Treinamento: abertura de turno</div></div><div class="panel"><strong>Checklist de abertura</strong><div id="tasks" class="tasks"></div><div id="progress" class="small"></div></div><div class="panel" id="rolePanel"></div><div class="panel" id="epiProgress"></div></aside><div id="action"></div><div id="helper"><strong>INSTRUTOR VIRTUAL</strong><p id="speech">Bem-vindo ao CineGlobo Simulator. Vou acompanhar seu primeiro turno.</p><div class="rows"><button id="nextSpeech" class="primary">Continuar</button><button id="askHelp">Pedir orientação</button><button id="hideHelp">Ocultar</button></div></div><div id="joy"><div id="nub"></div></div><div id="look"></div><button id="touchInteract">AGIR</button><div class="overlay" id="pauseOverlay"><div class="dialog" style="max-width:560px"><h2>Jogo pausado</h2><p class="muted">CineGlobo Simulator · Configurações de navegação e áudio</p><div class="rows"><button id="resumeBtn" class="primary">▶ Continuar</button><button id="resetViewBtn">↺ Centralizar câmera</button><button id="techBtn" type="button" aria-pressed="false">Métricas técnicas: desligadas</button><button id="exportTechBtn" type="button">Compartilhar relatório técnico</button></div><p id="techStatus" class="small" role="status" aria-live="polite">Ative as métricas, percorra as áreas e compartilhe o relatório neste menu. Nada é enviado automaticamente.</p><h3>Configurações</h3><label class="field">Sensibilidade do mouse: <strong id="mouseText"></strong><input id="mouseSens" type="range" min="1" max="100" value="22"></label><label class="field">Sensibilidade ao tocar/arrastar: <strong id="touchText"></strong><input id="touchSens" type="range" min="1" max="100" value="22"></label><label class="field">Qualidade gráfica<select id="quality"><option value="low">Econômica · mais leve</option><option value="medium">Equilibrada</option><option value="high">Alta</option></select></label><label class="field">Limite de quadros por segundo<select id="fps"><option value="30">30 FPS · econômico</option><option value="45">45 FPS · equilibrado</option><option value="60">60 FPS · fluido</option></select></label><label class="field">Volume geral: <strong id="volumeText"></strong><input id="volume" type="range" min="0" max="100" value="40"></label><p class="small">Esta demonstração não possui trilha sonora; o volume fica configurado para sons introduzidos futuramente. No celular: joystick à esquerda, olhar arrastando à direita e AGIR. ESC abre a pausa no computador.</p><button id="closePause" class="primary">Salvar e continuar</button></div></div><div class="overlay" id="modal"><div class="dialog"><button class="exit" id="closeModal">Fechar ✕</button><div id="modalContent"></div></div></div><div id="start"><div class="dialog"><h2>CineGlobo Simulator</h2><p>Protótipo imersivo 3D para demonstração comercial. Você pode caminhar pelo cinema, interagir com equipamentos, acompanhar o instrutor e testar a simulação de bilheteria.</p><p class="notice">O ambiente ainda é <b>conceitual</b>, não reproduz a planta real de Ijuí. Programação, ingressos e procedimentos são fictícios.</p><div class="field"><label>Escolha a unidade</label><select id="startCity"></select></div><div class="field"><label>Escolha sua função neste turno</label><select id="startRole"><option value="caixa">Caixa e atendimento</option><option value="bomboniere">Bomboniere e pipoqueiras</option><option value="sala">Salas e controle de ingressos</option></select></div><p class="notice">Os outros setores serão atendidos por funcionários virtuais. Você poderá escolher outra função ao iniciar um novo turno.</p><p class="small"><b>Novidades:</b> cliente que caminha até o caixa quando o computador é acionado; monitor voltado para o funcionário; missão espacial de EPIs com movimentos animados; estação de duas pipoqueiras com vitrines, caldeirões e controles; menu de pausa com sensibilidade e qualidade ajustáveis; separação física das salas; portas interativas, salas exploráveis e instrutor visível no modo local e GLB opcional quando hospedado e alternativa geométrica. <b>Computador:</b> WASD para andar, mouse para olhar, E para interagir, ESC para liberar o cursor. <b>Celular:</b> joystick à esquerda, arrastar à direita e botão AGIR.</p><button class="primary" id="enter">Entrar no cinema virtual</button></div></div><script>
-(()=>{const b=document.getElementById('mobileHudToggle');if(matchMedia('(pointer:coarse)').matches){document.body.classList.add('hud-closed')}b.addEventListener('click',()=>{const hidden=document.body.classList.toggle('hud-closed');b.setAttribute('aria-expanded',String(!hidden));b.textContent=hidden?'☰ Tarefas':'✕ Fechar tarefas';});if('serviceWorker' in navigator && (location.protocol==='https:'||['localhost','127.0.0.1'].includes(location.hostname)))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('CineGlobo PWA: cache indisponível',err)));})();
+</style><link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#171018"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="CineGlobo"><link rel="apple-touch-icon" href="./icon.svg"></head><body><div id="scene"></div><button id="mobileHudToggle" type="button" aria-expanded="false" aria-controls="hud">☰ Tarefas</button><div id="rotateHint">Dica: gire o iPhone na horizontal para ampliar a visão do cinema.</div><div id="cross">+</div><div id="top"><div class="brand">◉ CINE<span>GLOBO</span> SIMULATOR</div><span class="tag">v2.4 · iPHONE</span><span class="spacer"></span><select id="city" aria-label="Unidade"></select><button id="openSchedule">Agenda</button><button id="openNotices">Avisos</button><button id="openAdmin">Admin</button><button id="pauseBtn" aria-label="Pausar jogo">☰ Pausa</button></div><aside id="hud"><div class="panel"><strong id="siteName">Cine Globo · Ijuí</strong><div class="small">Treinamento: abertura de turno</div></div><div class="panel"><strong>Checklist de abertura</strong><div id="tasks" class="tasks"></div><div id="progress" class="small"></div></div><div class="panel" id="rolePanel"></div><div class="panel" id="epiProgress"></div></aside><div id="action"></div><div id="helper"><strong>INSTRUTOR VIRTUAL</strong><p id="speech">Bem-vindo ao CineGlobo Simulator. Vou acompanhar seu primeiro turno.</p><div class="rows"><button id="nextSpeech" class="primary">Continuar</button><button id="askHelp">Pedir orientação</button><button id="hideHelp">Ocultar</button></div></div><div id="joy"><div id="nub"></div></div><div id="look"></div><button id="touchInteract">AGIR</button><div class="overlay" id="pauseOverlay"><div class="dialog" style="max-width:560px"><h2>Jogo pausado</h2><p class="muted">CineGlobo Simulator · Configurações de navegação e áudio</p><div class="rows"><button id="resumeBtn" class="primary">▶ Continuar</button><button id="resetViewBtn">↺ Centralizar câmera</button><button id="techBtn" type="button" aria-pressed="false">Métricas técnicas: desligadas</button><button id="exportTechBtn" type="button">Compartilhar relatório técnico</button></div><p id="techStatus" class="small" role="status" aria-live="polite">Ative as métricas, percorra as áreas e compartilhe o relatório neste menu. Nada é enviado automaticamente.</p><h3>Configurações</h3><label class="field">Sensibilidade do mouse: <strong id="mouseText"></strong><input id="mouseSens" type="range" min="1" max="100" value="22"></label><label class="field">Sensibilidade ao tocar/arrastar: <strong id="touchText"></strong><input id="touchSens" type="range" min="1" max="100" value="22"></label><label class="field">Qualidade gráfica<select id="quality"><option value="low">Econômica · mais leve</option><option value="medium">Equilibrada</option><option value="high">Alta</option></select></label><label class="field">Limite de quadros por segundo<select id="fps"><option value="30">30 FPS · econômico</option><option value="45">45 FPS · equilibrado</option><option value="60">60 FPS · fluido</option></select></label><label class="field">Volume geral: <strong id="volumeText"></strong><input id="volume" type="range" min="0" max="100" value="40"></label><p class="small">Esta demonstração não possui trilha sonora; o volume fica configurado para sons introduzidos futuramente. No celular: joystick à esquerda, olhar arrastando à direita e AGIR. ESC abre a pausa no computador.</p><button id="closePause" class="primary">Salvar e continuar</button></div></div><div class="overlay" id="modal"><div class="dialog"><button class="exit" id="closeModal">Fechar ✕</button><div id="modalContent"></div></div></div><div id="start"><div class="dialog"><h2>CineGlobo Simulator</h2><p>Protótipo imersivo 3D para demonstração comercial. Você pode caminhar pelo cinema, interagir com equipamentos, acompanhar o instrutor e testar a simulação de bilheteria.</p><p class="notice">O ambiente ainda é <b>conceitual</b>, não reproduz a planta real de Ijuí. Programação, ingressos e procedimentos são fictícios.</p><div class="field"><label>Escolha a unidade</label><select id="startCity"></select></div><div class="field"><label>Escolha sua função neste turno</label><select id="startRole"><option value="caixa">Caixa e atendimento</option><option value="bomboniere">Bomboniere e pipoqueiras</option><option value="sala">Salas e controle de ingressos</option></select></div><p class="notice">Os outros setores serão atendidos por funcionários virtuais. Você poderá escolher outra função ao iniciar um novo turno.</p><p class="small"><b>Novidades:</b> cliente que caminha até o caixa quando o computador é acionado; monitor voltado para o funcionário; missão espacial de EPIs com movimentos animados; estação de duas pipoqueiras com vitrines, caldeirões e controles; menu de pausa com sensibilidade e qualidade ajustáveis; separação física das salas; portas interativas, salas exploráveis e instrutor visível no modo local e GLB opcional quando hospedado e alternativa geométrica. <b>Computador:</b> WASD para andar, mouse para olhar, E para interagir, ESC para liberar o cursor. <b>Celular:</b> joystick à esquerda, arrastar à direita e botão AGIR.</p><button class="primary" id="enter">Entrar no cinema virtual</button></div></div><script>
+(()=>{const b=document.getElementById('mobileHudToggle');if(matchMedia('(pointer:coarse)').matches){document.body.classList.add('hud-closed')}b.addEventListener('click',()=>{const hidden=document.body.classList.toggle('hud-closed');b.setAttribute('aria-expanded',String(!hidden));b.textContent=hidden?'☰ Tarefas':'✕ Fechar tarefas';});if('serviceWorker' in navigator && (location.protocol==='https:'||['localhost','127.0.0.1'].includes(location.hostname))){
+ window.addEventListener('load',async()=>{
+  const hadController=Boolean(navigator.serviceWorker.controller);
+  function showUpdate(){
+   if(!hadController||document.getElementById('updateGameBanner'))return;
+   const banner=document.createElement('aside');
+   banner.id='updateGameBanner';
+   banner.setAttribute('role','status');
+   banner.style.cssText='position:fixed;z-index:120;bottom:calc(12px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);max-width:90vw;padding:12px 16px;border:1px solid #b78663;border-radius:12px;background:#18151a;color:#fff;font:14px system-ui;box-shadow:0 6px 24px #000a;display:flex;gap:10px;align-items:center';
+   const message=document.createElement('span');message.textContent='Atualização disponível. Salve seu progresso antes de reiniciar o jogo.';
+   const action=document.createElement('button');action.type='button';action.textContent='Atualizar';action.style.cssText='min-height:42px;padding:8px 13px;background:#a24b37;color:white;border:0;border-radius:8px;cursor:pointer';
+   action.addEventListener('click',()=>location.reload());
+   banner.append(message,action);document.body.appendChild(banner);
+  }
+  try{
+   const registration=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
+   navigator.serviceWorker.addEventListener('controllerchange',showUpdate);
+   registration.addEventListener('updatefound',()=>{
+    registration.installing?.addEventListener('statechange',event=>{
+     if(event.target.state==='activated')showUpdate();
+    });
+   });
+   registration.update().catch(()=>{});
+  }catch(err){console.warn('CineGlobo PWA: cache indisponível',err)}
+ });
+}})();
 </script><script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script><script type="module">
 import * as THREE from 'three';
 import { finishCinema, upholsteredGeometry } from './visuals.js';
@@ -104,13 +129,34 @@ import { createPerformanceMonitor } from './performance-monitor.js';
 import { createCheckoutZone } from './checkout-zone.js';
 import { createCinemaCharacter } from './character-kit.js';
 import { batchStaticBoxes, mergeStaticDetails } from './static-batching.js';
+import { planWalkingRoute } from './navigation.mjs';
 const $=x=>document.getElementById(x),cities=['Três Passos','Palmeira das Missões','Santa Rosa','Frederico Westphalen','Cruz Alta','Ijuí','Horizontina'];
 const defaults={notices:[{city:'Todas',text:'Bem-vindo ao ambiente demonstrativo. Todos os dados são fictícios.'}],sessions:[{city:'Ijuí',film:'Aventura Estelar (demonstração)',time:'14:00',room:'Sala 1',format:'2D'},{city:'Ijuí',film:'Mistério da Noite (demonstração)',time:'16:30',room:'Sala 2',format:'3D'}],tasks:['Acender as luzes do hall','Ligar o computador do caixa','Ligar a mini impressora','Conferir a televisão do catálogo','Preparar a pipoqueira','Conferir a iluminação da Sala 1','Conferir a climatização da Sala 2']};
-let data;try{data={...defaults,...JSON.parse(localStorage.getItem('cineglobo_demo')||'{}')}}catch{data=structuredClone(defaults)};
+let data=structuredClone(defaults);
+try{
+ const stored=JSON.parse(localStorage.getItem('cineglobo_demo')||'{}');
+ if(stored&&typeof stored==='object'&&!Array.isArray(stored)){
+  data={...data,...stored};
+  data.tasks=Array.isArray(stored.tasks)?stored.tasks.filter(t=>typeof t==='string'&&t.trim()).slice(0,60).map(t=>t.slice(0,240)):defaults.tasks;
+  data.sessions=Array.isArray(stored.sessions)?stored.sessions.filter(t=>t&&typeof t==='object'&&typeof t.film==='string'&&typeof t.city==='string'&&typeof t.time==='string'&&typeof t.room==='string').slice(0,180):defaults.sessions;
+  data.notices=Array.isArray(stored.notices)?stored.notices.filter(t=>t&&typeof t.city==='string'&&typeof t.text==='string').slice(-100):defaults.notices;
+ }
+}catch(error){console.warn('Configuração local inválida, usando dados demonstrativos.',error)}
 let technicalMonitor=null,staticBatchReport=null,staticDetailReport=null;
 const roomRoutines={'Sala 1':createRoomRoutine('Sala 1'),'Sala 2':createRoomRoutine('Sala 2')};
 const roomSessionChoice={'Sala 1':'','Sala 2':''};
-let settings={mouse:26,touch:34,quality:"medium",fps:30,volume:40};try{settings={...settings,...JSON.parse(localStorage.getItem("cineglobo_config")||"{}")}}catch{}
+let settings={mouse:26,touch:34,quality:"medium",fps:30,volume:40};
+try{
+ const stored=JSON.parse(localStorage.getItem("cineglobo_config")||"{}");
+ if(stored&&typeof stored==='object'&&!Array.isArray(stored))settings={...settings,...stored};
+}catch{}
+for(const k of ['mouse','touch','volume']){
+ const v=Number(settings[k]);
+ settings[k]=Number.isFinite(v)?Math.max(k==='volume'?0:1,Math.min(100,v)):({mouse:26,touch:34,volume:40})[k];
+}
+if(!['low','medium','high'].includes(settings.quality))settings.quality='medium';
+if(![30,45,60].includes(Number(settings.fps)))settings.fps=30;
+else settings.fps=Number(settings.fps);
 // Migração única da antiga qualidade subnativa (0,6×) para nitidez equilibrada.
 // Após esta atualização, a escolha manual do usuário é respeitada.
 try{
@@ -300,7 +346,7 @@ function updateWorkers(dt=0){npcClock+=dt;for(const n of npcTeam){n.g.visible=n.
 const speeches=['Bem-vindo! Este é um cinema virtual de treinamento. Comece explorando o hall e interagindo com equipamentos.','Aproxime-se de um objeto identificado e pressione E, ou AGIR no celular. Cada ação simula um procedimento.','Para treinar no caixa, caminhe para trás do balcão e use o computador voltado ao funcionário. Um cliente virá até você; também é possível clicar diretamente quando o monitor estiver selecionado. Depois confira o filme, a sessão, as poltronas e o pagamento.','Na agenda você verá sessões fictícias da unidade selecionada. No painel Admin poderá modificar horários e comunicados.'];
 function trainerAdvice(){if(!shiftState.started||!shiftState.completed){say(shiftHint());return;}const tips={caixa:'Estou ao seu lado. Aproxime-se da face do monitor do caixa e pressione E/AGIR ou clique nele. Quando o cliente chegar, confirme o pedido e conclua a venda no computador.',bomboniere:'Vamos para a bomboniere. Comece pela preparação de EPIs somente se você for operar as pipoqueiras. Siga os objetos da bancada em sequência.',sala:'Eu vou acompanhar você até as salas. Confira o ingresso do cliente, a sala correta e o horário antes de liberar o acesso.'};say(tips[currentRole]);}
 
-const trainerFollow={lastX:0,lastZ:6,headingX:0,headingZ:-1,targetX:.75,targetZ:4,walking:false};
+const trainerFollow={lastX:0,lastZ:6,headingX:0,headingZ:-1,targetX:2.25,targetZ:6.55,walking:false,path:[],repath:0,lastGoalX:2.25,lastGoalZ:6.55};
 let seatedAtSofa=null;
 function updateTrainerFollow(dt){
  if(!trainer||paused||$('start').style.display!=='none')return;
@@ -308,33 +354,45 @@ function updateTrainerFollow(dt){
  const deltaX=px-trainerFollow.lastX,deltaZ=pz-trainerFollow.lastZ;
  const moving=Math.hypot(deltaX,deltaZ)>.013;
  if(moving){
-  // A trajetória real, e NÃO a rotação da câmera, define o ponto de parada.
   const d=Math.hypot(deltaX,deltaZ);
-  trainerFollow.headingX=trainerFollow.headingX*.75+(deltaX/d)*.25;
-  trainerFollow.headingZ=trainerFollow.headingZ*.75+(deltaZ/d)*.25;
-  const h=Math.hypot(trainerFollow.headingX,trainerFollow.headingZ)||1;
-  const hx=trainerFollow.headingX/h,hz=trainerFollow.headingZ/h;
-  const candidates=[
-   [px-hx*1.65-hz*.43,pz-hz*1.65+hx*.43],
-   [px-hx*1.7+hz*.43,pz-hz*1.7-hx*.43],
-   [px-hx*2.0,pz-hz*2.0]
-  ];
-  const target=candidates.find(([x,z])=>canStand(x,z));
-  if(target){trainerFollow.targetX=target[0];trainerFollow.targetZ=target[1]}
+  trainerFollow.headingX=trainerFollow.headingX*.75+deltaX/d*.25;
+  trainerFollow.headingZ=trainerFollow.headingZ*.75+deltaZ/d*.25;
+  const length=Math.hypot(trainerFollow.headingX,trainerFollow.headingZ)||1;
+  const hx=trainerFollow.headingX/length,hz=trainerFollow.headingZ/length;
+  const offsets=[[1.65,-.43],[1.7,.43],[2,0]];
+  const target=offsets.map(([back,side])=>({x:px-hx*back-hz*side,z:pz-hz*back+hx*side})).find(p=>canStand(p.x,p.z));
+  if(target){trainerFollow.targetX=target.x;trainerFollow.targetZ=target.z}
  }
  trainerFollow.lastX=px;trainerFollow.lastZ=pz;
- let dx=trainerFollow.targetX-trainer.position.x,dz=trainerFollow.targetZ-trainer.position.z;
- const distance=Math.hypot(dx,dz),playerDistance=Math.hypot(px-trainer.position.x,pz-trainer.position.z);
- // Histerese: quando o jogador para ou apenas gira, o ajudante permanece parado.
- const shouldStart=distance>1.1||playerDistance>3.1;
- const shouldStop=distance<.48&&playerDistance>1.05;
+ const x=trainer.position.x,z=trainer.position.z;
+ const goalX=trainerFollow.targetX,goalZ=trainerFollow.targetZ;
+ const distance=Math.hypot(goalX-x,goalZ-z),playerDistance=Math.hypot(px-x,pz-z);
+ const shouldStart=distance>1.05||playerDistance>3.15;
+ const shouldStop=distance<.47&&playerDistance>1.05;
  if(!trainerFollow.walking&&shouldStart)trainerFollow.walking=true;
  if(trainerFollow.walking&&shouldStop)trainerFollow.walking=false;
- if(trainerFollow.walking&&distance>.08){
-  const step=Math.min(distance,Math.max(0,dt)*2.0);
-  const nx=trainer.position.x+dx/distance*step,nz=trainer.position.z+dz/distance*step;
-  if(canStand(nx,nz)&&Math.hypot(nx-px,nz-pz)>1.02){
-   trainer.position.x=nx;trainer.position.z=nz;
+ trainerFollow.repath-=Math.max(0,dt);
+ if(trainerFollow.walking&&canStand(goalX,goalZ)&&(
+  trainerFollow.repath<=0||
+  Math.hypot(goalX-trainerFollow.lastGoalX,goalZ-trainerFollow.lastGoalZ)>.72
+ )){
+  trainerFollow.path=planWalkingRoute({x,z},{x:goalX,z:goalZ},canStand);
+  trainerFollow.repath=1.05;
+  trainerFollow.lastGoalX=goalX;trainerFollow.lastGoalZ=goalZ;
+ }
+ if(trainerFollow.walking){
+  while(trainerFollow.path.length>1&&Math.hypot(trainerFollow.path[0].x-trainer.position.x,trainerFollow.path[0].z-trainer.position.z)<.34)trainerFollow.path.shift();
+  const waypoint=trainerFollow.path[0];
+  if(waypoint){
+   const dx=waypoint.x-trainer.position.x,dz=waypoint.z-trainer.position.z;
+   const wayDistance=Math.hypot(dx,dz);
+   if(wayDistance>.035){
+    const step=Math.min(wayDistance,Math.max(0,dt)*1.8);
+    const nx=trainer.position.x+dx/wayDistance*step,nz=trainer.position.z+dz/wayDistance*step;
+    if(canStand(nx,nz)&&Math.hypot(nx-px,nz-pz)>1.04){
+     trainer.position.x=nx;trainer.position.z=nz;
+    }else{trainerFollow.path=[];trainerFollow.repath=0;trainerFollow.walking=false}
+   }else trainerFollow.path.shift();
   }else trainerFollow.walking=false;
  }
  const interaction=world.find(o=>o.instructor);
@@ -349,7 +407,7 @@ function updateTrainerFollow(dt){
  }
 }
 function say(t){$('helper').style.display='block';$('speech').textContent=t}function save(){localStorage.setItem('cineglobo_demo',JSON.stringify(data))}function fillCities(){['city','startCity'].forEach(id=>{$(id).innerHTML=cities.map(c=>`<option ${c==='Ijuí'?'selected':''}>${c}</option>`).join('')})}fillCities();
-function setCity(c){seatedAtSofa=null;if(c!==city){shiftState=createShift(currentRole,c);lastDeliveredCodes=[]}city=c;for(const name of Object.keys(roomRoutines)){roomRoutines[name]=createRoomRoutine(name);roomSessionChoice[name]='';if(roomLighting[name])setRoomLights(name,'entrada');}$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${t}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
+function setCity(c){seatedAtSofa=null;if(c!==city){shiftState=createShift(currentRole,c);lastDeliveredCodes=[]}city=c;for(const name of Object.keys(roomRoutines)){roomRoutines[name]=createRoomRoutine(name);roomSessionChoice[name]='';if(roomLighting[name])setRoomLights(name,'entrada');}$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${escapeHtml(t)}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
 function mat(color){return new THREE.MeshStandardMaterial({color,roughness:.75})}function box(x,y,z,w,h,d,color){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));m.position.set(x,y,z);scene.add(m);return m}const fixedTextSigns=[];
 function textSign(t,x,y,z,w=2,color='#ffffff'){
  fixedTextSigns.push({t,x,y,z,w,color});
@@ -410,7 +468,7 @@ function makeDoor(x,label){
 }
 function makeTrainer(){
  // Instrutor humano procedural: sem textura facial de pessoa real, baixo custo para navegador.
- const group=new THREE.Group();group.position.set(.75,0,3.15);scene.add(group);trainer=group;
+ const group=new THREE.Group();group.position.set(2.25,0,6.55);scene.add(group);trainer=group;
  const skin=new THREE.MeshStandardMaterial({color:0xb98768,roughness:.94}),skinShade=new THREE.MeshStandardMaterial({color:0x99684e,roughness:.94});
  const shirt=new THREE.MeshStandardMaterial({color:0x111316,roughness:.94}),pants=new THREE.MeshStandardMaterial({color:0x191a1e,roughness:.96});
  const hair=new THREE.MeshStandardMaterial({color:0x211b1a,roughness:.97}),shoe=new THREE.MeshStandardMaterial({color:0x131416,roughness:.83});
@@ -510,6 +568,23 @@ function loadDetailedTrainer(){
  console.info('CineGlobo: instrutor procedural local ativo.');
 }
 
+function initializeRoomLightSurfaces(){
+ for(const [label,light] of Object.entries(roomLighting)){
+  const group=roomScenes[label]?.group;if(!group)continue;
+  const exempt=new Set([light.screen,...light.sconces.map(s=>s.bulb),...light.ceiling.map(c=>c.bulb)]);
+  const seen=new Set();
+  light.surfaces=[];
+  group.traverse(obj=>{
+   if(!obj.isMesh||exempt.has(obj))return;
+   const mat=obj.material;
+   if(!mat?.isMeshStandardMaterial||seen.has(mat))return;
+   seen.add(mat);
+   light.surfaces.push({material:mat,base:mat.color.clone()});
+  });
+  // Aplicado após batching: inclui assentos instanciados e paredes da sala.
+  setRoomLights(label,light.mode);
+ }
+}
 function setRoomLights(room, mode){
  const L=roomLighting[room];if(!L)return;L.mode=mode;
  const ar=mode==='entrada',clean=mode==='limpeza';
@@ -517,9 +592,13 @@ function setRoomLights(room, mode){
  L.cleanLight.intensity=clean?9.0:0;
  L.cleanLight.distance=19;
  L.sconceLight.distance=17;
- L.sconces.forEach(o=>{o.bulb.material.emissiveIntensity=ar?4.0:clean?1.0:0;});
- L.ceiling.forEach(o=>{o.bulb.material.emissiveIntensity=clean?5.0:0;});
+ L.sconces.forEach(o=>{o.bulb.material.emissiveIntensity=ar?4.0:clean?1.0:0;o.bulb.material.color.setHex(mode==='filme'?0x241d1b:0xffefd0);});
+ L.ceiling.forEach(o=>{o.bulb.material.emissiveIntensity=clean?5.0:0;o.bulb.material.color.setHex(clean?0xf3eae2:0x201d1d);});
  if(L.screen)L.screen.material.color.setHex(mode==='filme'?0x98999d:0xffffff);
+ // A luz hemisférica é global (hall + ambas as salas). Escurecemos apenas
+ // as superfícies desta sala, preservando LEDs de segurança emissivos.
+ const brightness=mode==='filme'?.105:mode==='entrada'?.50:1;
+ for(const item of L.surfaces||[])item.material.color.copy(item.base).multiplyScalar(brightness);
  L.leds.forEach(o=>{o.visible=true;});
  const status=document.getElementById('lightingStatus');if(status)status.textContent=mode==='entrada'?'ARANDELAS ACESAS — iluminação suave para recepção e comerciais; LEDs ligados.':mode==='filme'?'FILME — arandelas apagadas, luzes gerais apagadas; somente LEDs de orientação ligados.':'LIMPEZA — luzes gerais acesas para a equipe limpar a sala; LEDs ligados.';
 }
@@ -1179,6 +1258,7 @@ box(-4,2.83,-4.36,2.5,.8,.08,0x131d25);textSign('BILHETERIA',-4.7,3.3,-4.45,2.8)
  // Mescla detalhes residuais opacos do hall em vez de reduzir a qualidade
  // do instrutor ou dos cartazes. Mantém todos os marcadores de interação.
  staticDetailReport.hallExtra=mergeStaticDetails(scene,{exclude:[...excluded],minCount:3});
+ initializeRoomLightSurfaces();
  // Pontos de AGIR do hall continuam individualmente identificáveis em world,
  // mas suas caixas coloridas são desenhadas com UMA chamada.
  const markers=world.filter(item=>item.marker?.userData.trainingWorldMarker&&item.marker.visible&&item.marker.parent===scene);

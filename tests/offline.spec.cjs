@@ -19,11 +19,11 @@ test('PWA abre e inicia o cinema sem rede depois da primeira instalação',async
  await expect.poll(()=>page.evaluate(()=>Boolean(navigator.serviceWorker.controller)),{timeout:15000}).toBe(true);
  const cached=await page.evaluate(async()=>{
   const keys=await caches.keys();
-  const cache=await caches.open(keys.find(key=>key.startsWith('cineglobo-v32-'))||'');
+  const cache=await caches.open(keys.find(key=>key.startsWith('cineglobo-v33-'))||'');
   const files=['./index.html','./vendor/three.module.js','./character-kit.js','./sw.js'];
   return {keys,files:await Promise.all(files.map(async f=>({file:f,present:Boolean(await cache.match(f))})))};
  });
- expect(cached.keys.some(k=>k==='cineglobo-v32-hall-operacional')).toBe(true);
+ expect(cached.keys.some(k=>k==='cineglobo-v33-auditoria-iphone')).toBe(true);
  expect(cached.files.filter(f=>f.file!=='./sw.js').every(f=>f.present)).toBe(true);
  await context.setOffline(true);
  await page.reload({waitUntil:'load',timeout:30000});
