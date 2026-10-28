@@ -6,7 +6,7 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
  await page.route('**/index.html',async route=>{
    let html=fs.readFileSync('index.html','utf8');
    // Dados técnicos temporários apenas na resposta do teste: não expostos na versão pública.
-   html=html.replace('function applyGraphics(){',`window.__visualTest={scene:()=>scene,trainer:()=>trainer,workers:()=>npcTeam,client:()=>queueCustomer,checkout:()=>checkoutVisual,renderer:()=>renderer,shiftVisuals:()=>shiftTerminalVisualReport,batches:()=>staticBatchReport,details:()=>staticDetailReport,world:()=>world,lights:()=>lights,rooms:()=>roomScenes,doors:()=>doors,refreshRooms:()=>updateVisibleRooms(),position:(x,z)=>{player.x=x;player.z=z;player.yaw=0;player.pitch=0;}};\nfunction applyGraphics(){`);
+   html=html.replace('function applyGraphics(){',`window.__visualTest={scene:()=>scene,trainer:()=>trainer,trainerParts:()=>trainerParts,procedural:()=>!trainerRealistic,workers:()=>npcTeam,client:()=>queueCustomer,checkout:()=>checkoutVisual,renderer:()=>renderer,shiftVisuals:()=>shiftTerminalVisualReport,batches:()=>staticBatchReport,details:()=>staticDetailReport,world:()=>world,lights:()=>lights,rooms:()=>roomScenes,doors:()=>doors,refreshRooms:()=>updateVisibleRooms(),position:(x,z)=>{player.x=x;player.z=z;player.yaw=0;player.pitch=0;}};\nfunction applyGraphics(){`);
    await route.fulfill({contentType:'text/html',body:html});
  });
  await page.goto('/index.html');
@@ -23,7 +23,7 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
    });
    return {
      workers:workers().length,
-     trainerOptimization:(()=>{const t=window.__visualTest.trainer();return {procedural:!trainerRealistic,root:t.userData.optimization?.trunk,arms:t.userData.optimization?.arms,armGroups:trainerParts.length,handMovesWithArm:trainerParts.every(a=>a.pivot.children.some(m=>m.isMesh&&m.name?.includes('consolidados')))}})(),
+     trainerOptimization:(()=>{const t=window.__visualTest.trainer();return {procedural:window.__visualTest.procedural(),root:t.userData.optimization?.trunk,arms:t.userData.optimization?.arms,armGroups:window.__visualTest.trainerParts().length,handMovesWithArm:window.__visualTest.trainerParts().every(a=>a.pivot.children.some(m=>m.isMesh&&m.name?.includes('consolidados')))}})(),
 
      separateActors:customer!==staff,
      sharedLegGeometry:customer.userData.walkingLimbs[0].leg.children[0].geometry===staff.userData.walkingLimbs[0].leg.children[0].geometry,
