@@ -36,6 +36,8 @@ test('iPhone horizontal: cena usa tela toda, mantém nitidez e HUD recolhido',as
  expect(initial.furnitureDraws).toBe(1);
  expect(initial.markerDimensions.length).toBeGreaterThanOrEqual(6);
  expect(initial.markerDimensions.every(m=>m.height<.25&&m.depth<.09)).toBe(true);
+ // A tela de entrada cobre intencionalmente os controles até iniciar o jogo.
+ await page.locator('#enter').click();
  await expect(page.locator('#hud')).toBeHidden();
  await page.locator('#mobileHudToggle').click();
  await expect(page.locator('#hud')).toBeVisible();
@@ -48,7 +50,6 @@ test('iPhone horizontal: cena usa tela toda, mantém nitidez e HUD recolhido',as
  });
  // Menu de tarefas abaixo do cabeçalho ou afastado da ação de pausa.
  expect(controlBoxes.toggleTop>=controlBoxes.pauseBottom-5||controlBoxes.toggleRight<=controlBoxes.pauseLeft).toBe(true);
- await page.locator('#enter').click();
  await page.mouse.move(618,219);
  await page.mouse.down();
  await page.mouse.move(750,247,{steps:8});
