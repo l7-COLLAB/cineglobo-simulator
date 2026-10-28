@@ -69,7 +69,7 @@ button,select,input,textarea{touch-action:manipulation}
  #look{left:36%;right:0;width:auto;top:calc(100px + env(safe-area-inset-top));bottom:calc(115px + env(safe-area-inset-bottom));background:transparent;overscroll-behavior:contain}
  #joy{width:132px;height:132px;bottom:calc(15px + env(safe-area-inset-bottom));left:calc(18px + env(safe-area-inset-left));background:#e4e5ed1e;border:2px solid #ffffff5c}
  #nub{width:45px;height:45px;left:calc(50% - 22.5px);top:calc(50% - 22.5px);background:#eeeeefd4;box-shadow:0 0 12px #0005}
- #touchInteract{width:78px;height:78px;min-height:78px;right:calc(20px + env(safe-area-inset-right));bottom:calc(27px + env(safe-area-inset-bottom));border-radius:50%}
+ #touchInteract{display:none;width:78px;height:78px;min-height:78px;right:calc(20px + env(safe-area-inset-right));bottom:calc(27px + env(safe-area-inset-bottom));border-radius:50%}
  #action{bottom:calc(124px + env(safe-area-inset-bottom));max-width:57vw;left:50%;font-size:12px}
  .dialog{max-height:calc(100dvh - 28px)}
 }
@@ -299,20 +299,53 @@ function setupWorkers(){makeWorker('caixa',-5.25,-4.02,0x4b545d);makeWorker('bom
 function updateWorkers(dt=0){npcClock+=dt;for(const n of npcTeam){n.g.visible=n.role!==currentRole;if(!n.g.visible)continue;const t=npcClock+n.phase;n.g.position.x=n.origin.x+Math.sin(t*.37)*.12;n.g.position.z=n.origin.z+Math.cos(t*.4)*.10;n.g.rotation.y=Math.sin(t*.3)*.23;n.g.userData['arm-1'].rotation.x=Math.sin(t*2)*.23;n.g.userData['arm1'].rotation.x=-Math.sin(t*2)*.23;}if(dt&&Math.floor(npcClock/20)!==Math.floor((npcClock-dt)/20)){for(const k of Object.keys(npcCycles))if(k!==currentRole)npcCycles[k]++;roleHUD()}}
 const speeches=['Bem-vindo! Este é um cinema virtual de treinamento. Comece explorando o hall e interagindo com equipamentos.','Aproxime-se de um objeto identificado e pressione E, ou AGIR no celular. Cada ação simula um procedimento.','Para treinar no caixa, caminhe para trás do balcão e use o computador voltado ao funcionário. Um cliente virá até você; também é possível clicar diretamente quando o monitor estiver selecionado. Depois confira o filme, a sessão, as poltronas e o pagamento.','Na agenda você verá sessões fictícias da unidade selecionada. No painel Admin poderá modificar horários e comunicados.'];
 function trainerAdvice(){if(!shiftState.started||!shiftState.completed){say(shiftHint());return;}const tips={caixa:'Estou ao seu lado. Aproxime-se da face do monitor do caixa e pressione E/AGIR ou clique nele. Quando o cliente chegar, confirme o pedido e conclua a venda no computador.',bomboniere:'Vamos para a bomboniere. Comece pela preparação de EPIs somente se você for operar as pipoqueiras. Siga os objetos da bancada em sequência.',sala:'Eu vou acompanhar você até as salas. Confira o ingresso do cliente, a sala correta e o horário antes de liberar o acesso.'};say(tips[currentRole]);}
-function updateTrainerFollow(dt){if(!trainer||paused||$('start').style.display!=='none')return;
- const sideX=Math.cos(player.yaw),sideZ=-Math.sin(player.yaw);
- const backX=Math.sin(player.yaw),backZ=Math.cos(player.yaw);
- const choices=[[-1.18,1.28],[1.18,1.28],[-1.3,1.85],[1.3,1.85]];
- let target=null;
- for(const [side,back] of choices){const x=player.x+sideX*side+backX*back,z=player.z+sideZ*side+backZ*back;
- if(canStand(x,z)){target={x,z};break}}
- if(!target)return;
- const d=Math.hypot(trainer.position.x-target.x,trainer.position.z-target.z);
- if(d>7){trainer.position.x=target.x;trainer.position.z=target.z;}
- else if(d>.13){const step=Math.min(d,dt*2.15);trainer.position.x+=(target.x-trainer.position.x)/d*step;trainer.position.z+=(target.z-trainer.position.z)/d*step;}
- const interaction=world.find(o=>o.instructor);if(interaction){interaction.x=trainer.position.x;interaction.z=trainer.position.z;}
- trainer.rotation.y=Math.atan2(player.x-trainer.position.x,player.z-trainer.position.z);
- if(!trainerRealistic){trainer.position.y=Math.sin(performance.now()*.005)*(d>.2?.028:.008);for(const a of trainerParts)a.pivot.rotation.x=Math.sin(performance.now()*.011+a.side)*(d>.2?.26:.03);}
+
+const trainerFollow={lastX:0,lastZ:6,headingX:0,headingZ:-1,targetX:.75,targetZ:4,walking:false};
+function updateTrainerFollow(dt){
+ if(!trainer||paused||$('start').style.display!=='none')return;
+ const px=player.x,pz=player.z;
+ const deltaX=px-trainerFollow.lastX,deltaZ=pz-trainerFollow.lastZ;
+ const moving=Math.hypot(deltaX,deltaZ)>.013;
+ if(moving){
+  // A trajetória real, e NÃO a rotação da câmera, define o ponto de parada.
+  const d=Math.hypot(deltaX,deltaZ);
+  trainerFollow.headingX=trainerFollow.headingX*.75+(deltaX/d)*.25;
+  trainerFollow.headingZ=trainerFollow.headingZ*.75+(deltaZ/d)*.25;
+  const h=Math.hypot(trainerFollow.headingX,trainerFollow.headingZ)||1;
+  const hx=trainerFollow.headingX/h,hz=trainerFollow.headingZ/h;
+  const candidates=[
+   [px-hx*1.65-hz*.43,pz-hz*1.65+hx*.43],
+   [px-hx*1.7+hz*.43,pz-hz*1.7-hx*.43],
+   [px-hx*2.0,pz-hz*2.0]
+  ];
+  const target=candidates.find(([x,z])=>canStand(x,z));
+  if(target){trainerFollow.targetX=target[0];trainerFollow.targetZ=target[1]}
+ }
+ trainerFollow.lastX=px;trainerFollow.lastZ=pz;
+ let dx=trainerFollow.targetX-trainer.position.x,dz=trainerFollow.targetZ-trainer.position.z;
+ const distance=Math.hypot(dx,dz),playerDistance=Math.hypot(px-trainer.position.x,pz-trainer.position.z);
+ // Histerese: quando o jogador para ou apenas gira, o ajudante permanece parado.
+ const shouldStart=distance>1.1||playerDistance>3.1;
+ const shouldStop=distance<.48&&playerDistance>1.05;
+ if(!trainerFollow.walking&&shouldStart)trainerFollow.walking=true;
+ if(trainerFollow.walking&&shouldStop)trainerFollow.walking=false;
+ if(trainerFollow.walking&&distance>.08){
+  const step=Math.min(distance,Math.max(0,dt)*2.0);
+  const nx=trainer.position.x+dx/distance*step,nz=trainer.position.z+dz/distance*step;
+  if(canStand(nx,nz)&&Math.hypot(nx-px,nz-pz)>1.02){
+   trainer.position.x=nx;trainer.position.z=nz;
+  }else trainerFollow.walking=false;
+ }
+ const interaction=world.find(o=>o.instructor);
+ if(interaction){interaction.x=trainer.position.x;interaction.z=trainer.position.z}
+ const angle=Math.atan2(px-trainer.position.x,pz-trainer.position.z);
+ const turn=Math.atan2(Math.sin(angle-trainer.rotation.y),Math.cos(angle-trainer.rotation.y));
+ trainer.rotation.y+=turn*Math.min(1,Math.max(0,dt)*4.5);
+ if(!trainerRealistic){
+  const pulse=performance.now()*.009,amplitude=trainerFollow.walking?.22:0;
+  trainer.position.y=trainerFollow.walking?Math.sin(pulse*1.3)*.013:0;
+  for(const a of trainerParts)a.pivot.rotation.x=Math.sin(pulse+a.side)*amplitude;
+ }
 }
 function say(t){$('helper').style.display='block';$('speech').textContent=t}function save(){localStorage.setItem('cineglobo_demo',JSON.stringify(data))}function fillCities(){['city','startCity'].forEach(id=>{$(id).innerHTML=cities.map(c=>`<option ${c==='Ijuí'?'selected':''}>${c}</option>`).join('')})}fillCities();
 function setCity(c){if(c!==city){shiftState=createShift(currentRole,c);lastDeliveredCodes=[]}city=c;for(const name of Object.keys(roomRoutines)){roomRoutines[name]=createRoomRoutine(name);roomSessionChoice[name]='';if(roomLighting[name])setRoomLights(name,'entrada');}$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${t}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
@@ -1318,7 +1351,13 @@ function movement(){
  const priority=o.epiStation?.12:(o.name==='Computador do caixa'?.65:0);const s=dist+(1-facing)*3-priority;
  if(s<score){best=o;score=s;}
  });
- currentTarget=best;$('action').style.display=best&&!blocked?'block':'none';if(best)$('action').textContent='E / AGIR · '+best.name;
+ currentTarget=best;
+ const canAct=Boolean(best&&!blocked&&!paused);
+ $('action').style.display=canAct?'block':'none';
+ if(best)$('action').textContent='E / AGIR · '+best.name;
+ // iPhone: o botão não fica permanente na tela; só surge no alcance real.
+ $('touchInteract').style.display=isMobile&&canAct?'block':'none';
+ $('touchInteract').setAttribute('aria-label',canAct?'Interagir: '+best.name:'Nenhuma interação próxima');
  for(const door of doors){door.hinge.rotation.y+= (door.goal-door.hinge.rotation.y)*Math.min(1,dt*8)}
  if(trainerMixer&&!paused)trainerMixer.update(dt);
  updateVisibleRooms();
@@ -1395,7 +1434,7 @@ function applyGraphics(){
  resizeGame();
 }
 function applyInputs(){for(const [key,id] of [['mouse','mouseSens'],['touch','touchSens'],['quality','quality'],['fps','fps'],['volume','volume']])$(id).value=settings[key];$('mouseText').textContent=settings.mouse+'%';$('touchText').textContent=settings.touch+'%';$('volumeText').textContent=settings.volume+'%'}
-function togglePause(force){paused=typeof force==='boolean'?force:!paused;technicalMonitor?.reset();$('pauseOverlay').classList.toggle('visible',paused);if(paused){document.exitPointerLock?.();keys={};joy={x:0,y:0};walkVelocity.set(0,0);$('nub').style.transform='none';applyInputs()}else{lastFrame=0}}
+function togglePause(force){paused=typeof force==='boolean'?force:!paused;technicalMonitor?.reset();$('pauseOverlay').classList.toggle('visible',paused);if(paused){document.exitPointerLock?.();keys={};joy={x:0,y:0};walkVelocity.set(0,0);$('nub').style.transform='none';$('touchInteract').style.display='none';applyInputs()}else{lastFrame=0}}
 $('pauseBtn').onclick=()=>togglePause(true);$('resumeBtn').onclick=$('closePause').onclick=()=>togglePause(false);
 $('resetViewBtn').onclick=()=>{player.pitch=0;player.yaw=0};
 $('techBtn').onclick=()=>{if(!technicalMonitor)return;const on=technicalMonitor.setEnabled(!technicalMonitor.isEnabled());$('techBtn').textContent='Métricas técnicas: '+(on?'ligadas':'desligadas');$('techBtn').setAttribute('aria-pressed',String(on));};
