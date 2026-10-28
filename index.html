@@ -959,6 +959,9 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
    const cabinet=scene.getObjectByName('Pipoqueira visual · '+flavor);
    if(cabinet)staticBatchReport['Pipoqueira '+flavor]=batchStaticBoxes(cabinet);
  }
+ // Mescla detalhes residuais opacos do hall em vez de reduzir a qualidade
+ // do instrutor ou dos cartazes. Mantém todos os marcadores de interação.
+ staticDetailReport.hallExtra=mergeStaticDetails(scene,{exclude:[...excluded],minCount:3});
  loadDetailedTrainer();
  collider(-4.6,-3.7,5,1.7);collider(3.7,-4.6,5.1,1.6);
  for(let x of [-2,2])for(let z of [2,5])collider(x,z,1.55,1.2);
