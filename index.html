@@ -104,6 +104,7 @@ import { createPerformanceMonitor } from './performance-monitor.js';
 import { createCheckoutZone } from './checkout-zone.js';
 import { createCinemaCharacter } from './character-kit.js';
 import { batchStaticBoxes, mergeStaticDetails } from './static-batching.js';
+import { planWalkingRoute } from './navigation.mjs';
 const $=x=>document.getElementById(x),cities=['Três Passos','Palmeira das Missões','Santa Rosa','Frederico Westphalen','Cruz Alta','Ijuí','Horizontina'];
 const defaults={notices:[{city:'Todas',text:'Bem-vindo ao ambiente demonstrativo. Todos os dados são fictícios.'}],sessions:[{city:'Ijuí',film:'Aventura Estelar (demonstração)',time:'14:00',room:'Sala 1',format:'2D'},{city:'Ijuí',film:'Mistério da Noite (demonstração)',time:'16:30',room:'Sala 2',format:'3D'}],tasks:['Acender as luzes do hall','Ligar o computador do caixa','Ligar a mini impressora','Conferir a televisão do catálogo','Preparar a pipoqueira','Conferir a iluminação da Sala 1','Conferir a climatização da Sala 2']};
 let data;try{data={...defaults,...JSON.parse(localStorage.getItem('cineglobo_demo')||'{}')}}catch{data=structuredClone(defaults)};
@@ -300,7 +301,7 @@ function updateWorkers(dt=0){npcClock+=dt;for(const n of npcTeam){n.g.visible=n.
 const speeches=['Bem-vindo! Este é um cinema virtual de treinamento. Comece explorando o hall e interagindo com equipamentos.','Aproxime-se de um objeto identificado e pressione E, ou AGIR no celular. Cada ação simula um procedimento.','Para treinar no caixa, caminhe para trás do balcão e use o computador voltado ao funcionário. Um cliente virá até você; também é possível clicar diretamente quando o monitor estiver selecionado. Depois confira o filme, a sessão, as poltronas e o pagamento.','Na agenda você verá sessões fictícias da unidade selecionada. No painel Admin poderá modificar horários e comunicados.'];
 function trainerAdvice(){if(!shiftState.started||!shiftState.completed){say(shiftHint());return;}const tips={caixa:'Estou ao seu lado. Aproxime-se da face do monitor do caixa e pressione E/AGIR ou clique nele. Quando o cliente chegar, confirme o pedido e conclua a venda no computador.',bomboniere:'Vamos para a bomboniere. Comece pela preparação de EPIs somente se você for operar as pipoqueiras. Siga os objetos da bancada em sequência.',sala:'Eu vou acompanhar você até as salas. Confira o ingresso do cliente, a sala correta e o horário antes de liberar o acesso.'};say(tips[currentRole]);}
 
-const trainerFollow={lastX:0,lastZ:6,headingX:0,headingZ:-1,targetX:.75,targetZ:4,walking:false};
+const trainerFollow={lastX:0,lastZ:6,headingX:0,headingZ:-1,targetX:2.25,targetZ:6.55,walking:false,path:[],repath:0,lastGoalX:2.25,lastGoalZ:6.55};
 let seatedAtSofa=null;
 function updateTrainerFollow(dt){
  if(!trainer||paused||$('start').style.display!=='none')return;
@@ -308,33 +309,45 @@ function updateTrainerFollow(dt){
  const deltaX=px-trainerFollow.lastX,deltaZ=pz-trainerFollow.lastZ;
  const moving=Math.hypot(deltaX,deltaZ)>.013;
  if(moving){
-  // A trajetória real, e NÃO a rotação da câmera, define o ponto de parada.
   const d=Math.hypot(deltaX,deltaZ);
-  trainerFollow.headingX=trainerFollow.headingX*.75+(deltaX/d)*.25;
-  trainerFollow.headingZ=trainerFollow.headingZ*.75+(deltaZ/d)*.25;
-  const h=Math.hypot(trainerFollow.headingX,trainerFollow.headingZ)||1;
-  const hx=trainerFollow.headingX/h,hz=trainerFollow.headingZ/h;
-  const candidates=[
-   [px-hx*1.65-hz*.43,pz-hz*1.65+hx*.43],
-   [px-hx*1.7+hz*.43,pz-hz*1.7-hx*.43],
-   [px-hx*2.0,pz-hz*2.0]
-  ];
-  const target=candidates.find(([x,z])=>canStand(x,z));
-  if(target){trainerFollow.targetX=target[0];trainerFollow.targetZ=target[1]}
+  trainerFollow.headingX=trainerFollow.headingX*.75+deltaX/d*.25;
+  trainerFollow.headingZ=trainerFollow.headingZ*.75+deltaZ/d*.25;
+  const length=Math.hypot(trainerFollow.headingX,trainerFollow.headingZ)||1;
+  const hx=trainerFollow.headingX/length,hz=trainerFollow.headingZ/length;
+  const offsets=[[1.65,-.43],[1.7,.43],[2,0]];
+  const target=offsets.map(([back,side])=>({x:px-hx*back-hz*side,z:pz-hz*back+hx*side})).find(p=>canStand(p.x,p.z));
+  if(target){trainerFollow.targetX=target.x;trainerFollow.targetZ=target.z}
  }
  trainerFollow.lastX=px;trainerFollow.lastZ=pz;
- let dx=trainerFollow.targetX-trainer.position.x,dz=trainerFollow.targetZ-trainer.position.z;
- const distance=Math.hypot(dx,dz),playerDistance=Math.hypot(px-trainer.position.x,pz-trainer.position.z);
- // Histerese: quando o jogador para ou apenas gira, o ajudante permanece parado.
- const shouldStart=distance>1.1||playerDistance>3.1;
- const shouldStop=distance<.48&&playerDistance>1.05;
+ const x=trainer.position.x,z=trainer.position.z;
+ const goalX=trainerFollow.targetX,goalZ=trainerFollow.targetZ;
+ const distance=Math.hypot(goalX-x,goalZ-z),playerDistance=Math.hypot(px-x,pz-z);
+ const shouldStart=distance>1.05||playerDistance>3.15;
+ const shouldStop=distance<.47&&playerDistance>1.05;
  if(!trainerFollow.walking&&shouldStart)trainerFollow.walking=true;
  if(trainerFollow.walking&&shouldStop)trainerFollow.walking=false;
- if(trainerFollow.walking&&distance>.08){
-  const step=Math.min(distance,Math.max(0,dt)*2.0);
-  const nx=trainer.position.x+dx/distance*step,nz=trainer.position.z+dz/distance*step;
-  if(canStand(nx,nz)&&Math.hypot(nx-px,nz-pz)>1.02){
-   trainer.position.x=nx;trainer.position.z=nz;
+ trainerFollow.repath-=Math.max(0,dt);
+ if(trainerFollow.walking&&canStand(goalX,goalZ)&&(
+  trainerFollow.repath<=0||
+  Math.hypot(goalX-trainerFollow.lastGoalX,goalZ-trainerFollow.lastGoalZ)>.72
+ )){
+  trainerFollow.path=planWalkingRoute({x,z},{x:goalX,z:goalZ},canStand);
+  trainerFollow.repath=1.05;
+  trainerFollow.lastGoalX=goalX;trainerFollow.lastGoalZ=goalZ;
+ }
+ if(trainerFollow.walking){
+  while(trainerFollow.path.length>1&&Math.hypot(trainerFollow.path[0].x-trainer.position.x,trainerFollow.path[0].z-trainer.position.z)<.34)trainerFollow.path.shift();
+  const waypoint=trainerFollow.path[0];
+  if(waypoint){
+   const dx=waypoint.x-trainer.position.x,dz=waypoint.z-trainer.position.z;
+   const wayDistance=Math.hypot(dx,dz);
+   if(wayDistance>.035){
+    const step=Math.min(wayDistance,Math.max(0,dt)*1.8);
+    const nx=trainer.position.x+dx/wayDistance*step,nz=trainer.position.z+dz/wayDistance*step;
+    if(canStand(nx,nz)&&Math.hypot(nx-px,nz-pz)>1.04){
+     trainer.position.x=nx;trainer.position.z=nz;
+    }else{trainerFollow.path=[];trainerFollow.repath=0;trainerFollow.walking=false}
+   }else trainerFollow.path.shift();
   }else trainerFollow.walking=false;
  }
  const interaction=world.find(o=>o.instructor);
@@ -410,7 +423,7 @@ function makeDoor(x,label){
 }
 function makeTrainer(){
  // Instrutor humano procedural: sem textura facial de pessoa real, baixo custo para navegador.
- const group=new THREE.Group();group.position.set(.75,0,3.15);scene.add(group);trainer=group;
+ const group=new THREE.Group();group.position.set(2.25,0,6.55);scene.add(group);trainer=group;
  const skin=new THREE.MeshStandardMaterial({color:0xb98768,roughness:.94}),skinShade=new THREE.MeshStandardMaterial({color:0x99684e,roughness:.94});
  const shirt=new THREE.MeshStandardMaterial({color:0x111316,roughness:.94}),pants=new THREE.MeshStandardMaterial({color:0x191a1e,roughness:.96});
  const hair=new THREE.MeshStandardMaterial({color:0x211b1a,roughness:.97}),shoe=new THREE.MeshStandardMaterial({color:0x131416,roughness:.83});
