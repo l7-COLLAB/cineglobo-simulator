@@ -437,7 +437,10 @@ function makeTrainer(){
  // Corte de cabelo, com volume discretamente superior ao crânio.
  sphere(1,.193,.090,.187,hair,0,2.297,-.014);
  for(const side of [-1,1])sphere(1,.040,.10,.11,hair,side*.161,2.23,-.018);
- // Braços, antebraços e mãos (suspensos em postura neutra).
+ // O instrutor também usa boné escuro do cinema.
+ const staffCap=part(new THREE.SphereGeometry(.20,12,8,0,Math.PI*2,0,Math.PI*.48),shirt,0,2.31,-.012);
+ part(new THREE.BoxGeometry(.29,.028,.16),shirt,0,2.31,.169);
+  // Braços, antebraços e mãos (suspensos em postura neutra).
  const arms=[];
  for(const side of [-1,1]){
    const pivot=new THREE.Group();pivot.position.set(side*.308,1.705,0);group.add(pivot);
@@ -463,6 +466,8 @@ function makeTrainer(){
  c.font='bold 27px Arial';c.fillStyle='#f2eee7';c.textAlign='center';c.fillText('CINE',128,169);c.fillText('GLOBO',128,199);
  const map=new THREE.CanvasTexture(logo);map.colorSpace=THREE.SRGBColorSpace;
  const chest=part(new THREE.PlaneGeometry(.21,.21),new THREE.MeshBasicMaterial({map,transparent:true,side:THREE.DoubleSide,depthWrite:false}),.128,1.61,.186);chest.rotation.y=.06;
+ const capBadge=part(new THREE.PlaneGeometry(.125,.105),new THREE.MeshBasicMaterial({map,transparent:true,side:THREE.DoubleSide,depthWrite:false}),0,2.315,.20);
+ capBadge.name='Logo Cine Globo no boné do instrutor';
  // Orientação do instrutor por marcador fixo, sem componente luminoso dinâmico.
  const cc=document.createElement('canvas');cc.width=512;cc.height=128;const ctx=cc.getContext('2d');ctx.fillStyle='#13151edb';ctx.fillRect(0,10,512,100);ctx.fillStyle='#ffe2af';ctx.font='bold 29px Arial';ctx.textAlign='center';ctx.fillText('INSTRUTOR • E PARA FALAR',256,69);
  const badge=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cc),transparent:true,depthWrite:false}));badge.position.y=2.65;badge.scale.set(2.5,.62,1);group.add(badge);
