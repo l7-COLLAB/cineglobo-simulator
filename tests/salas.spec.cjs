@@ -6,13 +6,17 @@ test('sala: recepção, ingresso válido, bloqueio de duplicidade, filme e limpe
  await page.route('**/index.html',async route=>{
   let html=fs.readFileSync('index.html','utf8');
   html=html.replace('function applyGraphics(){',
-   "window.__roomTest={setRole,reader:openValidation,panel:roomLightingDialog,routines:()=>roomRoutines,tickets:()=>trainingTickets,lighting:()=>roomLighting,missions:()=>mission};\nfunction applyGraphics(){");
+   "window.__roomTest={setRole,reader:openValidation,panel:roomLightingDialog,routines:()=>roomRoutines,tickets:()=>trainingTickets,lighting:()=>roomLighting,missions:()=>mission,world:()=>world,shift:()=>shiftState};\nfunction applyGraphics(){");
   await route.fulfill({contentType:'text/html',body:html});
  });
  await page.goto('/index.html');
  await expect(page.locator('#scene canvas')).toBeVisible({timeout:45000});
  await page.locator('#enter').click();
  await page.evaluate(()=>window.__roomTest.setRole('sala'));
+ await page.evaluate(()=>window.__roomTest.world().find(o=>o.name==='Terminal de turno Salas').callback());
+ await page.locator('[data-shift-start]').click();
+ await page.locator('#closeModal').click();
+ await page.evaluate(()=>window.__roomTest.world().find(o=>o.name==='Porta Sala 1').callback());
  await page.evaluate(()=>window.__roomTest.panel('Sala 1'));
  await expect(page.getByText('Sala 1 — rotina interativa')).toBeVisible();
  await page.locator('[data-room-action="film"]').click();
@@ -47,6 +51,13 @@ test('sala: recepção, ingresso válido, bloqueio de duplicidade, filme e limpe
  await page.locator('[data-room-action="finish"]').click();
  expect(await page.evaluate(()=>window.__roomTest.routines()['Sala 1'].completed)).toBe(true);
  expect(await page.evaluate(()=>window.__roomTest.lighting()['Sala 1'].cleanLight.intensity)).toBeGreaterThan(0);
+ expect(await page.evaluate(()=>window.__roomTest.shift().phase)).toBe('fechamento');
+ await page.evaluate(()=>window.__roomTest.world().find(o=>o.name==='Terminal de turno Salas').callback());
+ await page.locator('[data-shift-action="lights-checked"]').click();
+ await page.evaluate(()=>window.__roomTest.world().find(o=>o.name==='Conferir saída da sala').callback());
+ const completedShift=await page.evaluate(()=>window.__roomTest.shift());
+ expect(completedShift.completed).toBe(true);
+ expect(completedShift.events.length).toBe(6);
  expect(errors).toEqual([]);
  await page.screenshot({path:'test-results/rotina-salas-mobile.png',fullPage:true});
 });

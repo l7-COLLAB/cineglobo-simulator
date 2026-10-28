@@ -7,13 +7,16 @@ test('bomboniere interativa: EPI, duas pipoqueiras, ingredientes e balde misto n
   let html=fs.readFileSync('index.html','utf8');
   // Acesso técnico exclusivamente injetado no teste, não publicado no jogo.
   html=html.replace('function applyGraphics(){',
-  "window.__popTest={setRole,epi:()=>epi,grantEpiForTest:()=>{epi.started=true;epi.cap=true;epi.hair=true;epi.uniform=true;epi.gloves=true;epi.checked=true;epi.finished=true;refreshEpiHUD()},machineAction,batches:()=>popcornTraining,tub:()=>mixedTub,step:(dt=.05)=>animatePopcornTraining(dt),models:()=>popcornModels,world:()=>world};\nfunction applyGraphics(){");
+  "window.__popTest={setRole,epi:()=>epi,grantEpiForTest:()=>{epi.started=true;epi.cap=true;epi.hair=true;epi.uniform=true;epi.gloves=true;epi.checked=false;epi.finished=false;verifyEpi()},machineAction,batches:()=>popcornTraining,tub:()=>mixedTub,step:(dt=.05)=>animatePopcornTraining(dt),models:()=>popcornModels,world:()=>world,shift:()=>shiftState};\nfunction applyGraphics(){");
   await route.fulfill({contentType:'text/html',body:html});
  });
  await page.goto('/index.html');
  await expect(page.locator('#scene canvas')).toBeVisible({timeout:45000});
  await page.locator('#enter').click();
  await page.evaluate(()=>window.__popTest.setRole('bomboniere'));
+ await page.evaluate(()=>window.__popTest.world().find(o=>o.name==='Terminal de turno Bomboniere e pipoqueiras').callback());
+ await page.locator('[data-shift-start]').click();
+ await page.locator('#closeModal').click();
  await page.evaluate(()=>window.__popTest.machineAction('salgada'));
  await expect(page.locator('#modal.visible')).toHaveCount(0);
  const g=await page.evaluate(()=>{
@@ -25,6 +28,8 @@ test('bomboniere interativa: EPI, duas pipoqueiras, ingredientes e balde misto n
  expect(g.epi).toBe(false);
  // Preparação simulada apenas no teste, sem atalho no produto.
  await page.evaluate(()=>window.__popTest.grantEpiForTest());
+ await page.evaluate(()=>window.__popTest.world().find(o=>o.name==='Conferir estoque da bomboniere').callback());
+ expect(await page.evaluate(()=>window.__popTest.shift().phase)).toBe('atendimento');
  await page.evaluate(()=>window.__popTest.machineAction('salgada'));
  await expect(page.getByText('Pipoqueira SALGADA',{exact:true})).toBeVisible();
  const click=async(kind,action)=>page.locator('[data-popcorn-kind="'+kind+'"][data-popcorn-action="'+action+'"]').click();
@@ -68,7 +73,15 @@ test('bomboniere interativa: EPI, duas pipoqueiras, ingredientes e balde misto n
  await page.evaluate(()=>window.__popTest.world().find(o=>o.name==='Montar balde misto').callback());
  for(const action of ['saltHalf','sweetHalf','saltFinish'])await click('misto',action);
  expect(await page.evaluate(()=>window.__popTest.tub().completed)).toBe(true);
+ expect(await page.evaluate(()=>window.__popTest.shift().phase)).toBe('fechamento');
  await expect(page.getByText('Balde misto · montagem simulada',{exact:true})).toBeVisible();
+ await page.evaluate(()=>window.__popTest.world().find(o=>o.name==='Terminal de turno Bomboniere e pipoqueiras').callback());
+ await page.locator('[data-shift-action="motors-checked"]').click();
+ await page.evaluate(()=>window.__popTest.world().find(o=>o.name==='Inspecionar bancada de bomboniere').callback());
+ const finalShift=await page.evaluate(()=>window.__popTest.shift());
+ expect(finalShift.completed).toBe(true);
+ expect(finalShift.events.length).toBe(7);
+ expect(finalShift.errors.length).toBeGreaterThan(0);
  await page.screenshot({path:'test-results/bomboniere-preparo-mobile.png',fullPage:true});
  expect(errors).toEqual([]);
 });
