@@ -805,6 +805,65 @@ function animateEpi(dt){if(!equipMotion)return;equipMotion.time+=dt;
  if(epiVisual.gloves){const t=equipMotion.time/equipMotion.duration;epiVisual.gloves.position.y=Math.sin(Math.min(t,1)*Math.PI)*.25;}
  if(equipMotion.time>=equipMotion.duration){if(equipMotion.id==='gloves')epiVisual.gloves.children.filter(x=>x.position.y<-.50).forEach(x=>x.visible=true);epiVisual.gloves.position.y=0;finishEquip()}
 }
+/**
+ * Terminais 3D de turno, preparados para clique/AGIR em celular.
+ * As conferências específicas usam objetos do setor, não checkboxes de progresso.
+ */
+function createShiftTerminals(){
+ const faceMat=new THREE.MeshStandardMaterial({color:0x2c303b,roughness:.65});
+ const trimMat=new THREE.MeshStandardMaterial({color:0x9e7850,metalness:.28,roughness:.63});
+ const screenGeo=new THREE.PlaneGeometry(.66,.27);
+ const canvas=document.createElement('canvas');canvas.width=512;canvas.height=200;
+ const c=canvas.getContext('2d');c.fillStyle='#1b232e';c.fillRect(0,0,512,200);
+ c.strokeStyle='#bc9160';c.lineWidth=8;c.strokeRect(10,10,492,180);
+ c.fillStyle='#ecd9b9';c.textAlign='center';c.font='bold 39px Arial';c.fillText('CINE GLOBO',256,91);
+ c.font='26px Arial';c.fillText('CONTROLE DE TURNO',256,145);
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+ const screenMat=new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide});
+ const equipment=[
+  ['caixa',-2.10,-5.10],
+  ['bomboniere',5.65,-4.20],
+  ['sala',.72,-8.65]
+ ];
+ for(const [role,x,z] of equipment){
+  const group=new THREE.Group();group.name='Terminal de turno · '+role;group.position.set(x,0,z);scene.add(group);
+  const stem=new THREE.Mesh(new THREE.BoxGeometry(.12,.82,.14),trimMat);stem.position.y=.60;group.add(stem);
+  const base=new THREE.Mesh(new THREE.BoxGeometry(.76,.12,.46),faceMat);base.position.y=1.08;group.add(base);
+  const screen=new THREE.Mesh(screenGeo,screenMat);screen.position.set(0,1.10,.239);group.add(screen);
+  world.push({name:'Terminal de turno '+roleNames[role],x,z:z+.15,marker:group,
+   callback:()=>{if(!allowRole(role))return;openShiftConsole()}});
+ }
+ // Materiais e ingredientes são apenas representações, sem manipulação real.
+ const inspections=[
+  {name:'Conferir estoque da bomboniere',x:5.15,z:-4.82,event:'stock-inspected',role:'bomboniere'},
+  {name:'Inspecionar bancada de bomboniere',x:4.60,z:-4.31,event:'station-inspected',role:'bomboniere'},
+  {name:'Conferir saída da sala',x:.18,z:7.70,event:'exit-inspected',role:'sala'}
+ ];
+ for(const item of inspections){
+  const g=new THREE.Group();g.name=item.name;g.position.set(item.x,0,item.z);scene.add(g);
+  const plate=new THREE.Mesh(new THREE.BoxGeometry(.52,.13,.32),trimMat);
+  plate.position.y=1.04;g.add(plate);
+  const icon=new THREE.Mesh(new THREE.BoxGeometry(.28,.29,.16),faceMat);
+  icon.position.set(0,1.24,0);g.add(icon);
+  world.push({name:item.name,x:item.x,z:item.z,marker:g,callback:()=>{
+   if(!allowRole(item.role))return;
+   if(item.event==='station-inspected'&&Object.values(popcornTraining).some(b=>b.motor)){
+    onShiftError('Bomboniere','A estação não pode ser conferida com misturador acionado.');
+    say('Desligue os dois misturadores no simulador antes de inspecionar a bancada.');return
+   }
+   if(item.event==='exit-inspected'&&!Object.values(roomRoutines).some(r=>r.completed)){
+    onShiftError('Sala','A inspeção de saída exige uma sessão concluída.');
+    say('Conclua a rotina de sala antes de conferir a saída.');return
+   }
+   if(item.event==='stock-inspected'&&!epi.finished){
+    onShiftError('Bomboniere','A inspeção de insumos exige EPIs conferidos.');
+    say('Complete e verifique seus EPIs antes de inspecionar os insumos.');return
+   }
+   const changed=onShiftEvent(item.event);
+   if(!changed)say(shiftHint());
+  }});
+ }
+}
 function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e171c');scene.fog=new THREE.Fog('#1e171c',12,28);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.06,90);renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'low-power'});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;$('scene').appendChild(renderer.domElement);scene.add(new THREE.HemisphereLight(0xece2e2,0x2b2530,2.4));ambient=new THREE.AmbientLight(0xffe4c2,.46);scene.add(ambient);box(0,-.12,0,17,.2,22,0x5a4341);box(-8.4,2,0,.3,4,22,0x9d8281);box(8.4,2,0,.3,4,22,0x9d8281);box(0,3.7,0,17,.18,22,0x453a40);for(const segment of [{x:-7.15,w:2.1},{x:-1.95,w:3.9},{x:1.95,w:3.9},{x:7.15,w:2.1}])box(segment.x,2,-10.9,segment.w,4,.3,0x8c6769);box(0,2,-16.35,.27,4,10.7,0x3d3039);box(0,2,10.9,17,4,.3,0x59454c);box(-4.6,.63,-3.7,5,1.22,1.4,0x503539);box(-4.6,1.28,-3.7,4.85,.11,1.55,0xb66c4f);box(-4,2.83,-4.36,2.5,.8,.08,0x131d25);textSign('BILHETERIA',-4.7,3.3,-4.45,2.8);box(3.7,1.2,-4.6,5,1.4,1.4,0x70414b);box(3.7,2,-4.6,5,.15,1.4,0xc47a47);textSign('BOMBONIERE',3.7,3,-5.45,3);textSign('SALA 1 (2D)',-4,2.65,-10.68,2.8);textSign('SALA 2 (3D)',4,2.65,-10.68,2.8);for(let x of [-4,4]){box(x,0.1,-9.7,2,.15,1,0x813c40);for(let k=0;k<4;k++)box(x-1.2+k*.8,.42,-8.3,0.5,.65,.5,0x5e282e)}for(let x of [-6,0,6]){let lamp=box(x,3.57,1,.7,.06,.7,0xf5e4c2);lights.push(lamp)}for(let x of [-2,2])for(let z of [2,5]){box(x,.45,z,1.5,.12,1.2,0x81534b);box(x-.5,.23,z-.35,.1,.45,.1,0x3d2527);box(x+.5,.23,z+.35,.1,.45,.1,0x3d2527)}// Estação de atendimento: monitor, teclado, terminal, impressora e gaveta com formas reconhecíveis.
  const pos={x:-5.55,z:-3.12};
  const equipmentStart=scene.children.length;
@@ -881,7 +940,7 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
  eqLabel('CAIXA 1',-4.7,.91,-2.987,.83,.21);
  object('Computador do caixa',-5.55,-5.03,0x2c747f,()=>summonCustomer());
  // O marcador continua detectável, mas não aparece como bloco flutuante.
- world[world.length-1].marker.visible=false;object('Mini impressora',-6.55,-2.9,0x686f75,()=>{if(allowRole('caixa')){onShiftEvent('printer-checked');complete(2,'Mini impressora ligada e conferida.')}});object('Televisão do catálogo',-1, -6.9,0x335c82,()=>{if(currentRole==='caixa')onShiftEvent('catalogue-checked');complete(3,'A televisão de programação foi conferida.');});buildPopcornStation();object('Interruptor do hall',-7.7,3.7,0xe9c17f,()=>{lights.forEach(l=>l.visible=!l.visible);complete(0,'Iluminação do hall acionada.')} );object('Luzes Sala 1',-3.2,-9,0xdcbc71,()=>{if(allowRole('sala'))complete(5,'Conferência da iluminação da Sala 1 registrada.')});object('Ar-condicionado Sala 2',4.9,-9,0x93a7b1,()=>{if(allowRole('sala'))complete(6,'Climatização da Sala 2 conferida.')});object('Leitor de ingressos',-.25,-8,0x62987c,()=>openValidation());addTrainingClients();world.push({name:'Conversar com instrutor',x:.75,z:3.15,callback:trainerAdvice,marker:null,instructor:true});textSign('ENTRADA / HALL',0,2.8,10.65,3.4);
+ world[world.length-1].marker.visible=false;object('Mini impressora',-6.55,-2.9,0x686f75,()=>{if(allowRole('caixa')){onShiftEvent('printer-checked');complete(2,'Mini impressora ligada e conferida.')}});object('Televisão do catálogo',-1, -6.9,0x335c82,()=>{if(currentRole==='caixa')onShiftEvent('catalogue-checked');complete(3,'A televisão de programação foi conferida.');});buildPopcornStation();object('Interruptor do hall',-7.7,3.7,0xe9c17f,()=>{lights.forEach(l=>l.visible=!l.visible);complete(0,'Iluminação do hall acionada.')} );object('Luzes Sala 1',-3.2,-9,0xdcbc71,()=>{if(allowRole('sala'))complete(5,'Conferência da iluminação da Sala 1 registrada.')});object('Ar-condicionado Sala 2',4.9,-9,0x93a7b1,()=>{if(allowRole('sala'))complete(6,'Climatização da Sala 2 conferida.')});object('Leitor de ingressos',-.25,-8,0x62987c,()=>openValidation());addTrainingClients();createShiftTerminals();world.push({name:'Conversar com instrutor',x:.75,z:3.15,callback:trainerAdvice,marker:null,instructor:true});textSign('ENTRADA / HALL',0,2.8,10.65,3.4);
  makeDoor(-4,'Sala 1');makeDoor(4,'Sala 2');
  addRoom(-4,'Sala 1',false);addRoom(4,'Sala 2',true);
  makeTrainer();
