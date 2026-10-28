@@ -53,7 +53,7 @@ let settings={mouse:22,touch:22,quality:"low",fps:30,volume:40};try{settings={..
 let currentRole='caixa',npcTeam=[],npcClock=0,npcCycles={caixa:0,bomboniere:0,sala:0};
 const roleNames={caixa:'Caixa',bomboniere:'Bomboniere e pipoqueiras',sala:'Salas'};
 
-let shiftState=createShift(currentRole,city);
+let shiftState=createShift(currentRole,city),lastDeliveredCodes=[];
 const SHIFT_HISTORY_KEY='cineglobo_demo_shift_history_v1';
 let shiftHistory=[];try{const v=JSON.parse(localStorage.getItem(SHIFT_HISTORY_KEY)||'[]');if(Array.isArray(v))shiftHistory=v.filter(x=>x?.kind==='cineglobo-demo-shift-report').slice(-8)}catch{}
 function shiftHint(){
@@ -92,7 +92,7 @@ function onShiftEvent(event){
  if(!shiftState.started||shiftState.completed||shiftState.role!==currentRole||shiftState.city!==city)return false;
  const result=recordShiftEvent(shiftState,event);
  if(!result.changed)return false;
- shiftState=result.state;refreshShiftHUD();
+ shiftState=result.state;if(event==='sale-delivered')lastDeliveredCodes=[...(serviceMission?.issuedCodes||[])];refreshShiftHUD();
  if(shiftState.completed){
   const report=makeShiftReport(shiftState);
   if(report){
@@ -111,13 +111,13 @@ function onShiftError(source,message){
 function startSectorShift(){
  const outcome=beginShift(shiftState);
  if(outcome.error){say(outcome.error);return}
- shiftState=outcome.state;refreshShiftHUD();say(shiftHint());
+ shiftState=outcome.state;lastDeliveredCodes=[];refreshShiftHUD();say(shiftHint());
 }
 function shiftAction(action){
  if(!allowRole(currentRole)||!shiftState.started){say('Inicie o turno pelo terminal antes de registrar o fechamento.');return}
  if(action==='receipt-audited'){
-  const issued=serviceMission?.issuedCodes||[];
-  if(currentRole!=='caixa'||!serviceMission?.handoffCompleted||!issued.length||
+  const issued=lastDeliveredCodes;
+  if(currentRole!=='caixa'||!issued.length||
      trainingTickets.filter(t=>issued.includes(t.code)&&t.city===city).length!==issued.length){
    onShiftError('Caixa','Relatório indisponível: venda e entrega ainda não conferidas.');
    say('A conferência precisa de ingressos fictícios emitidos e entregues neste atendimento.');return
@@ -149,7 +149,7 @@ function openShiftConsole(){
  const actions=shiftState.phase==='fechamento'?
    currentRole==='caixa'?[['receipt-audited','Conferir comprovantes fictícios'],['pos-shutdown','Encerrar computador do turno']]:
    currentRole==='bomboniere'?[['motors-checked','Conferir misturadores desligados']]:
-   [['lights-checked','Conferir luzes de limpeza'],['exit-inspected','Conferir a saída do cinema']]:[];
+   [['lights-checked','Conferir luzes de limpeza (painel do setor)']]:[];
  const pending=goals.map(g=>'<div class="epi-line">'+(g.done?'✓':'○')+' '+escaped(g.title)+'</div>').join('');
  const errors=shiftState.errors.slice(-5).map(x=>'<div class="epi-line">'+escaped(x.source)+': '+escaped(x.message)+'</div>').join('');
  const history=shiftHistory.slice(-3).reverse().map(x=>'<div class="epi-line">'+escaped(roleNames[x.role]||x.role)+' · '+escaped(x.city)+' · '+x.achievements.filter(y=>y.done).length+' metas · '+x.errors.length+' erros</div>').join('');
@@ -168,7 +168,7 @@ function openShiftConsole(){
 
 function allowRole(role){if(currentRole===role)return true;say('Este posto está sob responsabilidade da equipe virtual. Sua função atual é '+roleNames[currentRole]+'. Reinicie o turno para trocar de função.');return false}
 function roleHUD(){const el=$('rolePanel');if(!el)return;el.innerHTML='<b>Turno · '+roleNames[currentRole]+'</b>'+Object.keys(roleNames).map(k=>'<div class="epi-line">'+(k===currentRole?'● Você: ':'✓ Funcionário virtual: ')+roleNames[k]+' <span class="small">'+(k===currentRole?'treinamento ativo':'em operação')+'</span></div>').join('')+'<div class="small">Ações automáticas da equipe: '+Object.entries(npcCycles).filter(([k])=>k!==currentRole).reduce((n,[k,v])=>n+v,0)+'</div>'+shiftSidebarHtml()}
-function setRole(role){const next=roleNames[role]?role:'caixa';if(next!==currentRole)shiftState=createShift(next,city);currentRole=next;document.querySelector('#epiProgress').style.display=currentRole==='bomboniere'?'block':'none';roleHUD();say('Você vai treinar em '+roleNames[currentRole]+'. O instrutor caminhará com você; aproxime-se e use E/AGIR para conversar. Os outros postos ficam com funcionários virtuais.');}
+function setRole(role){const next=roleNames[role]?role:'caixa';if(next!==currentRole){shiftState=createShift(next,city);lastDeliveredCodes=[]}currentRole=next;document.querySelector('#epiProgress').style.display=currentRole==='bomboniere'?'block':'none';roleHUD();say('Você vai treinar em '+roleNames[currentRole]+'. O instrutor caminhará com você; aproxime-se e use E/AGIR para conversar. Os outros postos ficam com funcionários virtuais.');}
 function makeWorker(role,x,z,color){
  const g=createCinemaCharacter({role,uniformColor:color});
  g.position.set(x,0,z);g.visible=role!==currentRole;scene.add(g);
@@ -177,7 +177,7 @@ function makeWorker(role,x,z,color){
 function setupWorkers(){makeWorker('caixa',-5.25,-4.02,0x4b545d);makeWorker('bomboniere',3.9,-3.53,0x733840);makeWorker('sala',-.1,-8.15,0x3c5967);updateWorkers()}
 function updateWorkers(dt=0){npcClock+=dt;for(const n of npcTeam){n.g.visible=n.role!==currentRole;if(!n.g.visible)continue;const t=npcClock+n.phase;n.g.position.x=n.origin.x+Math.sin(t*.37)*.12;n.g.position.z=n.origin.z+Math.cos(t*.4)*.10;n.g.rotation.y=Math.sin(t*.3)*.23;n.g.userData['arm-1'].rotation.x=Math.sin(t*2)*.23;n.g.userData['arm1'].rotation.x=-Math.sin(t*2)*.23;}if(dt&&Math.floor(npcClock/20)!==Math.floor((npcClock-dt)/20)){for(const k of Object.keys(npcCycles))if(k!==currentRole)npcCycles[k]++;roleHUD()}}
 const speeches=['Bem-vindo! Este é um cinema virtual de treinamento. Comece explorando o hall e interagindo com equipamentos.','Aproxime-se de um objeto identificado e pressione E, ou AGIR no celular. Cada ação simula um procedimento.','Para treinar no caixa, caminhe para trás do balcão e use o computador voltado ao funcionário. Um cliente virá até você; também é possível clicar diretamente quando o monitor estiver selecionado. Depois confira o filme, a sessão, as poltronas e o pagamento.','Na agenda você verá sessões fictícias da unidade selecionada. No painel Admin poderá modificar horários e comunicados.'];
-function trainerAdvice(){if(shiftState.started&&!shiftState.completed){say(shiftHint());return;}const tips={caixa:'Estou ao seu lado. Aproxime-se da face do monitor do caixa e pressione E/AGIR ou clique nele. Quando o cliente chegar, confirme o pedido e conclua a venda no computador.',bomboniere:'Vamos para a bomboniere. Comece pela preparação de EPIs somente se você for operar as pipoqueiras. Siga os objetos da bancada em sequência.',sala:'Eu vou acompanhar você até as salas. Confira o ingresso do cliente, a sala correta e o horário antes de liberar o acesso.'};say(tips[currentRole]);}
+function trainerAdvice(){if(!shiftState.started||!shiftState.completed){say(shiftHint());return;}const tips={caixa:'Estou ao seu lado. Aproxime-se da face do monitor do caixa e pressione E/AGIR ou clique nele. Quando o cliente chegar, confirme o pedido e conclua a venda no computador.',bomboniere:'Vamos para a bomboniere. Comece pela preparação de EPIs somente se você for operar as pipoqueiras. Siga os objetos da bancada em sequência.',sala:'Eu vou acompanhar você até as salas. Confira o ingresso do cliente, a sala correta e o horário antes de liberar o acesso.'};say(tips[currentRole]);}
 function updateTrainerFollow(dt){if(!trainer||paused||$('start').style.display!=='none')return;
  const sideX=Math.cos(player.yaw),sideZ=-Math.sin(player.yaw);
  const backX=Math.sin(player.yaw),backZ=Math.cos(player.yaw);
@@ -194,7 +194,7 @@ function updateTrainerFollow(dt){if(!trainer||paused||$('start').style.display!=
  if(!trainerRealistic){trainer.position.y=Math.sin(performance.now()*.005)*(d>.2?.028:.008);for(const a of trainerParts)a.pivot.rotation.x=Math.sin(performance.now()*.011+a.side)*(d>.2?.26:.03);}
 }
 function say(t){$('helper').style.display='block';$('speech').textContent=t}function save(){localStorage.setItem('cineglobo_demo',JSON.stringify(data))}function fillCities(){['city','startCity'].forEach(id=>{$(id).innerHTML=cities.map(c=>`<option ${c==='Ijuí'?'selected':''}>${c}</option>`).join('')})}fillCities();
-function setCity(c){if(c!==city)shiftState=createShift(currentRole,c);city=c;for(const name of Object.keys(roomRoutines)){roomRoutines[name]=createRoomRoutine(name);roomSessionChoice[name]='';if(roomLighting[name])setRoomLights(name,'entrada');}$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${t}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
+function setCity(c){if(c!==city){shiftState=createShift(currentRole,c);lastDeliveredCodes=[]}city=c;for(const name of Object.keys(roomRoutines)){roomRoutines[name]=createRoomRoutine(name);roomSessionChoice[name]='';if(roomLighting[name])setRoomLights(name,'entrada');}$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${t}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
 function mat(color){return new THREE.MeshStandardMaterial({color,roughness:.75})}function box(x,y,z,w,h,d,color){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));m.position.set(x,y,z);scene.add(m);return m}function textSign(t,x,y,z,w=2,color='#ffffff'){let c=document.createElement('canvas');c.width=512;c.height=100;let ctx=c.getContext('2d');ctx.fillStyle='#20191d';ctx.fillRect(0,0,512,100);ctx.fillStyle=color;ctx.font='bold 38px Arial';ctx.textAlign='center';ctx.fillText(t,256,66);const m=new THREE.Mesh(new THREE.PlaneGeometry(w,w*100/512),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),side:THREE.DoubleSide}));m.position.set(x,y,z);scene.add(m)}function object(name,x,z,color,callback){let marker=box(x,1.05,z,.5,.6,.45,color);world.push({name,x,z,callback,marker});}
 function collider(x,z,w,d){blockers.push({x,z,w,d})}
 function canStand(x,z){
