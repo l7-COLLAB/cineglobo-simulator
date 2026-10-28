@@ -1258,8 +1258,14 @@ function movement(){
  const blocked=paused||$('modal').classList.contains('visible')||$('start').style.display!=='none';
  let forward=blocked?0:(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-joy.y;
  let strafe=blocked?0:(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joy.x;
+ // Sem aceleração brusca na borda do joystick; mantém teclado responsivo.
+ const response=Math.min(1,1-Math.exp(-dt*16));
+ walkVelocity.x+=(strafe-walkVelocity.x)*response;
+ walkVelocity.y+=(forward-walkVelocity.y)*response;
+ if(blocked){walkVelocity.x=0;walkVelocity.y=0;}
+ forward=walkVelocity.y;strafe=walkVelocity.x;
  const magnitude=Math.hypot(forward,strafe);if(magnitude>1){forward/=magnitude;strafe/=magnitude}
- const spd=(keys.ShiftLeft?6.2:3.7)*dt;
+ const spd=(keys.ShiftLeft?6.2:(isMobile?3.1:3.7))*dt;
  const dx=(-Math.sin(player.yaw)*forward+Math.cos(player.yaw)*strafe)*spd;
  const dz=(-Math.cos(player.yaw)*forward-Math.sin(player.yaw)*strafe)*spd;
  if(!paused&&canStand(player.x+dx,player.z))player.x+=dx;
@@ -1280,8 +1286,53 @@ function movement(){
  renderer.render(scene,camera);
  technicalMonitor?.record(performance.now());
 }
+const walkVelocity=new THREE.Vector2();
 const clock=new THREE.Clock();
-addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='KeyE'&&!paused&&!e.repeat&&currentTarget&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))currentTarget.callback();if(e.code==='Escape'&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))togglePause()});addEventListener('keyup',e=>keys[e.code]=false);addEventListener('blur',()=>{keys={};joy={x:0,y:0};$('nub').style.transform='none'});document.addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer?.domElement){player.yaw-=e.movementX*settings.mouse*.000035;player.pitch=THREE.MathUtils.clamp(player.pitch-e.movementY*settings.mouse*.000035,-1.15,1.15)}});$('touchInteract').onclick=()=>{if(!paused&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))currentTarget?.callback()};let touchStart=null;$('look').addEventListener('pointerdown',e=>{touchStart={x:e.clientX,y:e.clientY};$('look').setPointerCapture(e.pointerId)});$('look').addEventListener('pointermove',e=>{if(!touchStart)return;player.yaw-=(e.clientX-touchStart.x)*settings.touch*.000065;player.pitch=THREE.MathUtils.clamp(player.pitch-(e.clientY-touchStart.y)*settings.touch*.000065,-1.2,1.2);touchStart={x:e.clientX,y:e.clientY}});['pointerup','pointercancel','lostpointercapture'].forEach(type=>$('look').addEventListener(type,()=>touchStart=null));let activeJoystickPointer=null;function updateJoystick(e){const r=$('joy').getBoundingClientRect(),x=(e.clientX-r.left-r.width/2)/40,y=(e.clientY-r.top-r.height/2)/40;const length=Math.max(1,Math.hypot(x,y));joy.x=x/length;joy.y=y/length;$('nub').style.transform=`translate(${joy.x*28}px,${joy.y*28}px)`}function clearJoystick(e){if(activeJoystickPointer!==e.pointerId)return;activeJoystickPointer=null;joy={x:0,y:0};$('nub').style.transform='none'}$('joy').addEventListener('pointerdown',e=>{if(activeJoystickPointer!==null)return;activeJoystickPointer=e.pointerId;$('joy').setPointerCapture(e.pointerId);updateJoystick(e)});$('joy').addEventListener('pointermove',e=>{if(activeJoystickPointer===e.pointerId)updateJoystick(e)});['pointerup','pointercancel','lostpointercapture'].forEach(k=>$('joy').addEventListener(k,clearJoystick));
+addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='KeyE'&&!paused&&!e.repeat&&currentTarget&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))currentTarget.callback();if(e.code==='Escape'&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))togglePause()});addEventListener('keyup',e=>keys[e.code]=false);addEventListener('blur',()=>{keys={};joy={x:0,y:0};walkVelocity.set(0,0);$('nub').style.transform='none'});document.addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer?.domElement){player.yaw-=e.movementX*settings.mouse*.000035;player.pitch=THREE.MathUtils.clamp(player.pitch-e.movementY*settings.mouse*.000035,-1.15,1.15)}});$('touchInteract').onclick=()=>{if(!paused&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))currentTarget?.callback()};let lookPointerId=null,lastTouchX=0,lastTouchY=0;
+const cameraArea=$('look');
+cameraArea.addEventListener('pointerdown',e=>{
+ if(lookPointerId!==null||paused||$('start').style.display!=='none'||$('modal').classList.contains('visible'))return;
+ lookPointerId=e.pointerId;
+ lastTouchX=e.clientX;lastTouchY=e.clientY;
+ cameraArea.setPointerCapture(e.pointerId);
+ e.preventDefault();
+});
+cameraArea.addEventListener('pointermove',e=>{
+ if(e.pointerId!==lookPointerId)return;
+ // Limitar saltos repentinos quando o Safari reatribui um contato.
+ const dx=THREE.MathUtils.clamp(e.clientX-lastTouchX,-65,65);
+ const dy=THREE.MathUtils.clamp(e.clientY-lastTouchY,-65,65);
+ const sensitivity=settings.touch*.00012;
+ player.yaw-=dx*sensitivity;
+ player.pitch=THREE.MathUtils.clamp(player.pitch-dy*sensitivity,-1.1,1.1);
+ lastTouchX=e.clientX;lastTouchY=e.clientY;
+ e.preventDefault();
+});
+for(const type of ['pointerup','pointercancel','lostpointercapture'])
+ cameraArea.addEventListener(type,e=>{if(e.pointerId===lookPointerId)lookPointerId=null});
+let activeJoystickPointer=null;
+function updateJoystick(e){
+ const rect=$('joy').getBoundingClientRect();
+ const radius=rect.width*.32;
+ const dx=(e.clientX-rect.left-rect.width/2)/radius,dy=(e.clientY-rect.top-rect.height/2)/radius;
+ const length=Math.hypot(dx,dy);
+ const strength=Math.min(1,Math.max(0,(length-.11)/.89));
+ const direction=length>.001?strength/length:0;
+ joy.x=dx*direction;joy.y=dy*direction;
+ const travel=rect.width*.265;
+ $('nub').style.transform='translate('+(joy.x*travel).toFixed(1)+'px,'+(joy.y*travel).toFixed(1)+'px)';
+}
+function clearJoystick(e){
+ if(activeJoystickPointer!==e.pointerId)return;
+ activeJoystickPointer=null;joy={x:0,y:0};$('nub').style.transform='none';
+}
+$('joy').addEventListener('pointerdown',e=>{
+ if(activeJoystickPointer!==null||paused||$('start').style.display!=='none')return;
+ activeJoystickPointer=e.pointerId;
+ $('joy').setPointerCapture(e.pointerId);updateJoystick(e);e.preventDefault();
+});
+$('joy').addEventListener('pointermove',e=>{if(activeJoystickPointer===e.pointerId){updateJoystick(e);e.preventDefault()}});
+for(const type of ['pointerup','pointercancel','lostpointercapture'])$('joy').addEventListener(type,clearJoystick);
 $('enter').onclick=()=>{$('start').style.display='none';setCity($('startCity').value);setRole($('startRole').value);if(!isMobile)renderer.domElement.requestPointerLock?.()};addEventListener('resize',resizeGame);addEventListener('orientationchange',()=>requestAnimationFrame(resizeGame));window.visualViewport?.addEventListener('resize',resizeGame);try{build();technicalMonitor=createPerformanceMonitor(renderer,()=>player.z< -11?(player.x<0?'Sala 1':'Sala 2'):(player.z<1?'Caixa / Bomboniere':'Hall'));applyGraphics();movement();renderer.domElement.onclick=()=>{if(!paused&&currentTarget?.name==='Computador do caixa'&&currentRole==='caixa'){currentTarget.callback();return;}if(!isMobile&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))renderer.domElement.requestPointerLock?.()}}catch(e){$('start').querySelector('.dialog').innerHTML+='<p class="notice">Não foi possível iniciar o motor gráfico. Confira a conexão de internet e o suporte WebGL do navegador.</p>';console.error(e)}
 
 function effectivePixelRatio(){
@@ -1305,7 +1356,7 @@ function applyGraphics(){
  resizeGame();
 }
 function applyInputs(){for(const [key,id] of [['mouse','mouseSens'],['touch','touchSens'],['quality','quality'],['fps','fps'],['volume','volume']])$(id).value=settings[key];$('mouseText').textContent=settings.mouse+'%';$('touchText').textContent=settings.touch+'%';$('volumeText').textContent=settings.volume+'%'}
-function togglePause(force){paused=typeof force==='boolean'?force:!paused;technicalMonitor?.reset();$('pauseOverlay').classList.toggle('visible',paused);if(paused){document.exitPointerLock?.();keys={};joy={x:0,y:0};applyInputs()}else{lastFrame=0}}
+function togglePause(force){paused=typeof force==='boolean'?force:!paused;technicalMonitor?.reset();$('pauseOverlay').classList.toggle('visible',paused);if(paused){document.exitPointerLock?.();keys={};joy={x:0,y:0};walkVelocity.set(0,0);$('nub').style.transform='none';applyInputs()}else{lastFrame=0}}
 $('pauseBtn').onclick=()=>togglePause(true);$('resumeBtn').onclick=$('closePause').onclick=()=>togglePause(false);
 $('resetViewBtn').onclick=()=>{player.pitch=0;player.yaw=0};
 $('techBtn').onclick=()=>{if(!technicalMonitor)return;const on=technicalMonitor.setEnabled(!technicalMonitor.isEnabled());$('techBtn').textContent='Métricas técnicas: '+(on?'ligadas':'desligadas');$('techBtn').setAttribute('aria-pressed',String(on));};
