@@ -6,7 +6,7 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
  await page.route('**/index.html',async route=>{
    let html=fs.readFileSync('index.html','utf8');
    // Dados técnicos temporários apenas na resposta do teste: não expostos na versão pública.
-   html=html.replace('function applyGraphics(){',`window.__visualTest={scene:()=>scene,workers:()=>npcTeam,client:()=>queueCustomer,checkout:()=>checkoutVisual,renderer:()=>renderer,batches:()=>staticBatchReport,details:()=>staticDetailReport,world:()=>world,lights:()=>lights,rooms:()=>roomScenes,doors:()=>doors,refreshRooms:()=>updateVisibleRooms(),position:(x,z)=>{player.x=x;player.z=z;player.yaw=0;player.pitch=0;}};\nfunction applyGraphics(){`);
+   html=html.replace('function applyGraphics(){',`window.__visualTest={scene:()=>scene,workers:()=>npcTeam,client:()=>queueCustomer,checkout:()=>checkoutVisual,renderer:()=>renderer,shiftVisuals:()=>shiftTerminalVisualReport,batches:()=>staticBatchReport,details:()=>staticDetailReport,world:()=>world,lights:()=>lights,rooms:()=>roomScenes,doors:()=>doors,refreshRooms:()=>updateVisibleRooms(),position:(x,z)=>{player.x=x;player.z=z;player.yaw=0;player.pitch=0;}};\nfunction applyGraphics(){`);
    await route.fulfill({contentType:'text/html',body:html});
  });
  await page.goto('/index.html');
@@ -30,6 +30,7 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
      customerCanSpeak:typeof customer.userData.updateSpeech==='function',
      machines,
      batches:window.__visualTest.batches(),
+     shiftVisuals:window.__visualTest.shiftVisuals(),
      details:window.__visualTest.details(),
      equipmentMarkersPresent:window.__visualTest.world().some(o=>o.name==='Computador do caixa'&&o.marker?.visible===false),
      lightingMeshesPreserved:window.__visualTest.lights().every(o=>o.parent===scene()),
@@ -60,7 +61,20 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
  const epiStatus=await page.evaluate(()=>window.__visualTest.world().filter(o=>o.epiStation).map(o=>({name:o.name,markerExists:!!o.marker,parentExists:!!o.marker?.parent})));
  expect(epiStatus.length).toBeGreaterThanOrEqual(5);
  expect(epiStatus.every(m=>m.markerExists&&m.parentExists)).toBe(true);
- expect(metrics.batches.hall.objectsReplaced).toBeGreaterThan(4);
+ expect(metrics.shiftVisuals.interactivePoints).toBe(6);
+ expect(metrics.shiftVisuals.legacyEstimatedDraws).toBe(15);
+ expect(metrics.shiftVisuals.instancedDraws).toBe(3);
+ expect(metrics.shiftVisuals.instances).toBe(15);
+ const shiftInstancing=await page.evaluate(()=>{
+  const expected=['Turnos · acabamento metálico instanciado','Turnos · gabinetes instanciados','Turnos · telas instanciadas'];
+  return expected.map(name=>{
+   const obj=window.__visualTest.scene().getObjectByName(name);
+   return {exists:!!obj,instanced:!!obj?.isInstancedMesh,count:obj?.count||0};
+  });
+ });
+ expect(shiftInstancing.every(x=>x.exists&&x.instanced)).toBe(true);
+ expect(shiftInstancing.map(x=>x.count)).toEqual([6,6,3]);
+  expect(metrics.batches.hall.objectsReplaced).toBeGreaterThan(4);
  for(const flavor of ['SALGADA','DOCE']){
    expect(metrics.batches['Pipoqueira '+flavor].objectsReplaced).toBeGreaterThan(12);
    expect(metrics.batches['Pipoqueira '+flavor].originalDraws).toBeGreaterThan(metrics.batches['Pipoqueira '+flavor].batchDraws);
