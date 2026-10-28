@@ -96,6 +96,14 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
   return {instanced:!!mesh?.isInstancedMesh,count:mesh?.count||0};
  });
  expect(hallPosters).toEqual({instanced:true,count:3});
+ const signAtlas=await page.evaluate(()=>{
+  const sign=window.__visualTest.scene().getObjectByName('Sinalização fixa em atlas');
+  return {exists:!!sign,count:sign?.userData.signs||0,vertices:sign?.geometry?.attributes.position.count||0};
+ });
+ expect(signAtlas.exists).toBe(true);
+ expect(signAtlas.count).toBeGreaterThanOrEqual(4);
+ expect(signAtlas.vertices).toBe(signAtlas.count*6);
+
   expect(metrics.shiftVisuals.interactivePoints).toBe(6);
  expect(metrics.shiftVisuals.legacyEstimatedDraws).toBe(15);
  expect(metrics.shiftVisuals.instancedDraws).toBe(3);
