@@ -25,7 +25,7 @@ test('Objeto atrás de balcão ou sofá não pode ser acionado através de obst�
 test('Equipamento montado em cima de um balcão continua acessível por seu lado',()=>{
  const box={x:-5,z:-3.5,w:2.5,d:1.6};
  const item=target('Computador do caixa',-5,-3.85);
- const loc=player(-5,-5.25);
+ const loc=player(-5,-5.25,Math.PI); // olhando para o computador à frente, não de costas
  assert.equal(canReach(loc,item,[box]),true);
  assert.equal(nearestInteraction({player:loc,targets:[item],blockers:[box]}),item);
 });
