@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SHIFT_GOALS,SHIFT_PHASES,createShift,beginShift,recordShiftEvent,recordShiftError,getShiftGoals,nextShiftGoal,shiftProgress,makeShiftReport,MAX_SHIFT_ERRORS} from '../shift-training.mjs';
+import {SHIFT_GOALS,SHIFT_PHASES,createShift,beginShift,recordShiftEvent,recordShiftError,getShiftGoals,nextShiftGoal,shiftProgress,makeShiftReport,assessShift,MAX_SHIFT_ERRORS} from '../shift-training.mjs';
 
 const eventsByRole={
  caixa:{abertura:['pos-opened','printer-checked','catalogue-checked'],atendimento:['sale-delivered'],fechamento:['receipt-audited','pos-shutdown']},
@@ -67,4 +67,33 @@ test('catálogos de eventos são explícitos, sem checkbox livre ou ação desco
   assert.equal(recordShiftEvent(s,'receipt-audited').changed,role==='caixa'?false:false);
   assert.equal(shiftProgress(s).done,0);
  }
+});
+
+test('avaliação ilustrativa usa ações realizadas, não certifica e penaliza erros reais',()=>{
+ let state=beginShift(createShift('sala','Ijuí')).state;
+ let preview=assessShift(state);
+ assert.equal(preview.finished,false);
+ assert.equal(preview.completionPercent,0);
+ assert.equal(preview.score,100);
+ assert.equal(preview.isCertification,false);
+ assert.equal(preview.officialTrainingApproved,false);
+ for(const event of [...eventsByRole.sala.abertura,...eventsByRole.sala.atendimento,...eventsByRole.sala.fechamento]){
+  state=recordShiftEvent(state,event).state;
+ }
+ assert.equal(assessShift(state).finished,true);
+ assert.equal(assessShift(state).score,100);
+ state=recordShiftError(state,'Sala','Erro após finalização'); // não contamina relatório já encerrado
+ assert.equal(assessShift(state).score,100);
+ let worker=beginShift(createShift('bomboniere','Ijuí')).state;
+ for(let i=0;i<7;i++)worker=recordShiftError(worker,'Bomboniere','Ação incorreta');
+ for(const phase of SHIFT_PHASES)for(const event of eventsByRole.bomboniere[phase]){
+  worker=recordShiftEvent(worker,event).state;
+ }
+ const final=assessShift(worker);
+ assert.equal(final.score,65);
+ assert.equal(final.errors,7);
+ assert.match(final.label,/repetir exercício/);
+ const report=makeShiftReport(worker);
+ assert.equal(report.assessment.score,65);
+ assert.equal(report.assessment.officialTrainingApproved,false);
 });

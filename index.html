@@ -28,6 +28,25 @@ button,select,input,textarea{touch-action:manipulation}
 @media(pointer:coarse){#joy,#touchInteract,#look{display:block}#joy{left:calc(18px + env(safe-area-inset-left));bottom:calc(19px + env(safe-area-inset-bottom));height:112px;width:112px}#nub{top:38px;left:38px}#touchInteract{right:calc(19px + env(safe-area-inset-right));bottom:calc(27px + env(safe-area-inset-bottom));height:76px;width:76px;font-weight:800;box-shadow:0 4px 22px #000a}#look{top:calc(70px + env(safe-area-inset-top));bottom:calc(115px + env(safe-area-inset-bottom))}#mobileHudToggle{display:block}#hud{top:calc(115px + env(safe-area-inset-top));left:calc(8px + env(safe-area-inset-left));width:min(270px,64vw);max-height:55dvh;overflow:auto;transition:opacity .15s}body.hud-closed #hud{display:none}#helper{bottom:calc(139px + env(safe-area-inset-bottom));max-height:40dvh;overflow:auto;width:min(520px,90vw)}#action{bottom:calc(202px + env(safe-area-inset-bottom))}#top{padding-top:calc(8px + env(safe-area-inset-top));padding-left:calc(9px + env(safe-area-inset-left));padding-right:calc(9px + env(safe-area-inset-right))}#start .dialog{max-height:85dvh}#rotateHint{display:block}}
 @media(pointer:coarse) and (orientation:landscape){#hud{max-height:58dvh}#joy{width:94px;height:94px}#nub{top:30px;left:30px}#touchInteract{width:65px;height:65px}#helper{bottom:calc(6px + env(safe-area-inset-bottom));left:56%;width:min(410px,55vw);max-height:45dvh}#action{bottom:calc(87px + env(safe-area-inset-bottom))}#rotateHint{display:none}}
 @media(pointer:coarse) and (orientation:portrait){#helper{bottom:calc(145px + env(safe-area-inset-bottom))}#start .dialog{max-height:87dvh}#rotateHint{display:block}}
+/* v1.8 – metas legíveis no Safari, sem ocupar os controles do jogo */
+.shift-compact{margin-top:9px;padding:10px;border-radius:10px;background:rgba(20,21,27,.68);border:1px solid #786052}
+.shift-compact-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;gap:8px}
+.shift-progress{height:8px;background:#3b3438;border-radius:99px;overflow:hidden;margin:8px 0}
+.shift-progress>div{height:100%;background:#db9c5d;border-radius:99px}
+.shift-next{font-size:12px;line-height:1.4;margin:8px 0;max-height:58px;overflow:auto}
+#shiftOpenButton{display:block;width:100%;margin-top:9px;min-height:44px;background:#78472d;border-color:#bb8356;font-weight:650}
+.shift-team{margin-top:8px;font-size:11px}
+.shift-team>summary{cursor:pointer;padding:6px;min-height:32px}
+.shift-assessment{padding:13px;margin:12px 0;border:1px solid #7b654d;border-radius:12px;background:#222329}
+.shift-grade{font-size:36px;font-weight:800;margin:5px 0;color:#f1c287}
+.shift-grade>span{font-size:15px;margin-left:4px;color:#d0c9be}
+.shift-assessment button{min-height:44px}
+@media(pointer:coarse){
+ #rolePanel{font-size:12px;padding:9px}
+ #rolePanel .shift-compact{padding:7px}
+ .shift-assessment{padding:10px}
+ #modalContent button[data-shift-action],#modalContent button[data-shift-start],#modalContent button[data-shift-export]{min-height:44px}
+}
 </style><link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#171018"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="CineGlobo"><link rel="apple-touch-icon" href="./icon.svg"></head><body><div id="scene"></div><button id="mobileHudToggle" type="button" aria-expanded="false" aria-controls="hud">☰ Tarefas</button><div id="rotateHint">Dica: gire o iPhone na horizontal para ampliar a visão do cinema.</div><div id="cross">+</div><div id="top"><div class="brand">◉ CINE<span>GLOBO</span> SIMULATOR</div><span class="tag">v2.0 · iPHONE</span><span class="spacer"></span><select id="city" aria-label="Unidade"></select><button id="openSchedule">Agenda</button><button id="openNotices">Avisos</button><button id="openAdmin">Admin</button><button id="pauseBtn" aria-label="Pausar jogo">☰ Pausa</button></div><aside id="hud"><div class="panel"><strong id="siteName">Cine Globo · Ijuí</strong><div class="small">Treinamento: abertura de turno</div></div><div class="panel"><strong>Checklist de abertura</strong><div id="tasks" class="tasks"></div><div id="progress" class="small"></div></div><div class="panel" id="rolePanel"></div><div class="panel" id="epiProgress"></div></aside><div id="action"></div><div id="helper"><strong>INSTRUTOR VIRTUAL</strong><p id="speech">Bem-vindo ao CineGlobo Simulator. Vou acompanhar seu primeiro turno.</p><div class="rows"><button id="nextSpeech" class="primary">Continuar</button><button id="askHelp">Pedir orientação</button><button id="hideHelp">Ocultar</button></div></div><div id="joy"><div id="nub"></div></div><div id="look"></div><button id="touchInteract">AGIR</button><div class="overlay" id="pauseOverlay"><div class="dialog" style="max-width:560px"><h2>Jogo pausado</h2><p class="muted">CineGlobo Simulator · Configurações de navegação e áudio</p><div class="rows"><button id="resumeBtn" class="primary">▶ Continuar</button><button id="resetViewBtn">↺ Centralizar câmera</button><button id="techBtn" type="button" aria-pressed="false">Métricas técnicas: desligadas</button><button id="exportTechBtn" type="button">Compartilhar relatório técnico</button></div><p id="techStatus" class="small" role="status" aria-live="polite">Ative as métricas, percorra as áreas e compartilhe o relatório neste menu. Nada é enviado automaticamente.</p><h3>Configurações</h3><label class="field">Sensibilidade do mouse: <strong id="mouseText"></strong><input id="mouseSens" type="range" min="1" max="100" value="22"></label><label class="field">Sensibilidade ao tocar/arrastar: <strong id="touchText"></strong><input id="touchSens" type="range" min="1" max="100" value="22"></label><label class="field">Qualidade gráfica<select id="quality"><option value="low">Econômica · mais leve</option><option value="medium">Equilibrada</option><option value="high">Alta</option></select></label><label class="field">Limite de quadros por segundo<select id="fps"><option value="30">30 FPS · econômico</option><option value="45">45 FPS · equilibrado</option><option value="60">60 FPS · fluido</option></select></label><label class="field">Volume geral: <strong id="volumeText"></strong><input id="volume" type="range" min="0" max="100" value="40"></label><p class="small">Esta demonstração não possui trilha sonora; o volume fica configurado para sons introduzidos futuramente. No celular: joystick à esquerda, olhar arrastando à direita e AGIR. ESC abre a pausa no computador.</p><button id="closePause" class="primary">Salvar e continuar</button></div></div><div class="overlay" id="modal"><div class="dialog"><button class="exit" id="closeModal">Fechar ✕</button><div id="modalContent"></div></div></div><div id="start"><div class="dialog"><h2>CineGlobo Simulator</h2><p>Protótipo imersivo 3D para demonstração comercial. Você pode caminhar pelo cinema, interagir com equipamentos, acompanhar o instrutor e testar a simulação de bilheteria.</p><p class="notice">O ambiente ainda é <b>conceitual</b>, não reproduz a planta real de Ijuí. Programação, ingressos e procedimentos são fictícios.</p><div class="field"><label>Escolha a unidade</label><select id="startCity"></select></div><div class="field"><label>Escolha sua função neste turno</label><select id="startRole"><option value="caixa">Caixa e atendimento</option><option value="bomboniere">Bomboniere e pipoqueiras</option><option value="sala">Salas e controle de ingressos</option></select></div><p class="notice">Os outros setores serão atendidos por funcionários virtuais. Você poderá escolher outra função ao iniciar um novo turno.</p><p class="small"><b>Novidades:</b> cliente que caminha até o caixa quando o computador é acionado; monitor voltado para o funcionário; missão espacial de EPIs com movimentos animados; estação de duas pipoqueiras com vitrines, caldeirões e controles; menu de pausa com sensibilidade e qualidade ajustáveis; separação física das salas; portas interativas, salas exploráveis e instrutor visível no modo local e GLB opcional quando hospedado e alternativa geométrica. <b>Computador:</b> WASD para andar, mouse para olhar, E para interagir, ESC para liberar o cursor. <b>Celular:</b> joystick à esquerda, arrastar à direita e botão AGIR.</p><button class="primary" id="enter">Entrar no cinema virtual</button></div></div><script>
 (()=>{const b=document.getElementById('mobileHudToggle');if(matchMedia('(pointer:coarse)').matches){document.body.classList.add('hud-closed')}b.addEventListener('click',()=>{const hidden=document.body.classList.toggle('hud-closed');b.setAttribute('aria-expanded',String(!hidden));b.textContent=hidden?'☰ Tarefas':'✕ Fechar tarefas';});if('serviceWorker' in navigator && location.protocol==='https:')window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));})();
 </script><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js"}}</script><script type="module">
@@ -35,7 +54,8 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.m
 import { finishCinema, upholsteredGeometry } from './visuals.js';
 import { saleError } from './training-rules.mjs';
 import { ticketIssues,createRoomRoutine,applyRoomAction } from './room-training.mjs';
-import { createShift,beginShift,recordShiftEvent,recordShiftError,getShiftGoals,nextShiftGoal,shiftProgress,makeShiftReport } from './shift-training.mjs';
+import { createShift,beginShift,recordShiftEvent,recordShiftError,getShiftGoals,nextShiftGoal,shiftProgress,makeShiftReport,assessShift } from './shift-training.mjs';
+import { createShiftTerminalVisuals } from './shift-terminal-visuals.js';
 import { createPopcornBatch,applyPopcornAction,advancePopcornBatch,createMixedTub,applyMixedTubAction } from './popcorn-training.mjs';
 import { createPerformanceMonitor } from './performance-monitor.js';
 import { createCheckoutZone } from './checkout-zone.js';
@@ -53,7 +73,7 @@ let settings={mouse:22,touch:22,quality:"low",fps:30,volume:40};try{settings={..
 let currentRole='caixa',npcTeam=[],npcClock=0,npcCycles={caixa:0,bomboniere:0,sala:0};
 const roleNames={caixa:'Caixa',bomboniere:'Bomboniere e pipoqueiras',sala:'Salas'};
 
-let shiftState=createShift(currentRole,city),lastDeliveredCodes=[];
+let shiftState=createShift(currentRole,city),lastDeliveredCodes=[],shiftTerminalVisualReport=null;
 const SHIFT_HISTORY_KEY='cineglobo_demo_shift_history_v1';
 let shiftHistory=[];try{const v=JSON.parse(localStorage.getItem(SHIFT_HISTORY_KEY)||'[]');if(Array.isArray(v))shiftHistory=v.filter(x=>x?.kind==='cineglobo-demo-shift-report').slice(-8)}catch{}
 function shiftHint(){
@@ -84,7 +104,18 @@ function shiftHint(){
  return 'Próxima meta: '+g.title+'. '+(instruction[g.event]||'Use E ou AGIR no equipamento relacionado.');
 }
 function shiftLabel(){const p=shiftProgress(shiftState);return (shiftState.started?p.phase:'não iniciado')+' · '+p.done+'/'+p.total+' metas · '+p.errors+' erro(s)';}
-function shiftSidebarHtml(){return '<div class="small">Treinamento de turno: '+shiftLabel()+'</div><button type="button" id="shiftOpenButton" style="min-height:38px;width:100%;margin-top:6px">Abrir terminal do turno</button>';}
+function shiftSidebarHtml(){
+ const progress=shiftProgress(shiftState);
+ const next=nextShiftGoal(shiftState);
+ const current=next?escapeHtml(next.title):shiftState.completed?'Exercício concluído':'Inicie pelo terminal';
+ const percent=progress.total?Math.round(progress.done/progress.total*100):0;
+ return '<section class="shift-compact" aria-label="Progresso do treinamento">'+
+  '<div class="shift-compact-head"><b>Metas do turno</b><span>'+progress.done+'/'+progress.total+'</span></div>'+
+  '<div class="shift-progress" role="progressbar" aria-label="Metas concluídas" aria-valuemin="0" aria-valuemax="'+progress.total+'" aria-valuenow="'+progress.done+'"><div style="width:'+percent+'%"></div></div>'+
+  '<p class="shift-next"><b>Próxima:</b> '+current+'</p>'+
+  '<div class="small">'+escapeHtml(progress.phase)+' · '+progress.errors+' erro(s)</div>'+
+  '<button type="button" id="shiftOpenButton" aria-label="Abrir terminal de treinamento do seu setor">Abrir terminal do turno</button></section>';
+}
 function refreshShiftHUD(){
  roleHUD();
 }
@@ -143,8 +174,38 @@ function shiftAction(action){
  const changed=onShiftEvent(action);
  if(!changed)say(shiftHint());
 }
+async function exportShiftAssessment(){
+ const report=makeShiftReport(shiftState);
+ if(!report){say('Conclua todas as metas antes de compartilhar a avaliação.');return}
+ const payload={...report,generatedAt:new Date().toISOString(),disclaimer:'Avaliação local ilustrativa, sem certificação ou aprovação operacional.'};
+ const json=JSON.stringify(payload,null,2);
+ const filename='cineglobo-turno-'+report.role+'-'+new Date().toISOString().slice(0,10)+'.json';
+ try{
+  const file=new File([json],filename,{type:'application/json'});
+  if(navigator.share&&navigator.canShare?.({files:[file]})){
+   await navigator.share({files:[file],title:'Avaliação fictícia do CineGlobo Simulator'});
+   say('Relatório disponibilizado pelo compartilhamento do dispositivo.');return
+  }
+ }catch(error){
+  if(error?.name==='AbortError'){say('Compartilhamento cancelado. Os dados continuam neste navegador.');return}
+ }
+ try{
+  if(navigator.clipboard?.writeText){
+   await navigator.clipboard.writeText(json);
+   say('Relatório em JSON copiado. Cole em uma nota ou conversa.');return
+  }
+ }catch{}
+ try{
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const anchor=document.createElement('a');anchor.href=url;anchor.download=filename;
+  document.body.appendChild(anchor);anchor.click();anchor.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  say('Arquivo de avaliação solicitado ao navegador. Confira Downloads.');
+ }catch{say('Não foi possível compartilhar este relatório no navegador.')}
+}
 function openShiftConsole(){
- const p=shiftProgress(shiftState),goals=getShiftGoals(shiftState);
+ const p=shiftProgress(shiftState),goals=getShiftGoals(shiftState),assessment=assessShift(shiftState);
  const escaped=escapeHtml;
  const actions=shiftState.phase==='fechamento'?
    currentRole==='caixa'?[['receipt-audited','Conferir comprovantes fictícios'],['pos-shutdown','Encerrar computador do turno']]:
@@ -152,7 +213,7 @@ function openShiftConsole(){
    [['lights-checked','Conferir luzes de limpeza (painel do setor)']]:[];
  const pending=goals.map(g=>'<div class="epi-line">'+(g.done?'✓':'○')+' '+escaped(g.title)+'</div>').join('');
  const errors=shiftState.errors.slice(-5).map(x=>'<div class="epi-line">'+escaped(x.source)+': '+escaped(x.message)+'</div>').join('');
- const history=shiftHistory.slice(-3).reverse().map(x=>'<div class="epi-line">'+escaped(roleNames[x.role]||x.role)+' · '+escaped(x.city)+' · '+x.achievements.filter(y=>y.done).length+' metas · '+x.errors.length+' erros</div>').join('');
+ const history=shiftHistory.slice(-3).reverse().map(x=>'<div class="epi-line">'+escaped(roleNames[x.role]||x.role)+' · '+escaped(x.city)+' · '+x.achievements.filter(y=>y.done).length+' metas · '+x.errors.length+' erros · '+(typeof x.assessment?.score==='number'?x.assessment.score+'/100 pontos':'avaliação anterior')+'</div>').join('');
  modal('<h2>Terminal de turno · '+escaped(roleNames[currentRole])+'</h2>'+
   '<p class="small">Exercício fictício local. As metas só avançam ao usar equipamentos e concluir atividades do seu setor.</p>'+
   '<p class="notice">Situação: '+escaped(shiftLabel())+'</p>'+
@@ -160,6 +221,11 @@ function openShiftConsole(){
   '<h3>Metas e ações realizadas</h3>'+pending+
   (actions.length?'<div class="rows">'+actions.map(([event,title])=>'<button data-shift-action="'+event+'" style="min-height:44px">'+title+'</button>').join('')+'</div>':'')+
   '<p class="small">'+escaped(shiftHint())+'</p>'+
+  (assessment.finished?
+   '<section class="shift-assessment" aria-label="Avaliação final do exercício">'+
+   '<h3>Avaliação ilustrativa</h3><p class="shift-grade">'+assessment.score+'<span>/100 pontos</span></p>'+
+   '<p>'+escaped(assessment.label)+'</p><p class="small">'+assessment.done+'/'+assessment.total+' metas executadas · '+assessment.errors+' erro(s) registrados. Pontos = 100 menos 5 por erro, mínimo zero. Não representa aprovação profissional.</p>'+
+   '<button type="button" data-shift-export="1">Compartilhar relatório fictício</button></section>':'')+
   '<h3>Ocorrências deste turno</h3>'+(errors||'<p class="small">Nenhum erro registrado.</p>')+
   '<h3>Histórico neste dispositivo</h3>'+(history||'<p class="small">Sem turnos anteriores completos.</p>')+
   (shiftState.completed?'<button data-shift-start="1">Iniciar novo exercício</button>':'')+
@@ -167,7 +233,10 @@ function openShiftConsole(){
 }
 
 function allowRole(role){if(currentRole===role)return true;say('Este posto está sob responsabilidade da equipe virtual. Sua função atual é '+roleNames[currentRole]+'. Reinicie o turno para trocar de função.');return false}
-function roleHUD(){const el=$('rolePanel');if(!el)return;el.innerHTML='<b>Turno · '+roleNames[currentRole]+'</b>'+Object.keys(roleNames).map(k=>'<div class="epi-line">'+(k===currentRole?'● Você: ':'✓ Funcionário virtual: ')+roleNames[k]+' <span class="small">'+(k===currentRole?'treinamento ativo':'em operação')+'</span></div>').join('')+'<div class="small">Ações automáticas da equipe: '+Object.entries(npcCycles).filter(([k])=>k!==currentRole).reduce((n,[k,v])=>n+v,0)+'</div>'+shiftSidebarHtml()}
+function roleHUD(){const el=$('rolePanel');if(!el)return;el.innerHTML='<b>Turno · '+roleNames[currentRole]+'</b>'+shiftSidebarHtml()+
+ '<details class="shift-team" aria-label="Equipes virtuais"><summary>Outros setores e equipes virtuais</summary>'+
+ Object.keys(roleNames).filter(k=>k!==currentRole).map(k=>'<div class="epi-line">✓ '+roleNames[k]+' <span class="small">em operação virtual</span></div>').join('')+
+ '<div class="small">Ações automáticas: '+Object.entries(npcCycles).filter(([k])=>k!==currentRole).reduce((n,[k,v])=>n+v,0)+'</div></details>';}
 function setRole(role){const next=roleNames[role]?role:'caixa';if(next!==currentRole){shiftState=createShift(next,city);lastDeliveredCodes=[]}currentRole=next;document.querySelector('#epiProgress').style.display=currentRole==='bomboniere'?'block':'none';roleHUD();say('Você vai treinar em '+roleNames[currentRole]+'. O instrutor caminhará com você; aproxime-se e use E/AGIR para conversar. Os outros postos ficam com funcionários virtuais.');}
 function makeWorker(role,x,z,color){
  const g=createCinemaCharacter({role,uniformColor:color});
@@ -810,42 +879,26 @@ function animateEpi(dt){if(!equipMotion)return;equipMotion.time+=dt;
  * As conferências específicas usam objetos do setor, não checkboxes de progresso.
  */
 function createShiftTerminals(){
- const faceMat=new THREE.MeshStandardMaterial({color:0x2c303b,roughness:.65});
- const trimMat=new THREE.MeshStandardMaterial({color:0x9e7850,metalness:.28,roughness:.63});
- const screenGeo=new THREE.PlaneGeometry(.66,.27);
- const canvas=document.createElement('canvas');canvas.width=512;canvas.height=200;
- const c=canvas.getContext('2d');c.fillStyle='#1b232e';c.fillRect(0,0,512,200);
- c.strokeStyle='#bc9160';c.lineWidth=8;c.strokeRect(10,10,492,180);
- c.fillStyle='#ecd9b9';c.textAlign='center';c.font='bold 39px Arial';c.fillText('CINE GLOBO',256,91);
- c.font='26px Arial';c.fillText('CONTROLE DE TURNO',256,145);
- const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
- const screenMat=new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide});
  const equipment=[
-  ['caixa',-2.10,-5.10],
-  ['bomboniere',5.65,-4.20],
-  ['sala',.72,-8.65]
+  {name:'Terminal de turno · caixa',role:'caixa',x:-2.10,z:-5.10},
+  {name:'Terminal de turno · bomboniere',role:'bomboniere',x:5.65,z:-4.20},
+  {name:'Terminal de turno · sala',role:'sala',x:.72,z:-8.65}
  ];
- for(const [role,x,z] of equipment){
-  const group=new THREE.Group();group.name='Terminal de turno · '+role;group.position.set(x,0,z);scene.add(group);
-  const stem=new THREE.Mesh(new THREE.BoxGeometry(.12,.82,.14),trimMat);stem.position.y=.60;group.add(stem);
-  const base=new THREE.Mesh(new THREE.BoxGeometry(.76,.12,.46),faceMat);base.position.y=1.08;group.add(base);
-  const screen=new THREE.Mesh(screenGeo,screenMat);screen.position.set(0,1.10,.239);group.add(screen);
-  world.push({name:'Terminal de turno '+roleNames[role],x,z:z+.15,marker:group,
-   callback:()=>{if(!allowRole(role))return;openShiftConsole()}});
- }
- // Materiais e ingredientes são apenas representações, sem manipulação real.
  const inspections=[
   {name:'Conferir estoque da bomboniere',x:5.15,z:-4.82,event:'stock-inspected',role:'bomboniere'},
   {name:'Inspecionar bancada de bomboniere',x:4.60,z:-4.31,event:'station-inspected',role:'bomboniere'},
   {name:'Conferir saída da sala',x:.18,z:7.70,event:'exit-inspected',role:'sala'}
  ];
- for(const item of inspections){
-  const g=new THREE.Group();g.name=item.name;g.position.set(item.x,0,item.z);scene.add(g);
-  const plate=new THREE.Mesh(new THREE.BoxGeometry(.52,.13,.32),trimMat);
-  plate.position.y=1.04;g.add(plate);
-  const icon=new THREE.Mesh(new THREE.BoxGeometry(.28,.29,.16),faceMat);
-  icon.position.set(0,1.24,0);g.add(icon);
-  world.push({name:item.name,x:item.x,z:item.z,marker:g,callback:()=>{
+ const visuals=createShiftTerminalVisuals(scene,equipment,inspections);
+ shiftTerminalVisualReport=visuals.report;
+ for(const point of visuals.points){
+  if(point.type==='terminal'){
+   world.push({name:'Terminal de turno '+roleNames[point.role],x:point.x,z:point.z+.15,marker:point.marker,
+    callback:()=>{if(!allowRole(point.role))return;openShiftConsole()}});
+   continue;
+  }
+  const item=point;
+  world.push({name:item.name,x:item.x,z:item.z,marker:point.marker,callback:()=>{
    if(!allowRole(item.role))return;
    if(item.event==='station-inspected'&&Object.values(popcornTraining).some(b=>b.motor)){
     onShiftError('Bomboniere','A estação não pode ser conferida com misturador acionado.');
@@ -966,7 +1019,7 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
  for(let x of [-2,2])for(let z of [2,5])collider(x,z,1.55,1.2);
  collider(-.25,-7.0,.5,.6);
  }
-function complete(i,msg){completed.add(i);tasksRender();say(msg)}function close(){ $('modal').classList.remove('visible');if(!isMobile)renderer.domElement.requestPointerLock?.()}function modal(html){$('modalContent').innerHTML=html;$('modal').classList.add('visible');document.exitPointerLock?.()}$('closeModal').onclick=close;$('rolePanel').addEventListener('click',e=>{if(e.target.closest('#shiftOpenButton'))openShiftConsole()});$('modalContent').addEventListener('click',e=>{if(e.target.closest('[data-shift-start]')){startSectorShift();openShiftConsole();return;}const shiftButton=e.target.closest('[data-shift-action]');if(shiftButton){shiftAction(shiftButton.dataset.shiftAction);openShiftConsole();return;}const roomAction=e.target.closest('[data-room-action]');if(roomAction){runRoomAction(roomAction.dataset.roomName,roomAction.dataset.roomAction);return;}const pop=e.target.closest('[data-popcorn-action]');if(pop){if(pop.dataset.popcornKind==='misto')operateMixedTub(pop.dataset.popcornAction);else operatePopcorn(pop.dataset.popcornKind,pop.dataset.popcornAction);return;}const btn=e.target.closest('[data-room-light]');if(btn){setRoomLights(btn.dataset.room,btn.dataset.roomLight);say(btn.dataset.roomLight==='filme'?'Música encerrada: arandelas apagadas, LEDs de orientação ligados.':btn.dataset.roomLight==='limpeza'?'Luzes gerais acesas para a limpeza após o filme.':'Arandelas ligadas para entrada do público.')}});
+function complete(i,msg){completed.add(i);tasksRender();say(msg)}function close(){ $('modal').classList.remove('visible');if(!isMobile)renderer.domElement.requestPointerLock?.()}function modal(html){$('modalContent').innerHTML=html;$('modal').classList.add('visible');document.exitPointerLock?.()}$('closeModal').onclick=close;$('rolePanel').addEventListener('click',e=>{if(e.target.closest('#shiftOpenButton'))openShiftConsole()});$('modalContent').addEventListener('click',e=>{if(e.target.closest('[data-shift-start]')){startSectorShift();openShiftConsole();return;}if(e.target.closest('[data-shift-export]')){exportShiftAssessment();return;}const shiftButton=e.target.closest('[data-shift-action]');if(shiftButton){shiftAction(shiftButton.dataset.shiftAction);openShiftConsole();return;}const roomAction=e.target.closest('[data-room-action]');if(roomAction){runRoomAction(roomAction.dataset.roomName,roomAction.dataset.roomAction);return;}const pop=e.target.closest('[data-popcorn-action]');if(pop){if(pop.dataset.popcornKind==='misto')operateMixedTub(pop.dataset.popcornAction);else operatePopcorn(pop.dataset.popcornKind,pop.dataset.popcornAction);return;}const btn=e.target.closest('[data-room-light]');if(btn){setRoomLights(btn.dataset.room,btn.dataset.roomLight);say(btn.dataset.roomLight==='filme'?'Música encerrada: arandelas apagadas, LEDs de orientação ligados.':btn.dataset.roomLight==='limpeza'?'Luzes gerais acesas para a limpeza após o filme.':'Arandelas ligadas para entrada do público.')}});
 // Banco exclusivamente fictício para demonstração — nunca consulta CPF real.
 const trainingDBKey='cineglobo_demo_tickets_v11';
 let trainingTickets=[];let selectedClient=0;let mission={served:0,rejected:0,attempts:0};

@@ -6,7 +6,7 @@ test('turno de caixa: abertura física, venda real do jogo, fechamento e histór
  await page.route('**/index.html',async route=>{
   const source=fs.readFileSync('index.html','utf8');
   const html=source.replace('function applyGraphics(){',
-   "window.__shiftTest={world:()=>world,shift:()=>shiftState,history:()=>shiftHistory,openCash,summonCustomer,read:()=>lastDeliveredCodes,trainerAdvice,setRole,invalidSale:()=>validateCustomerSale(null,null,[],'Inteira','Pix',0,{},[])};\nfunction applyGraphics(){");
+   "window.__shiftTest={world:()=>world,shift:()=>shiftState,assessment:()=>assessShift(shiftState),history:()=>shiftHistory,openCash,summonCustomer,read:()=>lastDeliveredCodes,trainerAdvice,setRole,invalidSale:()=>validateCustomerSale(null,null,[],'Inteira','Pix',0,{},[])};\nfunction applyGraphics(){");
   await route.fulfill({contentType:'text/html',body:html});
  });
  await page.goto('/index.html');
@@ -63,6 +63,13 @@ test('turno de caixa: abertura física, venda real do jogo, fechamento e histór
  expect(report.shift.errors.length).toBe(1);
  expect(report.history.length).toBe(1);
  expect(report.history[0].errors.length).toBe(1);
+ const assessment=await page.evaluate(()=>window.__shiftTest.assessment());
+ expect(assessment.finished).toBe(true);
+ expect(assessment.score).toBe(95);
+ expect(assessment.isCertification).toBe(false);
+ await expect(page.getByText('Avaliação ilustrativa',{exact:true})).toBeVisible();
+ await expect(page.locator('.shift-grade')).toContainText('95');
+ await expect(page.locator('[data-shift-export]')).toBeVisible();
  await expect(page.locator('#modalContent .notice')).toContainText('6/6 metas');
  await page.screenshot({path:'test-results/turno-caixa-mobile.png',fullPage:true});
  expect(errors).toEqual([]);

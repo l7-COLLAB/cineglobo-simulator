@@ -95,9 +95,28 @@ export function shiftProgress(state){
  const all=getShiftGoals(state);
  return {done:all.filter(g=>g.done).length,total:all.length,errors:state.errors.length,phase:state.phase};
 }
+/**
+ * Avaliação ilustrativa baseada apenas em metas/erros capturados localmente.
+ * Não certifica aptidão. Meta obrigatória incompleta = exercício pendente.
+ */
+export function assessShift(state){
+ const goals=getShiftGoals(state);
+ const done=goals.filter(g=>g.done).length,total=goals.length;
+ const errors=state?.errors?.length||0;
+ const completionPercent=total?Math.round(done/total*100):0;
+ const score=Math.max(0,Math.min(100,100-errors*5));
+ const finished=Boolean(state?.started&&state?.completed&&done===total);
+ const label=!finished?'Em andamento':score>=90?'Concluído · poucos erros':score>=75?'Concluído · revisar ocorrências':'Concluído · repetir exercício recomendado';
+ return {
+  role:state?.role||'',city:state?.city||'',finished,done,total,completionPercent,
+  errors,score,label,
+  isCertification:false,officialTrainingApproved:false
+ };
+}
 export function makeShiftReport(state){
- if(!state?.completed)return null;
+ const assessment=assessShift(state);
+ if(!assessment.finished)return null;
  return {kind:'cineglobo-demo-shift-report',role:state.role,city:state.city,
   achievements:getShiftGoals(state).map(g=>({id:g.id,phase:g.phase,done:g.done})),
-  errors:state.errors.map(e=>({...e})),completed:true,revision:state.revision};
+  errors:state.errors.map(e=>({...e})),assessment,completed:true,revision:state.revision};
 }
