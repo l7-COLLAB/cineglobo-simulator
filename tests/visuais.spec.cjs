@@ -89,7 +89,14 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
  const epiStatus=await page.evaluate(()=>window.__visualTest.world().filter(o=>o.epiStation).map(o=>({name:o.name,markerExists:!!o.marker,parentExists:!!o.marker?.parent})));
  expect(epiStatus.length).toBeGreaterThanOrEqual(5);
  expect(epiStatus.every(m=>m.markerExists&&m.parentExists)).toBe(true);
- expect(metrics.shiftVisuals.interactivePoints).toBe(6);
+ expect(metrics.batches.clickMarkers.instances).toBeGreaterThanOrEqual(6);
+ expect(metrics.batches.clickMarkers.savedDraws).toBeGreaterThanOrEqual(5);
+ const hallPosters=await page.evaluate(()=>{
+  const mesh=window.__visualTest.scene().getObjectByName('Molduras de cartazes do hall');
+  return {instanced:!!mesh?.isInstancedMesh,count:mesh?.count||0};
+ });
+ expect(hallPosters).toEqual({instanced:true,count:3});
+  expect(metrics.shiftVisuals.interactivePoints).toBe(6);
  expect(metrics.shiftVisuals.legacyEstimatedDraws).toBe(15);
  expect(metrics.shiftVisuals.instancedDraws).toBe(3);
  expect(metrics.shiftVisuals.instances).toBe(15);
