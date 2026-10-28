@@ -301,6 +301,7 @@ const speeches=['Bem-vindo! Este é um cinema virtual de treinamento. Comece exp
 function trainerAdvice(){if(!shiftState.started||!shiftState.completed){say(shiftHint());return;}const tips={caixa:'Estou ao seu lado. Aproxime-se da face do monitor do caixa e pressione E/AGIR ou clique nele. Quando o cliente chegar, confirme o pedido e conclua a venda no computador.',bomboniere:'Vamos para a bomboniere. Comece pela preparação de EPIs somente se você for operar as pipoqueiras. Siga os objetos da bancada em sequência.',sala:'Eu vou acompanhar você até as salas. Confira o ingresso do cliente, a sala correta e o horário antes de liberar o acesso.'};say(tips[currentRole]);}
 
 const trainerFollow={lastX:0,lastZ:6,headingX:0,headingZ:-1,targetX:.75,targetZ:4,walking:false};
+let seatedAtSofa=null;
 function updateTrainerFollow(dt){
  if(!trainer||paused||$('start').style.display!=='none')return;
  const px=player.x,pz=player.z;
@@ -348,7 +349,7 @@ function updateTrainerFollow(dt){
  }
 }
 function say(t){$('helper').style.display='block';$('speech').textContent=t}function save(){localStorage.setItem('cineglobo_demo',JSON.stringify(data))}function fillCities(){['city','startCity'].forEach(id=>{$(id).innerHTML=cities.map(c=>`<option ${c==='Ijuí'?'selected':''}>${c}</option>`).join('')})}fillCities();
-function setCity(c){if(c!==city){shiftState=createShift(currentRole,c);lastDeliveredCodes=[]}city=c;for(const name of Object.keys(roomRoutines)){roomRoutines[name]=createRoomRoutine(name);roomSessionChoice[name]='';if(roomLighting[name])setRoomLights(name,'entrada');}$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${t}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
+function setCity(c){seatedAtSofa=null;if(c!==city){shiftState=createShift(currentRole,c);lastDeliveredCodes=[]}city=c;for(const name of Object.keys(roomRoutines)){roomRoutines[name]=createRoomRoutine(name);roomSessionChoice[name]='';if(roomLighting[name])setRoomLights(name,'entrada');}$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${t}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
 function mat(color){return new THREE.MeshStandardMaterial({color,roughness:.75})}function box(x,y,z,w,h,d,color){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));m.position.set(x,y,z);scene.add(m);return m}const fixedTextSigns=[];
 function textSign(t,x,y,z,w=2,color='#ffffff'){
  fixedTextSigns.push({t,x,y,z,w,color});
@@ -1021,6 +1022,18 @@ function createFoyerFurniture(){
  piece(0,1.13,2.8,.31,.06,3.30,3,'Friso superior');
  for(const end of [-1,1])piece(0,.11,2.8+end*1.84,1.78,.08,.29,3,'Sapatas');
  group.userData.lobbyFurnitureReport=mergeStaticDetails(group,{minCount:3,maxVertices:18000});
+ const sides=[['esquerda',-1.52,2.8],['direita',1.52,2.8],['entrada',0,5.55],['caixa',0,.05]];
+ for(const [side,x,z] of sides){
+  world.push({name:'Sentar no sofá · '+side,x,z,callback:()=>sitAtSofa(side)});
+ }
+}
+function sitAtSofa(side){
+ if(seatedAtSofa===side){seatedAtSofa=null;say('Você se levantou do sofá.');return}
+ const spots={esquerda:[-1.34,2.8],direita:[1.34,2.8],entrada:[0,5.43],caixa:[0,.16]};
+ if(!spots[side])return;
+ seatedAtSofa=side;
+ player.x=spots[side][0];player.z=spots[side][1];
+ say('Você se sentou no sofá pelo lado '+side+'. Toque AGIR novamente ou use o joystick para levantar.');
 }
 function createCashierQueue(){
  const group=new THREE.Group();group.name='Organizadores de fila até bilheteria';scene.add(group);
@@ -1166,7 +1179,7 @@ box(-4,2.83,-4.36,2.5,.8,.08,0x131d25);textSign('BILHETERIA',-4.7,3.3,-4.45,2.8)
  }
  loadDetailedTrainer();
  collider(-4.6,-3.7,5,1.7);collider(3.7,-4.6,5.1,1.6);
- for(let x of [-2,2])for(let z of [2,5])collider(x,z,1.55,1.2);
+ collider(0,2.8,1.90,4.55);
  collider(-.25,-7.0,.5,.6);
  }
 function complete(i,msg){completed.add(i);tasksRender();say(msg)}function close(){ $('modal').classList.remove('visible');if(!isMobile)renderer.domElement.requestPointerLock?.()}function modal(html){$('modalContent').innerHTML=html;$('modal').classList.add('visible');document.exitPointerLock?.()}$('closeModal').onclick=close;$('rolePanel').addEventListener('click',e=>{if(e.target.closest('#shiftOpenButton'))openShiftConsole()});$('modalContent').addEventListener('click',e=>{if(e.target.closest('[data-shift-start]')){startSectorShift();openShiftConsole();return;}if(e.target.closest('[data-shift-export]')){exportShiftAssessment();return;}const shiftButton=e.target.closest('[data-shift-action]');if(shiftButton){shiftAction(shiftButton.dataset.shiftAction);openShiftConsole();return;}const preview=e.target.closest('[data-room-light-preview]');if(preview){previewRoomLights(preview.dataset.roomLightLabel,preview.dataset.roomLightPreview);return;}const roomAction=e.target.closest('[data-room-action]');if(roomAction){runRoomAction(roomAction.dataset.roomName,roomAction.dataset.roomAction);return;}const pop=e.target.closest('[data-popcorn-action]');if(pop){if(pop.dataset.popcornKind==='misto')operateMixedTub(pop.dataset.popcornAction);else operatePopcorn(pop.dataset.popcornKind,pop.dataset.popcornAction);return;}const btn=e.target.closest('[data-room-light]');if(btn){setRoomLights(btn.dataset.room,btn.dataset.roomLight);say(btn.dataset.roomLight==='filme'?'Música encerrada: arandelas apagadas, LEDs de orientação ligados.':btn.dataset.roomLight==='limpeza'?'Luzes gerais acesas para a limpeza após o filme.':'Arandelas ligadas para entrada do público.')}});
@@ -1359,13 +1372,14 @@ function movement(){
  walkVelocity.y+=(forward-walkVelocity.y)*response;
  if(blocked){walkVelocity.x=0;walkVelocity.y=0;}
  forward=walkVelocity.y;strafe=walkVelocity.x;
+ if(seatedAtSofa&&Math.hypot(forward,strafe)>.22){seatedAtSofa=null;say('Você se levantou do sofá.');}
  const magnitude=Math.hypot(forward,strafe);if(magnitude>1){forward/=magnitude;strafe/=magnitude}
  const spd=(keys.ShiftLeft?6.2:(isMobile?3.1:3.7))*dt;
  const dx=(-Math.sin(player.yaw)*forward+Math.cos(player.yaw)*strafe)*spd;
  const dz=(-Math.cos(player.yaw)*forward-Math.sin(player.yaw)*strafe)*spd;
  if(!paused&&canStand(player.x+dx,player.z))player.x+=dx;
  if(!paused&&canStand(player.x,player.z+dz))player.z+=dz;
- camera.position.set(player.x,1.67,player.z);camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
+ camera.position.set(player.x,seatedAtSofa?1.10:1.67,player.z);camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
  const room=player.z < -11?'sala':'hall';if(room!==roomState){roomState=room;say(room==='sala'?'Você entrou na sala. Observe a tela, as poltronas e os pontos de controle.':'Você voltou ao hall do cinema. Continue explorando os setores.')}
  let best=null,score=Infinity;
  const view=viewDirection;camera.getWorldDirection(view);const gaze=gazeDirection.set(view.x,view.z).normalize();
