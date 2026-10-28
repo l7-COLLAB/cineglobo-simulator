@@ -33,3 +33,5 @@ A publicação usa GitHub Pages e serve a versão estática em `dist/`, com o mo
 - Leia o procedimento completo de [instalação no Safari, offline e teste de 20 minutos](docs/ETAPA7_PAGES_OFFLINE.md).
 - O endereço previsto é `https://l7-collab.github.io/cineglobo-simulator/`, condicionado à confirmação do deploy HTTPS.
 - Para desenvolver: `npm install`, `npm run build`, `python3 -m http.server 8765 --directory dist`.
+
+> **Ativação do GitHub Pages (iPhone):** em **Settings → Pages → Build and deployment → Source**, selecione **GitHub Actions**. O workflow `pages.yml` é executado a cada atualização da `main` e confirma por HTTPS a presença do HTML e do Three.js local. Não use os modelos Jekyll ou Static HTML.
