@@ -41,3 +41,7 @@ A publicação usa GitHub Pages e serve a versão estática em `dist/`, com o mo
 Na revisão `v32`, o cinema inclui sofá-ilha comprido com interação pelos quatro lados, organizadores de fila do hall até o Caixa, demonstração de três modos de iluminação por interruptores nas entradas das salas, botão AGIR por proximidade e instrutor que para de seguir quando chega ao ponto de acompanhamento. Funcionários usam camisa preta e boné com logo Cine Globo.
 
 As regras e evidências dos testes estão em [Etapa 9](docs/ETAPA9_HALL_INTERACOES.md). A reprodução no Safari físico deve confirmar a iluminação, a circulação, os gestos e a atualização do cache.
+
+## Etapa 10 — Auditoria técnica do iPhone
+
+A revisão `v33` corrige a posição inicial do instrutor, adiciona navegação A* ao redor do sofá e obstáculos, escurece de fato as superfícies das salas no modo filme, protege dados antigos do Safari e exibe um aviso quando a PWA recebe uma atualização. Consulte [a auditoria completa](docs/AUDITORIA_TECNICA_ETAPA10.md). O projeto segue demonstrativo e exige validação no Safari físico antes de uso institucional.
