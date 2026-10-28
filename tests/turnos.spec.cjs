@@ -63,7 +63,7 @@ test('turno de caixa: abertura física, venda real do jogo, fechamento e histór
  expect(report.shift.errors.length).toBe(1);
  expect(report.history.length).toBe(1);
  expect(report.history[0].errors.length).toBe(1);
- await expect(page.getByText(/6\/6 metas/)).toBeVisible();
+ await expect(page.locator('#modalContent .notice')).toContainText('6/6 metas');
  await page.screenshot({path:'test-results/turno-caixa-mobile.png',fullPage:true});
  expect(errors).toEqual([]);
 });
