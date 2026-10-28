@@ -130,6 +130,7 @@ import { createCheckoutZone } from './checkout-zone.js';
 import { createCinemaCharacter } from './character-kit.js';
 import { batchStaticBoxes, mergeStaticDetails } from './static-batching.js';
 import { planWalkingRoute } from './navigation.mjs';
+import { nearestInteraction } from './interaction-targeting.mjs';
 const $=x=>document.getElementById(x),cities=['Três Passos','Palmeira das Missões','Santa Rosa','Frederico Westphalen','Cruz Alta','Ijuí','Horizontina'];
 const defaults={notices:[{city:'Todas',text:'Bem-vindo ao ambiente demonstrativo. Todos os dados são fictícios.'}],sessions:[{city:'Ijuí',film:'Aventura Estelar (demonstração)',time:'14:00',room:'Sala 1',format:'2D'},{city:'Ijuí',film:'Mistério da Noite (demonstração)',time:'16:30',room:'Sala 2',format:'3D'}],tasks:['Acender as luzes do hall','Ligar o computador do caixa','Ligar a mini impressora','Conferir a televisão do catálogo','Preparar a pipoqueira','Conferir a iluminação da Sala 1','Conferir a climatização da Sala 2']};
 let data=structuredClone(defaults);
@@ -1286,7 +1287,7 @@ box(-4,2.83,-4.36,2.5,.8,.08,0x131d25);textSign('BILHETERIA',-4.7,3.3,-4.45,2.8)
  collider(0,2.8,1.90,4.55);
  collider(-.25,-7.0,.5,.6);
  }
-function complete(i,msg){completed.add(i);tasksRender();say(msg)}function close(){ $('modal').classList.remove('visible');if(!isMobile)renderer.domElement.requestPointerLock?.()}function modal(html){$('modalContent').innerHTML=html;$('modal').classList.add('visible');document.exitPointerLock?.()}$('closeModal').onclick=close;$('rolePanel').addEventListener('click',e=>{if(e.target.closest('#shiftOpenButton'))openShiftConsole()});$('modalContent').addEventListener('click',e=>{if(e.target.closest('[data-shift-start]')){startSectorShift();openShiftConsole();return;}if(e.target.closest('[data-shift-export]')){exportShiftAssessment();return;}const shiftButton=e.target.closest('[data-shift-action]');if(shiftButton){shiftAction(shiftButton.dataset.shiftAction);openShiftConsole();return;}const preview=e.target.closest('[data-room-light-preview]');if(preview){previewRoomLights(preview.dataset.roomLightLabel,preview.dataset.roomLightPreview);return;}const roomAction=e.target.closest('[data-room-action]');if(roomAction){runRoomAction(roomAction.dataset.roomName,roomAction.dataset.roomAction);return;}const pop=e.target.closest('[data-popcorn-action]');if(pop){if(pop.dataset.popcornKind==='misto')operateMixedTub(pop.dataset.popcornAction);else operatePopcorn(pop.dataset.popcornKind,pop.dataset.popcornAction);return;}const btn=e.target.closest('[data-room-light]');if(btn){setRoomLights(btn.dataset.room,btn.dataset.roomLight);say(btn.dataset.roomLight==='filme'?'Música encerrada: arandelas apagadas, LEDs de orientação ligados.':btn.dataset.roomLight==='limpeza'?'Luzes gerais acesas para a limpeza após o filme.':'Arandelas ligadas para entrada do público.')}});
+function complete(i,msg){completed.add(i);tasksRender();say(msg)}function close(){ $('modal').classList.remove('visible');if(!isMobile)renderer.domElement.requestPointerLock?.()}function modal(html){resetTouchState();$('modalContent').innerHTML=html;$('modal').classList.add('visible');document.exitPointerLock?.()}$('closeModal').onclick=close;$('rolePanel').addEventListener('click',e=>{if(e.target.closest('#shiftOpenButton'))openShiftConsole()});$('modalContent').addEventListener('click',e=>{if(e.target.closest('[data-shift-start]')){startSectorShift();openShiftConsole();return;}if(e.target.closest('[data-shift-export]')){exportShiftAssessment();return;}const shiftButton=e.target.closest('[data-shift-action]');if(shiftButton){shiftAction(shiftButton.dataset.shiftAction);openShiftConsole();return;}const preview=e.target.closest('[data-room-light-preview]');if(preview){previewRoomLights(preview.dataset.roomLightLabel,preview.dataset.roomLightPreview);return;}const roomAction=e.target.closest('[data-room-action]');if(roomAction){runRoomAction(roomAction.dataset.roomName,roomAction.dataset.roomAction);return;}const pop=e.target.closest('[data-popcorn-action]');if(pop){if(pop.dataset.popcornKind==='misto')operateMixedTub(pop.dataset.popcornAction);else operatePopcorn(pop.dataset.popcornKind,pop.dataset.popcornAction);return;}const btn=e.target.closest('[data-room-light]');if(btn){setRoomLights(btn.dataset.room,btn.dataset.roomLight);say(btn.dataset.roomLight==='filme'?'Música encerrada: arandelas apagadas, LEDs de orientação ligados.':btn.dataset.roomLight==='limpeza'?'Luzes gerais acesas para a limpeza após o filme.':'Arandelas ligadas para entrada do público.')}});
 // Banco exclusivamente fictício para demonstração — nunca consulta CPF real.
 const trainingDBKey='cineglobo_demo_tickets_v11';
 let trainingTickets=[];let selectedClient=0;let mission={served:0,rejected:0,attempts:0};
@@ -1485,20 +1486,17 @@ function movement(){
  if(!paused&&canStand(player.x,player.z+dz))player.z+=dz;
  camera.position.set(player.x,seatedAtSofa?1.10:1.67,player.z);camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
  const room=player.z < -11?'sala':'hall';if(room!==roomState){roomState=room;say(room==='sala'?'Você entrou na sala. Observe a tela, as poltronas e os pontos de controle.':'Você voltou ao hall do cinema. Continue explorando os setores.')}
- let best=null,score=Infinity;
- const view=viewDirection;camera.getWorldDirection(view);const gaze=gazeDirection.set(view.x,view.z).normalize();
- world.forEach(o=>{const vx=o.x-player.x,vz=o.z-player.z,dist=Math.hypot(vx,vz);if(dist>(o.name==='Computador do caixa'?2.10:1.70)||dist<.05)return;
- const facing=(vx*gaze.x+vz*gaze.y)/dist;if(facing<(o.name==='Computador do caixa'?.42:.67))return;
- const priority=o.epiStation?.12:(o.name==='Computador do caixa'?.65:0);const s=dist+(1-facing)*3-priority;
- if(s<score){best=o;score=s;}
- });
+ const best=nearestInteraction({player,targets:world,blockers,doors,previous:currentTarget});
  currentTarget=best;
  const canAct=Boolean(best&&!blocked&&!paused);
+ if(blocked)currentTarget=null;
  $('action').style.display=canAct?'block':'none';
  if(best)$('action').textContent='E / AGIR · '+best.name;
  // iPhone: o botão não fica permanente na tela; só surge no alcance real.
  $('touchInteract').style.display=isMobile&&canAct?'block':'none';
  $('touchInteract').setAttribute('aria-label',canAct?'Interagir: '+best.name:'Nenhuma interação próxima');
+ $('touchInteract').title=canAct?'Interagir: '+best.name:'Aproxime-se de um setor ou equipamento';
+ $('touchInteract').dataset.target=canAct?best.name:'';
  for(const door of doors){door.hinge.rotation.y+= (door.goal-door.hinge.rotation.y)*Math.min(1,dt*8)}
  if(trainerMixer&&!paused)trainerMixer.update(dt);
  updateVisibleRooms();
@@ -1507,7 +1505,14 @@ function movement(){
 }
 const walkVelocity=new THREE.Vector2();
 const clock=new THREE.Clock();
-addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='KeyE'&&!paused&&!e.repeat&&currentTarget&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))currentTarget.callback();if(e.code==='Escape'&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))togglePause()});addEventListener('keyup',e=>keys[e.code]=false);addEventListener('blur',()=>{keys={};joy={x:0,y:0};walkVelocity.set(0,0);$('nub').style.transform='none'});document.addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer?.domElement){player.yaw-=e.movementX*settings.mouse*.000035;player.pitch=THREE.MathUtils.clamp(player.pitch-e.movementY*settings.mouse*.000035,-1.15,1.15)}});$('touchInteract').onclick=()=>{if(!paused&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))currentTarget?.callback()};let lookPointerId=null,lastTouchX=0,lastTouchY=0;
+addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='KeyE'&&!paused&&!e.repeat&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))activateNearbyTarget();if(e.code==='Escape'&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))togglePause()});addEventListener('keyup',e=>keys[e.code]=false);addEventListener('blur',resetTouchState);document.addEventListener('visibilitychange',()=>{if(document.hidden)resetTouchState()});document.addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer?.domElement){player.yaw-=e.movementX*settings.mouse*.000035;player.pitch=THREE.MathUtils.clamp(player.pitch-e.movementY*settings.mouse*.000035,-1.15,1.15)}});function activateNearbyTarget(){
+ if(paused||document.hidden||$('start').style.display!=='none'||$('modal').classList.contains('visible'))return;
+ const reachable=nearestInteraction({player,targets:world,blockers,doors,previous:currentTarget});
+ if(!reachable)return;
+ currentTarget=reachable;
+ reachable.callback();
+}
+$('touchInteract').onclick=activateNearbyTarget;let lookPointerId=null,lastTouchX=0,lastTouchY=0;
 const cameraArea=$('look');
 cameraArea.addEventListener('pointerdown',e=>{
  if(lookPointerId!==null||paused||$('start').style.display!=='none'||$('modal').classList.contains('visible'))return;
@@ -1552,7 +1557,20 @@ $('joy').addEventListener('pointerdown',e=>{
 });
 $('joy').addEventListener('pointermove',e=>{if(activeJoystickPointer===e.pointerId){updateJoystick(e);e.preventDefault()}});
 for(const type of ['pointerup','pointercancel','lostpointercapture'])$('joy').addEventListener(type,clearJoystick);
-$('enter').onclick=()=>{$('start').style.display='none';setCity($('startCity').value);setRole($('startRole').value);if(!isMobile)renderer.domElement.requestPointerLock?.()};addEventListener('resize',resizeGame);addEventListener('orientationchange',()=>requestAnimationFrame(resizeGame));window.visualViewport?.addEventListener('resize',resizeGame);try{build();technicalMonitor=createPerformanceMonitor(renderer,()=>player.z< -11?(player.x<0?'Sala 1':'Sala 2'):(player.z<1?'Caixa / Bomboniere':'Hall'));applyGraphics();movement();renderer.domElement.onclick=()=>{if(!paused&&currentTarget?.name==='Computador do caixa'&&currentRole==='caixa'){currentTarget.callback();return;}if(!isMobile&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))renderer.domElement.requestPointerLock?.()}}catch(e){$('start').querySelector('.dialog').innerHTML+='<p class="notice">Não foi possível iniciar o motor gráfico. Confira a conexão de internet e o suporte WebGL do navegador.</p>';console.error(e)}
+function resetTouchState(){
+ keys={};joy={x:0,y:0};walkVelocity.set(0,0);
+ const nub=$('nub');if(nub)nub.style.transform='none';
+ if(activeJoystickPointer!==null){
+  try{$('joy').releasePointerCapture(activeJoystickPointer)}catch{}
+  activeJoystickPointer=null;
+ }
+ if(lookPointerId!==null){
+  try{cameraArea.releasePointerCapture(lookPointerId)}catch{}
+  lookPointerId=null;
+ }
+}
+
+$('enter').onclick=()=>{$('start').style.display='none';setCity($('startCity').value);setRole($('startRole').value);if(!isMobile)renderer.domElement.requestPointerLock?.()};addEventListener('resize',resizeGame);addEventListener('orientationchange',()=>requestAnimationFrame(resizeGame));window.visualViewport?.addEventListener('resize',resizeGame);try{build();technicalMonitor=createPerformanceMonitor(renderer,()=>player.z< -11?(player.x<0?'Sala 1':'Sala 2'):(player.z<1?'Caixa / Bomboniere':'Hall'));applyGraphics();movement();renderer.domElement.onclick=()=>{if(!paused&&currentRole==='caixa'&&nearestInteraction({player,targets:world,blockers,doors,previous:currentTarget})?.name==='Computador do caixa'){activateNearbyTarget();return;}if(!isMobile&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))renderer.domElement.requestPointerLock?.()}}catch(e){$('start').querySelector('.dialog').innerHTML+='<p class="notice">Não foi possível iniciar o motor gráfico. Confira a conexão de internet e o suporte WebGL do navegador.</p>';console.error(e)}
 
 function effectivePixelRatio(){
  const dpr=Math.max(1,window.devicePixelRatio||1);
@@ -1575,7 +1593,7 @@ function applyGraphics(){
  resizeGame();
 }
 function applyInputs(){for(const [key,id] of [['mouse','mouseSens'],['touch','touchSens'],['quality','quality'],['fps','fps'],['volume','volume']])$(id).value=settings[key];$('mouseText').textContent=settings.mouse+'%';$('touchText').textContent=settings.touch+'%';$('volumeText').textContent=settings.volume+'%'}
-function togglePause(force){paused=typeof force==='boolean'?force:!paused;technicalMonitor?.reset();$('pauseOverlay').classList.toggle('visible',paused);if(paused){document.exitPointerLock?.();keys={};joy={x:0,y:0};walkVelocity.set(0,0);$('nub').style.transform='none';$('touchInteract').style.display='none';applyInputs()}else{lastFrame=0}}
+function togglePause(force){paused=typeof force==='boolean'?force:!paused;technicalMonitor?.reset();$('pauseOverlay').classList.toggle('visible',paused);if(paused){document.exitPointerLock?.();resetTouchState();currentTarget=null;$('touchInteract').style.display='none';applyInputs()}else{lastFrame=0}}
 $('pauseBtn').onclick=()=>togglePause(true);$('resumeBtn').onclick=$('closePause').onclick=()=>togglePause(false);
 $('resetViewBtn').onclick=()=>{player.pitch=0;player.yaw=0};
 $('techBtn').onclick=()=>{if(!technicalMonitor)return;const on=technicalMonitor.setEnabled(!technicalMonitor.isEnabled());$('techBtn').textContent='Métricas técnicas: '+(on?'ligadas':'desligadas');$('techBtn').setAttribute('aria-pressed',String(on));};
