@@ -30,8 +30,15 @@ export function finishCinema(scene){
  for(const side of [-1,1]){parts.push([side*8.18,.16,0,.08,.25,21.5]);parts.push([side*8.18,3.35,0,.08,.04,21.5]);}
  const strips=new THREE.InstancedMesh(unit,brass,parts.length),m=new THREE.Object3D();parts.forEach((p,i)=>{m.position.set(...p.slice(0,3));m.scale.set(...p.slice(3));m.updateMatrix();strips.setMatrixAt(i,m.matrix)});strips.computeBoundingSphere();scene.add(strips);
  // Painéis de programação decorativos e sinalização; nenhum novo obstáculo.
+ // Três molduras idênticas em uma única chamada, preservando cada cartaz.
+ const posterFrames=new THREE.InstancedMesh(unit,dark,3);
+ posterFrames.name='Molduras de cartazes do hall';
  for(const [i,z] of [-5,0,5].entries()){
- const frame=new THREE.Mesh(unit,dark);frame.position.set(8.18,2,z);frame.scale.set(.09,1.9,1.3);scene.add(frame);
+   m.position.set(8.18,2,z);m.rotation.set(0,0,0);m.scale.set(.09,1.9,1.3);m.updateMatrix();
+   posterFrames.setMatrixAt(i,m.matrix);
+ }
+ posterFrames.instanceMatrix.needsUpdate=true;posterFrames.computeBoundingSphere();scene.add(posterFrames);
+ for(const [i,z] of [-5,0,5].entries()){
  const c=document.createElement('canvas');c.width=256;c.height=384;const ctx=c.getContext('2d');const grad=ctx.createLinearGradient(0,0,256,384);grad.addColorStop(0,['#183849','#542532','#3d354c'][i]);grad.addColorStop(1,'#10151d');ctx.fillStyle=grad;ctx.fillRect(0,0,256,384);ctx.strokeStyle='#c6a064';ctx.lineWidth=2;ctx.strokeRect(12,12,232,360);ctx.fillStyle='#ead5b1';ctx.textAlign='center';ctx.font='bold 27px sans-serif';ctx.fillText('CINE GLOBO',128,65);ctx.font='18px sans-serif';ctx.fillText(['BEM-VINDO','BOMBONIERE','BOA SESSÃO'][i],128,230);ctx.font='13px sans-serif';ctx.fillText('AMBIENTE DE TREINAMENTO',128,320);
  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;
  const poster=new THREE.Mesh(new THREE.PlaneGeometry(1.16,1.74),new THREE.MeshBasicMaterial({map:t}));poster.position.set(8.12,2,z);poster.rotation.y=-Math.PI/2;scene.add(poster);

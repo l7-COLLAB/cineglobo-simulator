@@ -1,4 +1,4 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><title>CineGlobo Simulator | iPhone · v2.0</title><style>.epi-line{font-size:12px;padding:3px 0;color:#f0d6ad}#epiProgress{max-height:200px;overflow:auto} 
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><title>CineGlobo Simulator | iPhone · v2.1 offline</title><style>.epi-line{font-size:12px;padding:3px 0;color:#f0d6ad}#epiProgress{max-height:200px;overflow:auto} 
 :root{font-family:Inter,system-ui,-apple-system,Arial,sans-serif;color:#f8f5f0;background:#101017}*{box-sizing:border-box}body{margin:0;overflow:hidden}button,select,input,textarea{font:inherit}button{cursor:pointer}#scene{position:fixed;inset:0}#top{position:fixed;top:0;left:0;right:0;padding:13px 17px;background:linear-gradient(#101017eb,#10101720);display:flex;gap:12px;align-items:center;z-index:3;flex-wrap:wrap}.brand{font-weight:850;letter-spacing:.06em}.brand span{color:#ec9046}.tag{font-size:11px;border:1px solid #8b8590;border-radius:40px;padding:5px 9px;color:#ddd}.spacer{flex:1}select,button,input,textarea{background:#282733;color:white;border:1px solid #555361;border-radius:9px;padding:9px 12px}button:hover{background:#3b3642}.primary{background:#ab4a32;border-color:#dc6d48}.primary:hover{background:#c35c3e}#hud{position:fixed;z-index:3;top:85px;left:15px;width:min(325px,calc(100vw - 30px));pointer-events:none}#hud>div{pointer-events:auto}.panel{background:#17171fdc;border:1px solid #5b4851;border-radius:14px;padding:14px;box-shadow:0 12px 35px #0004;backdrop-filter:blur(12px);margin-bottom:9px}.small{font-size:12px;color:#c4bfc4}.tasks{max-height:220px;overflow:auto}.task{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:12px}.task.done{text-decoration:line-through;color:#a6c9b0}#helper{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);width:min(590px,calc(100vw - 24px));background:#191720ee;border:1px solid #ac6253;border-radius:16px;padding:14px;z-index:5;box-shadow:0 12px 35px #0008}#helper strong{color:#f5ba81}#helper p{margin:7px 0;line-height:1.45;font-size:14px}#helper button{margin:4px 5px 0 0;font-size:12px}#cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#fff9;font-size:26px;pointer-events:none;text-shadow:0 0 5px #000}#action{position:fixed;bottom:155px;left:50%;transform:translateX(-50%);background:#1c1824df;padding:10px 16px;border-radius:12px;border:1px solid #b76b4d;z-index:3;text-align:center;display:none}.overlay{position:fixed;inset:0;background:#09080bcc;display:none;align-items:center;justify-content:center;z-index:10;padding:15px}.overlay.visible{display:flex}.dialog{background:#1c1b24;border:1px solid #7e5554;border-radius:17px;padding:21px;width:min(720px,100%);max-height:90vh;overflow:auto;box-shadow:0 25px 65px #000b}h2{margin:0 0 9px}h3{margin:14px 0 8px}.muted{color:#bbb5c0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px}.field{display:flex;flex-direction:column;gap:5px;margin:9px 0;font-size:13px}.field input,.field select,.field textarea{width:100%}.screen{border-radius:12px;background:#0d1a20;border:1px solid #42616a;padding:16px;margin:13px 0}.rows{display:flex;gap:8px;flex-wrap:wrap}.exit{float:right}.badge{font-size:11px;border:1px solid #695b63;border-radius:30px;padding:4px 9px}.notice{padding:12px;border-left:3px solid #e78a50;background:#2c2429;margin:7px 0;font-size:13px}.foot{font-size:11px;color:#b3aab0}#joy{position:fixed;bottom:25px;left:22px;width:105px;height:105px;border-radius:50%;background:#ffffff20;border:1px solid #fff6;display:none;z-index:4;touch-action:none}#nub{position:absolute;top:34px;left:34px;width:35px;height:35px;border-radius:50%;background:#fff9}#touchInteract{display:none;position:fixed;bottom:45px;right:22px;border-radius:50%;height:70px;width:70px;z-index:4;background:#a34d3a}#look{position:fixed;right:0;top:70px;bottom:145px;width:48%;touch-action:none;z-index:2;display:none}#start{position:fixed;inset:0;background:linear-gradient(110deg,#161018fa,#331d20e8);z-index:20;display:flex;align-items:center;justify-content:center;padding:22px}#start .dialog{width:min(620px,100%)}@media(max-width:750px){#top{padding:7px 9px;gap:5px}.brand{font-size:12px}.tag{display:none}#hud{top:66px;width:210px}.panel{padding:9px}.tasks{max-height:95px}.task{font-size:11px}#helper{bottom:124px;padding:9px}#helper p{font-size:12px}#joy,#touchInteract,#look{display:block}#action{bottom:225px;font-size:12px}button{padding:7px 8px;font-size:12px}}
 
 /* Missão de validação v1.1 */
@@ -48,9 +48,9 @@ button,select,input,textarea{touch-action:manipulation}
  #modalContent button[data-shift-action],#modalContent button[data-shift-start],#modalContent button[data-shift-export]{min-height:44px}
 }
 </style><link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#171018"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="CineGlobo"><link rel="apple-touch-icon" href="./icon.svg"></head><body><div id="scene"></div><button id="mobileHudToggle" type="button" aria-expanded="false" aria-controls="hud">☰ Tarefas</button><div id="rotateHint">Dica: gire o iPhone na horizontal para ampliar a visão do cinema.</div><div id="cross">+</div><div id="top"><div class="brand">◉ CINE<span>GLOBO</span> SIMULATOR</div><span class="tag">v2.0 · iPHONE</span><span class="spacer"></span><select id="city" aria-label="Unidade"></select><button id="openSchedule">Agenda</button><button id="openNotices">Avisos</button><button id="openAdmin">Admin</button><button id="pauseBtn" aria-label="Pausar jogo">☰ Pausa</button></div><aside id="hud"><div class="panel"><strong id="siteName">Cine Globo · Ijuí</strong><div class="small">Treinamento: abertura de turno</div></div><div class="panel"><strong>Checklist de abertura</strong><div id="tasks" class="tasks"></div><div id="progress" class="small"></div></div><div class="panel" id="rolePanel"></div><div class="panel" id="epiProgress"></div></aside><div id="action"></div><div id="helper"><strong>INSTRUTOR VIRTUAL</strong><p id="speech">Bem-vindo ao CineGlobo Simulator. Vou acompanhar seu primeiro turno.</p><div class="rows"><button id="nextSpeech" class="primary">Continuar</button><button id="askHelp">Pedir orientação</button><button id="hideHelp">Ocultar</button></div></div><div id="joy"><div id="nub"></div></div><div id="look"></div><button id="touchInteract">AGIR</button><div class="overlay" id="pauseOverlay"><div class="dialog" style="max-width:560px"><h2>Jogo pausado</h2><p class="muted">CineGlobo Simulator · Configurações de navegação e áudio</p><div class="rows"><button id="resumeBtn" class="primary">▶ Continuar</button><button id="resetViewBtn">↺ Centralizar câmera</button><button id="techBtn" type="button" aria-pressed="false">Métricas técnicas: desligadas</button><button id="exportTechBtn" type="button">Compartilhar relatório técnico</button></div><p id="techStatus" class="small" role="status" aria-live="polite">Ative as métricas, percorra as áreas e compartilhe o relatório neste menu. Nada é enviado automaticamente.</p><h3>Configurações</h3><label class="field">Sensibilidade do mouse: <strong id="mouseText"></strong><input id="mouseSens" type="range" min="1" max="100" value="22"></label><label class="field">Sensibilidade ao tocar/arrastar: <strong id="touchText"></strong><input id="touchSens" type="range" min="1" max="100" value="22"></label><label class="field">Qualidade gráfica<select id="quality"><option value="low">Econômica · mais leve</option><option value="medium">Equilibrada</option><option value="high">Alta</option></select></label><label class="field">Limite de quadros por segundo<select id="fps"><option value="30">30 FPS · econômico</option><option value="45">45 FPS · equilibrado</option><option value="60">60 FPS · fluido</option></select></label><label class="field">Volume geral: <strong id="volumeText"></strong><input id="volume" type="range" min="0" max="100" value="40"></label><p class="small">Esta demonstração não possui trilha sonora; o volume fica configurado para sons introduzidos futuramente. No celular: joystick à esquerda, olhar arrastando à direita e AGIR. ESC abre a pausa no computador.</p><button id="closePause" class="primary">Salvar e continuar</button></div></div><div class="overlay" id="modal"><div class="dialog"><button class="exit" id="closeModal">Fechar ✕</button><div id="modalContent"></div></div></div><div id="start"><div class="dialog"><h2>CineGlobo Simulator</h2><p>Protótipo imersivo 3D para demonstração comercial. Você pode caminhar pelo cinema, interagir com equipamentos, acompanhar o instrutor e testar a simulação de bilheteria.</p><p class="notice">O ambiente ainda é <b>conceitual</b>, não reproduz a planta real de Ijuí. Programação, ingressos e procedimentos são fictícios.</p><div class="field"><label>Escolha a unidade</label><select id="startCity"></select></div><div class="field"><label>Escolha sua função neste turno</label><select id="startRole"><option value="caixa">Caixa e atendimento</option><option value="bomboniere">Bomboniere e pipoqueiras</option><option value="sala">Salas e controle de ingressos</option></select></div><p class="notice">Os outros setores serão atendidos por funcionários virtuais. Você poderá escolher outra função ao iniciar um novo turno.</p><p class="small"><b>Novidades:</b> cliente que caminha até o caixa quando o computador é acionado; monitor voltado para o funcionário; missão espacial de EPIs com movimentos animados; estação de duas pipoqueiras com vitrines, caldeirões e controles; menu de pausa com sensibilidade e qualidade ajustáveis; separação física das salas; portas interativas, salas exploráveis e instrutor visível no modo local e GLB opcional quando hospedado e alternativa geométrica. <b>Computador:</b> WASD para andar, mouse para olhar, E para interagir, ESC para liberar o cursor. <b>Celular:</b> joystick à esquerda, arrastar à direita e botão AGIR.</p><button class="primary" id="enter">Entrar no cinema virtual</button></div></div><script>
-(()=>{const b=document.getElementById('mobileHudToggle');if(matchMedia('(pointer:coarse)').matches){document.body.classList.add('hud-closed')}b.addEventListener('click',()=>{const hidden=document.body.classList.toggle('hud-closed');b.setAttribute('aria-expanded',String(!hidden));b.textContent=hidden?'☰ Tarefas':'✕ Fechar tarefas';});if('serviceWorker' in navigator && location.protocol==='https:')window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));})();
-</script><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js"}}</script><script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js';
+(()=>{const b=document.getElementById('mobileHudToggle');if(matchMedia('(pointer:coarse)').matches){document.body.classList.add('hud-closed')}b.addEventListener('click',()=>{const hidden=document.body.classList.toggle('hud-closed');b.setAttribute('aria-expanded',String(!hidden));b.textContent=hidden?'☰ Tarefas':'✕ Fechar tarefas';});if('serviceWorker' in navigator && (location.protocol==='https:'||['localhost','127.0.0.1'].includes(location.hostname)))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('CineGlobo PWA: cache indisponível',err)));})();
+</script><script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script><script type="module">
+import * as THREE from 'three';
 import { finishCinema, upholsteredGeometry } from './visuals.js';
 import { saleError } from './training-rules.mjs';
 import { ticketIssues,createRoomRoutine,applyRoomAction } from './room-training.mjs';
@@ -61,7 +61,6 @@ import { createPerformanceMonitor } from './performance-monitor.js';
 import { createCheckoutZone } from './checkout-zone.js';
 import { createCinemaCharacter } from './character-kit.js';
 import { batchStaticBoxes, mergeStaticDetails } from './static-batching.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
 const $=x=>document.getElementById(x),cities=['Três Passos','Palmeira das Missões','Santa Rosa','Frederico Westphalen','Cruz Alta','Ijuí','Horizontina'];
 const defaults={notices:[{city:'Todas',text:'Bem-vindo ao ambiente demonstrativo. Todos os dados são fictícios.'}],sessions:[{city:'Ijuí',film:'Aventura Estelar (demonstração)',time:'14:00',room:'Sala 1',format:'2D'},{city:'Ijuí',film:'Mistério da Noite (demonstração)',time:'16:30',room:'Sala 2',format:'3D'}],tasks:['Acender as luzes do hall','Ligar o computador do caixa','Ligar a mini impressora','Conferir a televisão do catálogo','Preparar a pipoqueira','Conferir a iluminação da Sala 1','Conferir a climatização da Sala 2']};
 let data;try{data={...defaults,...JSON.parse(localStorage.getItem('cineglobo_demo')||'{}')}}catch{data=structuredClone(defaults)};
@@ -264,7 +263,38 @@ function updateTrainerFollow(dt){if(!trainer||paused||$('start').style.display!=
 }
 function say(t){$('helper').style.display='block';$('speech').textContent=t}function save(){localStorage.setItem('cineglobo_demo',JSON.stringify(data))}function fillCities(){['city','startCity'].forEach(id=>{$(id).innerHTML=cities.map(c=>`<option ${c==='Ijuí'?'selected':''}>${c}</option>`).join('')})}fillCities();
 function setCity(c){if(c!==city){shiftState=createShift(currentRole,c);lastDeliveredCodes=[]}city=c;for(const name of Object.keys(roomRoutines)){roomRoutines[name]=createRoomRoutine(name);roomSessionChoice[name]='';if(roomLighting[name])setRoomLights(name,'entrada');}$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${t}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
-function mat(color){return new THREE.MeshStandardMaterial({color,roughness:.75})}function box(x,y,z,w,h,d,color){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));m.position.set(x,y,z);scene.add(m);return m}function textSign(t,x,y,z,w=2,color='#ffffff'){let c=document.createElement('canvas');c.width=512;c.height=100;let ctx=c.getContext('2d');ctx.fillStyle='#20191d';ctx.fillRect(0,0,512,100);ctx.fillStyle=color;ctx.font='bold 38px Arial';ctx.textAlign='center';ctx.fillText(t,256,66);const m=new THREE.Mesh(new THREE.PlaneGeometry(w,w*100/512),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),side:THREE.DoubleSide}));m.position.set(x,y,z);scene.add(m)}function object(name,x,z,color,callback){let marker=box(x,1.05,z,.5,.6,.45,color);world.push({name,x,z,callback,marker});}
+function mat(color){return new THREE.MeshStandardMaterial({color,roughness:.75})}function box(x,y,z,w,h,d,color){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));m.position.set(x,y,z);scene.add(m);return m}const fixedTextSigns=[];
+function textSign(t,x,y,z,w=2,color='#ffffff'){
+ fixedTextSigns.push({t,x,y,z,w,color});
+}
+function createCinemaSignAtlas(){
+ if(!fixedTextSigns.length)return;
+ const n=fixedTextSigns.length,can=document.createElement('canvas');
+ can.width=512;can.height=n*100;
+ const ctx=can.getContext('2d');
+ const position=[],uv=[];
+ const add=(x,y,z,u,v)=>{position.push(x,y,z);uv.push(u,v)};
+ for(let i=0;i<n;i++){
+  const item=fixedTextSigns[i],offset=i*100;
+  ctx.fillStyle='#20191d';ctx.fillRect(0,offset,512,100);
+  ctx.fillStyle=item.color;ctx.font='bold 38px Arial';ctx.textAlign='center';
+  ctx.fillText(item.t,256,offset+66);
+  const h=item.w*100/512, l=item.x-item.w/2,r=item.x+item.w/2;
+  const top=item.y+h/2,bot=item.y-h/2,vt=1-i/n,vb=1-(i+1)/n;
+  add(l,top,item.z,0,vt);add(l,bot,item.z,0,vb);add(r,bot,item.z,1,vb);
+  add(l,top,item.z,0,vt);add(r,bot,item.z,1,vb);add(r,top,item.z,1,vt);
+ }
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(position,3));
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+ geometry.computeBoundingSphere();
+ const texture=new THREE.CanvasTexture(can);texture.colorSpace=THREE.SRGBColorSpace;
+ texture.generateMipmaps=false;texture.minFilter=THREE.LinearFilter;
+ const group=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide}));
+ group.name='Sinalização fixa em atlas';
+ group.userData.signs=n;scene.add(group);
+}
+function object(name,x,z,color,callback){let marker=box(x,1.05,z,.5,.6,.45,color);marker.userData.trainingWorldMarker=true;world.push({name,x,z,callback,marker});}
 function collider(x,z,w,d){blockers.push({x,z,w,d})}
 function canStand(x,z){
  if(x < -7.98||x > 7.98||z>10.65||z < -21.65)return false;
@@ -321,7 +351,7 @@ function makeTrainer(){
    const upper=part(new THREE.CylinderGeometry(.105,.091,.39,10),shirt,side*.078,-.17,0,side*.18,pivot);
    sphere(1,.099,.103,.101,shirt,side*.041,-.025,0).visible=false;
    part(new THREE.CylinderGeometry(.082,.066,.35,10),skin,side*.13,-.52,.045,side*.08,pivot);
-   const hand=part(new THREE.SphereGeometry(.073,10,8),skin,side*.14,-.71,.063);hand.scale.set(.85,1.30,.73);
+   const hand=part(new THREE.SphereGeometry(.073,10,8),skin,side*.14,-.71,.063,0,pivot);hand.scale.set(.85,1.30,.73);
    arms.push({pivot,side});
  }
  // Pernas, calçados e solas claras.
@@ -346,6 +376,11 @@ function makeTrainer(){
  object('Conversar com instrutor',1.25,1.25,0x93433f,()=>say('Sou seu instrutor do Cine Globo. Posso demonstrar o funcionamento do caixa, a validação dos ingressos e as rotinas das salas.'));
  // Controle de gestos compartilhado com animação econômica no ciclo principal.
  trainerParts=arms;
+ // Componente rígido compartilhado no torso e em cada braço; mantém pivôs
+ // de animação, logotipo, balão e pontos de conversa totalmente separados.
+ const trunk=mergeStaticDetails(group,{minCount:2});
+ const armsCombined=arms.map(({pivot})=>mergeStaticDetails(pivot,{minCount:2}));
+ trainer.userData.optimization={trunk,arms:armsCombined};
 }
 
 
@@ -353,69 +388,10 @@ function makeTrainer(){
 // A conexão com o modelo é opcional; caso falhe, o instrutor anterior permanece.
 // Um personagem comercial fotorrealista e um uniforme fiel requerem asset dedicado.
 function loadDetailedTrainer(){
- // Navegadores restringem importação de modelos externos quando o HTML é aberto por file://.
- // Nessas condições o instrutor procedural permanece sempre visível.
- if(location.protocol === 'file:'){
-   console.info('CineGlobo: arquivo local; instrutor incorporado mantido. Para modelos GLB, hospede o jogo em HTTPS.');
-   return;
- }
- const url='https://cdn.jsdelivr.net/gh/mrdoob/three.js@r165/examples/models/gltf/Soldier.glb';
- const loader=new GLTFLoader();
- loader.load(url, gltf=>{
-   if(!trainer)return;
-   const character=gltf.scene;
-   const outer=new THREE.Group();
-   // Normaliza o personagem para aproximadamente 1,82 m.
-   const bounds=new THREE.Box3().setFromObject(character);
-   const dims=bounds.getSize(new THREE.Vector3());
-   const scale=1.82/Math.max(.01,dims.y);
-   character.scale.setScalar(scale);
-   character.updateMatrixWorld(true);
-   const normalized=new THREE.Box3().setFromObject(character);
-   character.position.y-=normalized.min.y;
-   // Modelos de demonstração seguem orientação própria, corrigida pelo contêiner.
-   character.rotation.y=Math.PI;
-   outer.add(character);
-   outer.position.copy(trainer.position);
-   scene.add(outer);
-   // Uniformização aproximada: escurece tecidos, preserva pele/cabelo e detalhes de rosto.
-   character.traverse(node=>{
-     if(!node.isMesh)return;
-     node.frustumCulled=false;
-     const mats=Array.isArray(node.material)?node.material:[node.material];
-     node.material=mats.map(original=>{
-       const material=original.clone();
-       const label=(node.name+' '+material.name).toLowerCase();
-       if(/body|vest|jacket|shirt|suit|uniform|pants|trouser|cloth|boot/.test(label)){
-         if(material.color)material.color.multiply(new THREE.Color('#33363b'));
-       }
-       material.roughness=Math.max(.78,material.roughness||.78);
-       return material;
-     });
-     if(!Array.isArray(node.material))node.material=node.material[0];
-   });
-   // Emblema ilustrativo independente, sem pretender ser bordado oficial.
-   const badge=document.createElement('canvas');badge.width=256;badge.height=128;
-   const ctx=badge.getContext('2d');ctx.fillStyle='#f5f5f5';ctx.font='bold 25px Arial';ctx.textAlign='center';ctx.fillText('◉ CINE GLOBO',128,66);
-   const logo=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(badge),transparent:true,depthTest:true}));
-   logo.position.set(.14,1.48,.22);logo.scale.set(.26,.13,1);outer.add(logo);
-   const label=document.createElement('canvas');label.width=512;label.height=100;const lc=label.getContext('2d');lc.fillStyle='#16151bdc';lc.fillRect(0,10,512,80);lc.fillStyle='#ffe1b9';lc.font='bold 25px Arial';lc.textAlign='center';lc.fillText('INSTRUTOR • E PARA FALAR',256,60);
-   const nameplate=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(label),transparent:true}));nameplate.position.y=2.18;nameplate.scale.set(2.2,.43,1);outer.add(nameplate);
-   const idle=gltf.animations.find(a=>/idle/i.test(a.name));
-   if(idle){trainerMixer=new THREE.AnimationMixer(character);trainerMixer.clipAction(idle).play()}
-   // Exibe o GLB apenas se possuir malha visível e dimensões plausíveis.
-   let visibleMeshes=0;
-   character.traverse(n=>{if(n.isMesh && n.visible && n.geometry) visibleMeshes++});
-   const finalBounds=new THREE.Box3().setFromObject(character);
-   const finalSize=finalBounds.getSize(new THREE.Vector3());
-   if(!visibleMeshes || !Number.isFinite(finalSize.y) || finalSize.y < .9 || finalSize.y > 3){
-     scene.remove(outer);
-     console.warn('CineGlobo: modelo sem geometria válida, instrutor incorporado mantido.');
-     return;
-   }
-   trainer.visible=false;trainer=outer;trainerParts=[];trainerRealistic=true;
-   console.info('CineGlobo: instrutor GLB de demonstração carregado.');
- },undefined,error=>console.warn('CineGlobo: modelo GLB indisponível; instrutor leve mantido.',error));
+ // Mantém o instrutor original animado e seguindo o funcionário.
+ // Nenhum download externo: modelo de demonstração remoto desativado
+ // para garantir disponibilidade offline e reduzir consumo de dados.
+ console.info('CineGlobo: instrutor procedural local ativo.');
 }
 
 function setRoomLights(room, mode){
@@ -1001,6 +977,7 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
  checkoutVisual=createCheckoutZone(scene);
  setupWorkers();
  finishCinema(scene);
+ createCinemaSignAtlas();
  // Otimização após a aplicação dos materiais definitivos: evita substituir
  // objetos dinâmicos e garante que móveis, portas e luzes permaneçam editáveis.
  const excluded=new Set([...lights,...world.map(item=>item.marker).filter(Boolean)]);
@@ -1013,6 +990,31 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
  for(const flavor of ['SALGADA','DOCE']){
    const cabinet=scene.getObjectByName('Pipoqueira visual · '+flavor);
    if(cabinet)staticBatchReport['Pipoqueira '+flavor]=batchStaticBoxes(cabinet);
+ }
+ // Mescla detalhes residuais opacos do hall em vez de reduzir a qualidade
+ // do instrutor ou dos cartazes. Mantém todos os marcadores de interação.
+ staticDetailReport.hallExtra=mergeStaticDetails(scene,{exclude:[...excluded],minCount:3});
+ // Pontos de AGIR do hall continuam individualmente identificáveis em world,
+ // mas suas caixas coloridas são desenhadas com UMA chamada.
+ const markers=world.filter(item=>item.marker?.userData.trainingWorldMarker&&item.marker.visible&&item.marker.parent===scene);
+ if(markers.length>1){
+  const mesh=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.75}),markers.length);
+  mesh.name='Marcadores de interação do hall instanciados';
+  const helper=new THREE.Object3D();
+  markers.forEach((item,i)=>{
+   const original=item.marker;
+   const params=original.geometry.parameters;
+   helper.position.copy(original.position);
+   helper.quaternion.copy(original.quaternion);
+   helper.scale.set(params.width*original.scale.x,params.height*original.scale.y,params.depth*original.scale.z);
+   helper.updateMatrix();mesh.setMatrixAt(i,helper.matrix);
+   mesh.setColorAt(i,original.material.color);
+   original.visible=false; // Mantém referência, posição e callback individuais.
+  });
+  mesh.instanceMatrix.needsUpdate=true;
+  if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+  mesh.computeBoundingSphere();scene.add(mesh);
+  staticBatchReport.clickMarkers={instances:markers.length,batchDraws:1,savedDraws:markers.length-1};
  }
  loadDetailedTrainer();
  collider(-4.6,-3.7,5,1.7);collider(3.7,-4.6,5.1,1.6);

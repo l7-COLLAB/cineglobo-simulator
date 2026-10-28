@@ -24,3 +24,12 @@ O plano de quatro etapas, as metas não comprovadas de desempenho e os requisito
 Após escolher a função Caixa, Bomboniere ou Sala, procure o **Terminal de turno** correspondente no cinema 3D ou abra **Terminal de turno** no painel lateral. Abertura, atendimento e fechamento usam metas que só avançam após ações executadas no jogo; o instrutor indica a próxima pendência. O histórico concluído fica apenas neste navegador, sem autenticação institucional.
 
 Regras e limites: [Etapa 4 — turnos e metas](docs/ETAPA4_TURNOS_METAS.md).
+
+## Publicação para iPhone e uso offline (Etapa 7)
+
+A publicação usa GitHub Pages e serve a versão estática em `dist/`, com o motor Three.js incorporado localmente. O jogo **não exige um computador pessoal ligado** quando o Pages estiver publicado com sucesso.
+
+- Acompanhe a publicação em [GitHub Actions — Publicar CineGlobo Simulator](https://github.com/l7-COLLAB/cineglobo-simulator/actions/workflows/pages.yml).
+- Leia o procedimento completo de [instalação no Safari, offline e teste de 20 minutos](docs/ETAPA7_PAGES_OFFLINE.md).
+- O endereço previsto é `https://l7-collab.github.io/cineglobo-simulator/`, condicionado à confirmação do deploy HTTPS.
+- Para desenvolver: `npm install`, `npm run build`, `python3 -m http.server 8765 --directory dist`.

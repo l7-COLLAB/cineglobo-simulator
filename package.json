@@ -1,0 +1,18 @@
+{
+  "name": "cineglobo-simulator",
+  "version": "2.1.0",
+  "private": true,
+  "description": "Simulador demonstrativo de treinamento operacional de cinema, executado no navegador.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-site.mjs",
+    "test:rules": "node --test tests/*.test.mjs",
+    "test:browser": "playwright test"
+  },
+  "dependencies": {
+    "three": "0.165.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}

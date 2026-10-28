@@ -16,13 +16,35 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar somente dependências declaradas
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Gerar versão independente de CDN
+        run: npm run build
+      - name: Verificar regras e integridade do aplicativo
+        run: npm run test:rules
+      # O token GITHUB_TOKEN não habilita Pages pela primeira vez.
+      # Ative Settings > Pages > Source: GitHub Actions antes do deploy.
       - uses: actions/configure-pages@v5
+      - name: Enviar apenas arquivos necessários ao jogo
+        uses: actions/upload-pages-artifact@v3
         with:
-          enablement: true
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
+          path: dist
       - id: deployment
         uses: actions/deploy-pages@v4
+      - name: Conferir URL HTTPS devolvida pelo Pages
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          test -n "$PAGE_URL"
+          echo "URL implantada pelo GitHub Pages: $PAGE_URL"
+          curl --fail --location --silent --show-error --retry 6 --retry-delay 3 --retry-connrefused "${PAGE_URL%/}/index.html" -o /tmp/cineglobo-page.html
+          grep -q 'CineGlobo Simulator' /tmp/cineglobo-page.html
+          curl --fail --location --silent --show-error --retry 6 --retry-delay 3 --retry-connrefused "${PAGE_URL%/}/vendor/three.module.js" -o /dev/null
+          echo 'Verificação HTTPS: HTML e biblioteca 3D local acessíveis.'
