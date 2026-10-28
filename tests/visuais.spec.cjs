@@ -6,7 +6,7 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
  await page.route('**/index.html',async route=>{
    let html=fs.readFileSync('index.html','utf8');
    // Dados técnicos temporários apenas na resposta do teste: não expostos na versão pública.
-   html=html.replace('function applyGraphics(){',`window.__visualTest={scene:()=>scene,workers:()=>npcTeam,client:()=>queueCustomer,checkout:()=>checkoutVisual,renderer:()=>renderer,shiftVisuals:()=>shiftTerminalVisualReport,batches:()=>staticBatchReport,details:()=>staticDetailReport,world:()=>world,lights:()=>lights,rooms:()=>roomScenes,doors:()=>doors,refreshRooms:()=>updateVisibleRooms(),position:(x,z)=>{player.x=x;player.z=z;player.yaw=0;player.pitch=0;}};\nfunction applyGraphics(){`);
+   html=html.replace('function applyGraphics(){',`window.__visualTest={scene:()=>scene,trainer:()=>trainer,workers:()=>npcTeam,client:()=>queueCustomer,checkout:()=>checkoutVisual,renderer:()=>renderer,shiftVisuals:()=>shiftTerminalVisualReport,batches:()=>staticBatchReport,details:()=>staticDetailReport,world:()=>world,lights:()=>lights,rooms:()=>roomScenes,doors:()=>doors,refreshRooms:()=>updateVisibleRooms(),position:(x,z)=>{player.x=x;player.z=z;player.yaw=0;player.pitch=0;}};\nfunction applyGraphics(){`);
    await route.fulfill({contentType:'text/html',body:html});
  });
  await page.goto('/index.html');
@@ -23,6 +23,8 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
    });
    return {
      workers:workers().length,
+     trainerOptimization:(()=>{const t=window.__visualTest.trainer();return {procedural:!trainerRealistic,root:t.userData.optimization?.trunk,arms:t.userData.optimization?.arms,armGroups:trainerParts.length,handMovesWithArm:trainerParts.every(a=>a.pivot.children.some(m=>m.isMesh&&m.name?.includes('consolidados')))}})(),
+
      separateActors:customer!==staff,
      sharedLegGeometry:customer.userData.walkingLimbs[0].leg.children[0].geometry===staff.userData.walkingLimbs[0].leg.children[0].geometry,
      customerLimbs:customer.userData.walkingLimbs.length,
@@ -49,6 +51,12 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
    };
  });
  expect(metrics.workers).toBe(3);
+ expect(metrics.trainerOptimization.procedural).toBe(true);
+ expect(metrics.trainerOptimization.root.objectsReplaced).toBeGreaterThanOrEqual(10);
+ expect(metrics.trainerOptimization.root.mergedDraws).toBeLessThan(metrics.trainerOptimization.root.originalDraws);
+ expect(metrics.trainerOptimization.armGroups).toBe(2);
+ expect(metrics.trainerOptimization.arms.every(a=>a.objectsReplaced>=2)).toBe(true);
+ expect(metrics.trainerOptimization.handMovesWithArm).toBe(true);
  expect(metrics.separateActors).toBe(true);
  expect(metrics.sharedLegGeometry).toBe(true);
  expect(metrics.customerLimbs).toBe(2);
@@ -116,7 +124,7 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
  });
  expect(roomsCheck).toEqual({initialClosed:true,opens:true,remainsVisibleInside:true});
  console.log('Métricas em Chromium simulado (não representam Safari físico):',JSON.stringify({
-  drawCalls:metrics.drawCalls,triangles:metrics.triangles,optimizedActors:metrics.optimizedActors,machines:metrics.machines,batches:metrics.batches,details:metrics.details
+  drawCalls:metrics.drawCalls,triangles:metrics.triangles,optimizedActors:metrics.optimizedActors,trainerOptimization:metrics.trainerOptimization,machines:metrics.machines,batches:metrics.batches,details:metrics.details
  }));
  await page.evaluate(()=>{
    window.__visualTest.position(0,1.5);
