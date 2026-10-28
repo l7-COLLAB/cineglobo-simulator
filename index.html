@@ -1042,9 +1042,10 @@ function sitAtSofa(side){
 }
 function createCashierQueue(){
  const group=new THREE.Group();group.name='Organizadores de fila até bilheteria';scene.add(group);
- const metal=new THREE.MeshStandardMaterial({color:0x4c4d54,roughness:.35,metalness:.65});
- const gold=new THREE.MeshStandardMaterial({color:0xc39e69,roughness:.42,metalness:.47});
- const red=new THREE.MeshStandardMaterial({color:0x923044,roughness:.68});
+ // Mesmo perfil de material, três cores por vértice: uma só chamada gráfica.
+ const metal=new THREE.MeshStandardMaterial({color:0x4c4d54,roughness:.54,metalness:.17});
+ const gold=new THREE.MeshStandardMaterial({color:0xc39e69,roughness:.54,metalness:.17});
+ const red=new THREE.MeshStandardMaterial({color:0x923044,roughness:.54,metalness:.17});
  const post=new THREE.CylinderGeometry(.046,.054,.82,10),foot=new THREE.CylinderGeometry(.16,.18,.07,14),cap=new THREE.CylinderGeometry(.07,.07,.06,12);
  const zs=[-1.5,.1,1.7,3.3,4.9,6.5],xs=[-5.65,-3.75];
  function add(geometry,material,x,y,z,name){const mesh=new THREE.Mesh(geometry,material);mesh.position.set(x,y,z);mesh.name=name;group.add(mesh)}
