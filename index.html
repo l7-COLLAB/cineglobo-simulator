@@ -465,9 +465,27 @@ function makeTrainer(){
  c.beginPath();c.moveTo(79,87);c.lineTo(177,87);c.moveTo(89,62);c.lineTo(167,62);c.moveTo(89,112);c.lineTo(167,112);c.stroke();
  c.font='bold 27px Arial';c.fillStyle='#f2eee7';c.textAlign='center';c.fillText('CINE',128,169);c.fillText('GLOBO',128,199);
  const map=new THREE.CanvasTexture(logo);map.colorSpace=THREE.SRGBColorSpace;
- const chest=part(new THREE.PlaneGeometry(.21,.21),new THREE.MeshBasicMaterial({map,transparent:true,side:THREE.DoubleSide,depthWrite:false}),.128,1.61,.186);chest.rotation.y=.06;
- const capBadge=part(new THREE.PlaneGeometry(.125,.105),new THREE.MeshBasicMaterial({map,transparent:true,side:THREE.DoubleSide,depthWrite:false}),0,2.315,.20);
- capBadge.name='Logo Cine Globo no boné do instrutor';
+
+ // Dois logotipos com uma única geometria/textura, sem perder o boné.
+ const positions=[],uv=[];
+ function addLogoQuad(x,y,z,w,h,angle=0){
+  const cos=Math.cos(angle),sin=Math.sin(angle);
+  const corners=[[-.5,.5,0,1],[-.5,-.5,0,0],[.5,-.5,1,0],[-.5,.5,0,1],[.5,-.5,1,0],[.5,.5,1,1]];
+  for(const [ox,oy,u,v] of corners){
+   const horizontal=ox*w;
+   positions.push(x+horizontal*cos,y+oy*h,z-horizontal*sin);
+   uv.push(u,v);
+  }
+ }
+ addLogoQuad(.128,1.61,.186,.21,.21,.06);
+ addLogoQuad(0,2.315,.20,.125,.105);
+ const logoGeometry=new THREE.BufferGeometry();
+ logoGeometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ logoGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+ logoGeometry.computeBoundingSphere();
+ const sharedLogo=new THREE.Mesh(logoGeometry,new THREE.MeshBasicMaterial({map,transparent:true,side:THREE.DoubleSide,depthWrite:false}));
+ sharedLogo.name='Logo Cine Globo no boné do instrutor';
+ group.add(sharedLogo);
  // Orientação do instrutor por marcador fixo, sem componente luminoso dinâmico.
  const cc=document.createElement('canvas');cc.width=512;cc.height=128;const ctx=cc.getContext('2d');ctx.fillStyle='#13151edb';ctx.fillRect(0,10,512,100);ctx.fillStyle='#ffe2af';ctx.font='bold 29px Arial';ctx.textAlign='center';ctx.fillText('INSTRUTOR • E PARA FALAR',256,69);
  const badge=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cc),transparent:true,depthWrite:false}));badge.position.y=2.65;badge.scale.set(2.5,.62,1);group.add(badge);
