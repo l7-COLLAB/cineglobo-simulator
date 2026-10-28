@@ -11,7 +11,19 @@ export function planWalkingRoute(start,goal,isWalkable,{
  const columns=Math.floor((maxX-minX)/step)+1,rows=Math.floor((maxZ-minZ)/step)+1;
  const at=(x,z)=>({x:minX+x*step,z:minZ+z*step});
  const cell=p=>({x:Math.max(0,Math.min(columns-1,Math.round((p.x-minX)/step))),z:Math.max(0,Math.min(rows-1,Math.round((p.z-minZ)/step)))});
- const source=cell(start),target=cell(goal);
+ const closestWalkable=p=>{
+  const preferred=cell(p);let best=null,distance=Infinity;
+  for(let radius=0;radius<=3;radius++)for(let dx=-radius;dx<=radius;dx++)for(let dz=-radius;dz<=radius;dz++){
+   const x=preferred.x+dx,z=preferred.z+dz;
+   if(x<0||z<0||x>=columns||z>=rows)continue;
+   const q=at(x,z);if(!isWalkable(q.x,q.z))continue;
+   const d=Math.hypot(q.x-p.x,q.z-p.z);
+   if(d<distance){best={x,z};distance=d}
+  }
+  return best;
+ };
+ const source=closestWalkable(start),target=closestWalkable(goal);
+ if(!source||!target)return [];
  const index=(x,z)=>z*columns+x;
  const from=index(source.x,source.z),to=index(target.x,target.z);
  const score=new Float64Array(columns*rows).fill(Infinity);
