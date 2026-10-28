@@ -263,7 +263,38 @@ function updateTrainerFollow(dt){if(!trainer||paused||$('start').style.display!=
 }
 function say(t){$('helper').style.display='block';$('speech').textContent=t}function save(){localStorage.setItem('cineglobo_demo',JSON.stringify(data))}function fillCities(){['city','startCity'].forEach(id=>{$(id).innerHTML=cities.map(c=>`<option ${c==='Ijuí'?'selected':''}>${c}</option>`).join('')})}fillCities();
 function setCity(c){if(c!==city){shiftState=createShift(currentRole,c);lastDeliveredCodes=[]}city=c;for(const name of Object.keys(roomRoutines)){roomRoutines[name]=createRoomRoutine(name);roomSessionChoice[name]='';if(roomLighting[name])setRoomLights(name,'entrada');}$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${t}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
-function mat(color){return new THREE.MeshStandardMaterial({color,roughness:.75})}function box(x,y,z,w,h,d,color){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));m.position.set(x,y,z);scene.add(m);return m}function textSign(t,x,y,z,w=2,color='#ffffff'){let c=document.createElement('canvas');c.width=512;c.height=100;let ctx=c.getContext('2d');ctx.fillStyle='#20191d';ctx.fillRect(0,0,512,100);ctx.fillStyle=color;ctx.font='bold 38px Arial';ctx.textAlign='center';ctx.fillText(t,256,66);const m=new THREE.Mesh(new THREE.PlaneGeometry(w,w*100/512),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),side:THREE.DoubleSide}));m.position.set(x,y,z);scene.add(m)}function object(name,x,z,color,callback){let marker=box(x,1.05,z,.5,.6,.45,color);marker.userData.trainingWorldMarker=true;world.push({name,x,z,callback,marker});}
+function mat(color){return new THREE.MeshStandardMaterial({color,roughness:.75})}function box(x,y,z,w,h,d,color){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));m.position.set(x,y,z);scene.add(m);return m}const fixedTextSigns=[];
+function textSign(t,x,y,z,w=2,color='#ffffff'){
+ fixedTextSigns.push({t,x,y,z,w,color});
+}
+function createCinemaSignAtlas(){
+ if(!fixedTextSigns.length)return;
+ const n=fixedTextSigns.length,can=document.createElement('canvas');
+ can.width=512;can.height=n*100;
+ const ctx=can.getContext('2d');
+ const position=[],uv=[];
+ const add=(x,y,z,u,v)=>{position.push(x,y,z);uv.push(u,v)};
+ for(let i=0;i<n;i++){
+  const item=fixedTextSigns[i],offset=i*100;
+  ctx.fillStyle='#20191d';ctx.fillRect(0,offset,512,100);
+  ctx.fillStyle=item.color;ctx.font='bold 38px Arial';ctx.textAlign='center';
+  ctx.fillText(item.t,256,offset+66);
+  const h=item.w*100/512, l=item.x-item.w/2,r=item.x+item.w/2;
+  const top=item.y+h/2,bot=item.y-h/2,vt=1-i/n,vb=1-(i+1)/n;
+  add(l,top,item.z,0,vt);add(l,bot,item.z,0,vb);add(r,bot,item.z,1,vb);
+  add(l,top,item.z,0,vt);add(r,bot,item.z,1,vb);add(r,top,item.z,1,vt);
+ }
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(position,3));
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+ geometry.computeBoundingSphere();
+ const texture=new THREE.CanvasTexture(can);texture.colorSpace=THREE.SRGBColorSpace;
+ texture.generateMipmaps=false;texture.minFilter=THREE.LinearFilter;
+ const group=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide}));
+ group.name='Sinalização fixa em atlas';
+ group.userData.signs=n;scene.add(group);
+}
+function object(name,x,z,color,callback){let marker=box(x,1.05,z,.5,.6,.45,color);marker.userData.trainingWorldMarker=true;world.push({name,x,z,callback,marker});}
 function collider(x,z,w,d){blockers.push({x,z,w,d})}
 function canStand(x,z){
  if(x < -7.98||x > 7.98||z>10.65||z < -21.65)return false;
@@ -946,6 +977,7 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
  checkoutVisual=createCheckoutZone(scene);
  setupWorkers();
  finishCinema(scene);
+ createCinemaSignAtlas();
  // Otimização após a aplicação dos materiais definitivos: evita substituir
  // objetos dinâmicos e garante que móveis, portas e luzes permaneçam editáveis.
  const excluded=new Set([...lights,...world.map(item=>item.marker).filter(Boolean)]);
