@@ -263,7 +263,7 @@ function updateTrainerFollow(dt){if(!trainer||paused||$('start').style.display!=
 }
 function say(t){$('helper').style.display='block';$('speech').textContent=t}function save(){localStorage.setItem('cineglobo_demo',JSON.stringify(data))}function fillCities(){['city','startCity'].forEach(id=>{$(id).innerHTML=cities.map(c=>`<option ${c==='Ijuí'?'selected':''}>${c}</option>`).join('')})}fillCities();
 function setCity(c){if(c!==city){shiftState=createShift(currentRole,c);lastDeliveredCodes=[]}city=c;for(const name of Object.keys(roomRoutines)){roomRoutines[name]=createRoomRoutine(name);roomSessionChoice[name]='';if(roomLighting[name])setRoomLights(name,'entrada');}$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${t}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
-function mat(color){return new THREE.MeshStandardMaterial({color,roughness:.75})}function box(x,y,z,w,h,d,color){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));m.position.set(x,y,z);scene.add(m);return m}function textSign(t,x,y,z,w=2,color='#ffffff'){let c=document.createElement('canvas');c.width=512;c.height=100;let ctx=c.getContext('2d');ctx.fillStyle='#20191d';ctx.fillRect(0,0,512,100);ctx.fillStyle=color;ctx.font='bold 38px Arial';ctx.textAlign='center';ctx.fillText(t,256,66);const m=new THREE.Mesh(new THREE.PlaneGeometry(w,w*100/512),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),side:THREE.DoubleSide}));m.position.set(x,y,z);scene.add(m)}function object(name,x,z,color,callback){let marker=box(x,1.05,z,.5,.6,.45,color);world.push({name,x,z,callback,marker});}
+function mat(color){return new THREE.MeshStandardMaterial({color,roughness:.75})}function box(x,y,z,w,h,d,color){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));m.position.set(x,y,z);scene.add(m);return m}function textSign(t,x,y,z,w=2,color='#ffffff'){let c=document.createElement('canvas');c.width=512;c.height=100;let ctx=c.getContext('2d');ctx.fillStyle='#20191d';ctx.fillRect(0,0,512,100);ctx.fillStyle=color;ctx.font='bold 38px Arial';ctx.textAlign='center';ctx.fillText(t,256,66);const m=new THREE.Mesh(new THREE.PlaneGeometry(w,w*100/512),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),side:THREE.DoubleSide}));m.position.set(x,y,z);scene.add(m)}function object(name,x,z,color,callback){let marker=box(x,1.05,z,.5,.6,.45,color);marker.userData.trainingWorldMarker=true;world.push({name,x,z,callback,marker});}
 function collider(x,z,w,d){blockers.push({x,z,w,d})}
 function canStand(x,z){
  if(x < -7.98||x > 7.98||z>10.65||z < -21.65)return false;
@@ -962,6 +962,28 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
  // Mescla detalhes residuais opacos do hall em vez de reduzir a qualidade
  // do instrutor ou dos cartazes. Mantém todos os marcadores de interação.
  staticDetailReport.hallExtra=mergeStaticDetails(scene,{exclude:[...excluded],minCount:3});
+ // Pontos de AGIR do hall continuam individualmente identificáveis em world,
+ // mas suas caixas coloridas são desenhadas com UMA chamada.
+ const markers=world.filter(item=>item.marker?.userData.trainingWorldMarker&&item.marker.visible&&item.marker.parent===scene);
+ if(markers.length>1){
+  const mesh=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.75}),markers.length);
+  mesh.name='Marcadores de interação do hall instanciados';
+  const helper=new THREE.Object3D();
+  markers.forEach((item,i)=>{
+   const original=item.marker;
+   const params=original.geometry.parameters;
+   helper.position.copy(original.position);
+   helper.quaternion.copy(original.quaternion);
+   helper.scale.set(params.width*original.scale.x,params.height*original.scale.y,params.depth*original.scale.z);
+   helper.updateMatrix();mesh.setMatrixAt(i,helper.matrix);
+   mesh.setColorAt(i,original.material.color);
+   original.visible=false; // Mantém referência, posição e callback individuais.
+  });
+  mesh.instanceMatrix.needsUpdate=true;
+  if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+  mesh.computeBoundingSphere();scene.add(mesh);
+  staticBatchReport.clickMarkers={instances:markers.length,batchDraws:1,savedDraws:markers.length-1};
+ }
  loadDetailedTrainer();
  collider(-4.6,-3.7,5,1.7);collider(3.7,-4.6,5.1,1.6);
  for(let x of [-2,2])for(let z of [2,5])collider(x,z,1.55,1.2);
