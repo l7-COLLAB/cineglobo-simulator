@@ -214,7 +214,7 @@ function makeDoor(x,label){
  const panel=new THREE.Mesh(new THREE.BoxGeometry(1.9,2.6,.11),mat(0x7e373b));panel.position.set(.95,1.35,0);hinge.add(panel);
  const handle=new THREE.Mesh(new THREE.SphereGeometry(.075,10,8),mat(0xf3c783));handle.position.set(1.67,1.25,.12);hinge.add(handle);
  const d={x,hinge,open:false,goal:0};doors.push(d);
- object('Porta '+label,x,-9.6,0xd6a35e,()=>{d.open=!d.open;d.goal=d.open?-Math.PI*.55:0;say(d.open?'Porta aberta. Agora entre para explorar '+label+'.':'Porta fechada. Use E ou AGIR para abrir novamente.')});
+ object('Porta '+label,x,-9.6,0xd6a35e,()=>{d.open=!d.open;d.goal=d.open?-Math.PI*.55:0;if(currentRole==='sala')onShiftEvent('doors-checked');say(d.open?'Porta aberta. Agora entre para explorar '+label+'.':'Porta fechada. Use E ou AGIR para abrir novamente.')});
 }
 function makeTrainer(){
  // Instrutor humano procedural: sem textura facial de pessoa real, baixo custo para navegador.
@@ -396,9 +396,11 @@ function runRoomAction(label,action){
  roomRoutines[label]=result.state;
  if(!result.error){
   if(['admission','film','cleaning'].includes(action))setRoomLights(label,result.state.mode);
+  if(action==='admission')onShiftEvent('reception-opened');
+  if(result.state.completed)onShiftEvent('room-completed');
   if(result.state.completed)say('Rotina de '+label+' concluída. Poltronas e corredores conferidos.');
   else say(result.message);
- }else say(result.message);
+ }else{onShiftError('Sala '+label,result.error);say(result.message)}
  roomLightingDialog(label,result.message,Boolean(result.error));
 }
 function addRoom(x,label,is3d){
@@ -540,7 +542,7 @@ function openCustomerDialogue(){
  if(cmd==='incorrect'){m.feedback.push('É necessário conferir o pedido e concluir a venda antes de autorizar a entrada.');chat('Você poderia conferir minha sessão e me orientar corretamente?', [['Desculpe. Vou conferir filme, horário e sala antes da venda.','check'],['Pedir ajuda ao instrutor','help'] ],'<div class="customer-score customer-bad">O instrutor identificou uma resposta inadequada. Você pode corrigir o atendimento.</div>');return}
  if(cmd==='reset'){checkoutVisual?.reset();customerAtCounter=false;customerApproaching=false;queueCustomer.visible=false;queueCustomer.position.set(-1.6,0,2.65);serviceMission=null;close();say('Atendimento encerrado. Volte ao computador para chamar o próximo cliente.');return}
  if(cmd==='handoff'){const matching=trainingTickets.filter(t=>m.issuedCodes.includes(t.code)&&t.city===city&&t.status==='novo');if(m.handoffPending||matching.length!==m.count){chat('Confira os ingressos antes da entrega.',[['Voltar ao caixa','open']]);return;}m.handoffPending=true;const started=checkoutVisual?.beginHandoff(queueCustomer,()=>{m.handoffPending=false;m.handoffCompleted=true;openCustomerDialogue()});if(started){close();say('Entrega fictícia em andamento.');}else{m.handoffPending=false;chat('Não foi possível realizar a animação de entrega.',[['Tentar entregar novamente','handoff']]);}return;}
- if(cmd==='finish'){if(!m.handoffCompleted){const prepared=trainingTickets.filter(t=>m.issuedCodes.includes(t.code)&&t.city===city&&t.status==='novo');if(prepared.length!==m.count){chat('Ainda não encontrei meus '+(m.count===2?'dois':m.count)+' ingressos desta sessão. Podemos conferir?', [['Voltar ao caixa','open']],'<div class="customer-score customer-bad">Venda pendente. Confirme a sessão e emita os ingressos fictícios.</div>');}else{chat('A venda está registrada, mas ainda preciso receber os ingressos.', [['Entregar ingressos agora','handoff'],['Voltar ao caixa','open']],'<div class="customer-score customer-bad">Entrega pendente: concluir a venda não substitui a entrega ao cliente.</div>');}return;}const issued=trainingTickets.filter(t=>m.issuedCodes.includes(t.code)&&t.city===city&&t.film===m.session.film&&t.time===m.session.time&&t.room===m.session.room&&t.status==='novo');const passed=issued.length===m.count;if(passed)queueCustomer?.userData.updateSpeech?.('Obrigado pelo atendimento!', 'Ingressos recebidos');chat(passed?'Obrigado pelo atendimento! Agora vou guardar meus ingressos.':'Ainda não encontrei meus dois ingressos desta sessão. Podemos conferir?',[[passed?'Atender próximo cliente':'Voltar à bilheteria',passed?'reset':'open']],`<div class="customer-score ${passed?'':'customer-bad'}">${passed?'Treinamento concluído: os ingressos deste atendimento correspondem ao pedido.':'Faltam ingressos compatíveis. A missão permanece pendente.'}</div>`)}
+ if(cmd==='finish'){if(!m.handoffCompleted){const prepared=trainingTickets.filter(t=>m.issuedCodes.includes(t.code)&&t.city===city&&t.status==='novo');if(prepared.length!==m.count){chat('Ainda não encontrei meus '+(m.count===2?'dois':m.count)+' ingressos desta sessão. Podemos conferir?', [['Voltar ao caixa','open']],'<div class="customer-score customer-bad">Venda pendente. Confirme a sessão e emita os ingressos fictícios.</div>');}else{chat('A venda está registrada, mas ainda preciso receber os ingressos.', [['Entregar ingressos agora','handoff'],['Voltar ao caixa','open']],'<div class="customer-score customer-bad">Entrega pendente: concluir a venda não substitui a entrega ao cliente.</div>');}return;}const issued=trainingTickets.filter(t=>m.issuedCodes.includes(t.code)&&t.city===city&&t.film===m.session.film&&t.time===m.session.time&&t.room===m.session.room&&t.status==='novo');const passed=issued.length===m.count;if(passed){onShiftEvent('sale-delivered');queueCustomer?.userData.updateSpeech?.('Obrigado pelo atendimento!', 'Ingressos recebidos');}chat(passed?'Obrigado pelo atendimento! Agora vou guardar meus ingressos.':'Ainda não encontrei meus dois ingressos desta sessão. Podemos conferir?',[[passed?'Atender próximo cliente':'Voltar à bilheteria',passed?'reset':'open']],`<div class="customer-score ${passed?'':'customer-bad'}">${passed?'Treinamento concluído: os ingressos deste atendimento correspondem ao pedido.':'Faltam ingressos compatíveis. A missão permanece pendente.'}</div>`)}
  };
  if(m.stage==='selling'){action('finish');return}
  if(m.stage==='confirmed'){action('open');return}
@@ -591,7 +593,7 @@ function finishEquip(){const id=equipMotion?.id;if(!id)return;epi[id]=true;equip
 function verifyEpi(){if(!allowRole('bomboniere'))return;if(!epi.started)return startEpi();
  const needed=['cap','hair','uniform','gloves'].filter(k=>!epi[k]);
  if(needed.length){epi.errors++;return epiNotice('Preparação incompleta. Confira: '+needed.map(x=>({cap:'boné',hair:'cabelo',uniform:'uniforme',gloves:'luvas'}[x])).join(', ')+'.')}
- epi.checked=true;epi.finished=true;refreshEpiHUD();epiNotice('EPIs conferidos. Agora opere uma pipoqueira, registre os ingredientes e complete a batelada no equipamento 3D.');
+ epi.checked=true;epi.finished=true;onShiftEvent('epi-verified');refreshEpiHUD();epiNotice('EPIs conferidos. Agora opere uma pipoqueira, registre os ingredientes e complete a batelada no equipamento 3D.');
 }
 const machineSteps={
  salgada:[['begin','Iniciar preparo'],['base','Conferir base de 1 L de óleo + 1 L de manteiga'],['heat','Aquecer painel simulado até 200 °C'],['motor','Acionar misturador'],['mix','Adicionar 1 copo de mistura'],['corn','Adicionar 1 copo de milho'],['salt','Registrar colher rasa de sal (etapa não avaliada)'],['lid','Fechar tampa'],['stop','Desligar motor'],['tilt','Inclinar caldeirão'],['reset','Reiniciar batelada']],
@@ -627,8 +629,8 @@ function operatePopcorn(kind,action){
  const result=applyPopcornAction(popcornTraining[kind],action);
  popcornTraining[kind]=result.state;
  updatePopcornVisual(kind);refreshPopcornHUD();
- if(result.error)epi.errors++;
- if(result.state.completed&&!result.error)complete(4,'Batelada '+kind+' concluída por ações verificadas. Prepare o outro sabor ou o balde misto.');
+ if(result.error){epi.errors++;onShiftError('Pipoqueira '+kind,result.error)}
+ if(result.state.completed&&!result.error){onShiftEvent(kind==='salgada'?'salted-ready':'sweet-ready');complete(4,'Batelada '+kind+' concluída por ações verificadas. Prepare o outro sabor ou o balde misto.');}
  else say(result.message);
  if(popcornPanel===kind)renderPopcornPanel(kind,result.message,result.error);
 }
@@ -655,7 +657,7 @@ function renderMixedTub(feedback='',error=null){
 function operateMixedTub(action){
  if(!allowRole('bomboniere')||!epi.finished){epiNotice('Verifique os EPIs antes de montar os recipientes.');return}
  const result=applyMixedTubAction(mixedTub,action,{salted:popcornTraining.salgada,sweet:popcornTraining.doce});
- mixedTub=result.state;refreshPopcornHUD();say(result.message);
+ mixedTub=result.state;if(result.error)onShiftError('Balde misto',result.error);if(mixedTub.completed&&!result.error)onShiftEvent('mixed-ready');refreshPopcornHUD();say(result.message);
  renderMixedTub(result.message,result.error);
 }
 function animatePopcornTraining(dt){
@@ -879,7 +881,7 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
  eqLabel('CAIXA 1',-4.7,.91,-2.987,.83,.21);
  object('Computador do caixa',-5.55,-5.03,0x2c747f,()=>summonCustomer());
  // O marcador continua detectável, mas não aparece como bloco flutuante.
- world[world.length-1].marker.visible=false;object('Mini impressora',-6.55,-2.9,0x686f75,()=>{if(allowRole('caixa'))complete(2,'Mini impressora ligada e conferida.')});object('Televisão do catálogo',-1, -6.9,0x335c82,()=>complete(3,'A televisão de programação foi conferida.'));buildPopcornStation();object('Interruptor do hall',-7.7,3.7,0xe9c17f,()=>{lights.forEach(l=>l.visible=!l.visible);complete(0,'Iluminação do hall acionada.')} );object('Luzes Sala 1',-3.2,-9,0xdcbc71,()=>{if(allowRole('sala'))complete(5,'Conferência da iluminação da Sala 1 registrada.')});object('Ar-condicionado Sala 2',4.9,-9,0x93a7b1,()=>{if(allowRole('sala'))complete(6,'Climatização da Sala 2 conferida.')});object('Leitor de ingressos',-.25,-8,0x62987c,()=>openValidation());addTrainingClients();world.push({name:'Conversar com instrutor',x:.75,z:3.15,callback:trainerAdvice,marker:null,instructor:true});textSign('ENTRADA / HALL',0,2.8,10.65,3.4);
+ world[world.length-1].marker.visible=false;object('Mini impressora',-6.55,-2.9,0x686f75,()=>{if(allowRole('caixa')){onShiftEvent('printer-checked');complete(2,'Mini impressora ligada e conferida.')}});object('Televisão do catálogo',-1, -6.9,0x335c82,()=>{if(currentRole==='caixa')onShiftEvent('catalogue-checked');complete(3,'A televisão de programação foi conferida.');});buildPopcornStation();object('Interruptor do hall',-7.7,3.7,0xe9c17f,()=>{lights.forEach(l=>l.visible=!l.visible);complete(0,'Iluminação do hall acionada.')} );object('Luzes Sala 1',-3.2,-9,0xdcbc71,()=>{if(allowRole('sala'))complete(5,'Conferência da iluminação da Sala 1 registrada.')});object('Ar-condicionado Sala 2',4.9,-9,0x93a7b1,()=>{if(allowRole('sala'))complete(6,'Climatização da Sala 2 conferida.')});object('Leitor de ingressos',-.25,-8,0x62987c,()=>openValidation());addTrainingClients();world.push({name:'Conversar com instrutor',x:.75,z:3.15,callback:trainerAdvice,marker:null,instructor:true});textSign('ENTRADA / HALL',0,2.8,10.65,3.4);
  makeDoor(-4,'Sala 1');makeDoor(4,'Sala 2');
  addRoom(-4,'Sala 1',false);addRoom(4,'Sala 2',true);
  makeTrainer();
@@ -1005,7 +1007,7 @@ function openValidation(){
     const ticket=candidate;const session=active();
     const issues=ticketIssues(ticket,{city,session});
     if(issues.length){feedback='<p class="notice">Validação interrompida: '+issues.map(esc).join('; ')+'</p>';draw();return}
-    ticket.status='validado';ticket.validatedAt=Date.now();storeTickets();mission.served++;
+    ticket.status='validado';ticket.validatedAt=Date.now();storeTickets();mission.served++;onShiftEvent('ticket-approved');
     const routine=roomRoutines[session.room];
     if(routine.phase==='entrada'&&routine.session&&key(routine.session)===key(session)){
      const result=applyRoomAction(routine,'validate',{session,city});
@@ -1034,9 +1036,11 @@ function openValidation(){
  draw();
 }
 function validateCustomerSale(m,session,seats,type,payment,received,prices,occupiedSeats){
- return saleError({session,seats,category:type,payment,received,prices,occupiedSeats,mission:m&&m.city===city?m:null});
+ const issue=saleError({session,seats,category:type,payment,received,prices,occupiedSeats,mission:m&&m.city===city?m:null});
+ if(issue)onShiftError('Caixa',issue);
+ return issue;
 }
-function currentSessions(){return data.sessions.filter(s=>s.city===city&&!(city==='Ijuí'&&s.room==='Sala 1'&&s.format==='3D'))}function openCash(){if(!allowRole('caixa'))return;
+function currentSessions(){return data.sessions.filter(s=>s.city===city&&!(city==='Ijuí'&&s.room==='Sala 1'&&s.format==='3D'))}function openCash(){if(!allowRole('caixa'))return;onShiftEvent('pos-opened');
  const sessions=currentSessions();
  const rates={Inteira:30,Meia:15,Promocional:20,...(JSON.parse(localStorage.getItem('cineglobo_pos_prices_v12')||'{}')[city]||{})}; // valores exclusivamente fictícios
  const occupied=new Set(['A2','B5','C7']); // poltronas ilustrativas indisponíveis
