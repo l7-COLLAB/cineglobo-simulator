@@ -523,6 +523,23 @@ function loadDetailedTrainer(){
  console.info('CineGlobo: instrutor procedural local ativo.');
 }
 
+function initializeRoomLightSurfaces(){
+ for(const [label,light] of Object.entries(roomLighting)){
+  const group=roomScenes[label]?.group;if(!group)continue;
+  const exempt=new Set([light.screen,...light.sconces.map(s=>s.bulb),...light.ceiling.map(c=>c.bulb)]);
+  const seen=new Set();
+  light.surfaces=[];
+  group.traverse(obj=>{
+   if(!obj.isMesh||exempt.has(obj))return;
+   const mat=obj.material;
+   if(!mat?.isMeshStandardMaterial||seen.has(mat))return;
+   seen.add(mat);
+   light.surfaces.push({material:mat,base:mat.color.clone()});
+  });
+  // Aplicado após batching: inclui assentos instanciados e paredes da sala.
+  setRoomLights(label,light.mode);
+ }
+}
 function setRoomLights(room, mode){
  const L=roomLighting[room];if(!L)return;L.mode=mode;
  const ar=mode==='entrada',clean=mode==='limpeza';
@@ -530,9 +547,13 @@ function setRoomLights(room, mode){
  L.cleanLight.intensity=clean?9.0:0;
  L.cleanLight.distance=19;
  L.sconceLight.distance=17;
- L.sconces.forEach(o=>{o.bulb.material.emissiveIntensity=ar?4.0:clean?1.0:0;});
- L.ceiling.forEach(o=>{o.bulb.material.emissiveIntensity=clean?5.0:0;});
+ L.sconces.forEach(o=>{o.bulb.material.emissiveIntensity=ar?4.0:clean?1.0:0;o.bulb.material.color.setHex(mode==='filme'?0x241d1b:0xffefd0);});
+ L.ceiling.forEach(o=>{o.bulb.material.emissiveIntensity=clean?5.0:0;o.bulb.material.color.setHex(clean?0xf3eae2:0x201d1d);});
  if(L.screen)L.screen.material.color.setHex(mode==='filme'?0x98999d:0xffffff);
+ // A luz hemisférica é global (hall + ambas as salas). Escurecemos apenas
+ // as superfícies desta sala, preservando LEDs de segurança emissivos.
+ const brightness=mode==='filme'?.105:mode==='entrada'?.50:1;
+ for(const item of L.surfaces||[])item.material.color.copy(item.base).multiplyScalar(brightness);
  L.leds.forEach(o=>{o.visible=true;});
  const status=document.getElementById('lightingStatus');if(status)status.textContent=mode==='entrada'?'ARANDELAS ACESAS — iluminação suave para recepção e comerciais; LEDs ligados.':mode==='filme'?'FILME — arandelas apagadas, luzes gerais apagadas; somente LEDs de orientação ligados.':'LIMPEZA — luzes gerais acesas para a equipe limpar a sala; LEDs ligados.';
 }
@@ -1192,6 +1213,7 @@ box(-4,2.83,-4.36,2.5,.8,.08,0x131d25);textSign('BILHETERIA',-4.7,3.3,-4.45,2.8)
  // Mescla detalhes residuais opacos do hall em vez de reduzir a qualidade
  // do instrutor ou dos cartazes. Mantém todos os marcadores de interação.
  staticDetailReport.hallExtra=mergeStaticDetails(scene,{exclude:[...excluded],minCount:3});
+ initializeRoomLightSurfaces();
  // Pontos de AGIR do hall continuam individualmente identificáveis em world,
  // mas suas caixas coloridas são desenhadas com UMA chamada.
  const markers=world.filter(item=>item.marker?.userData.trainingWorldMarker&&item.marker.visible&&item.marker.parent===scene);
