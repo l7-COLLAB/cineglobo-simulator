@@ -23,8 +23,8 @@ export function nearestInteraction({player,targets=[],blockers=[],doors=[],previ
   if(!canReach(player,target,blockers,doors))continue;
   const closeness=dist;
   const anglePenalty=dist<=1.22?0:(1-forward)*.25;
-  const sticky=previous===target?.30:0;
-  const priority=target.epiStation?.11:computer?.10:0;
+  const sticky=previous===target ? 0.30 : 0;
+  const priority=target.epiStation ? 0.11 : computer ? 0.10 : 0;
   const score=closeness+anglePenalty-sticky-priority;
   if(score<bestScore){bestScore=score;best=target}
  }
