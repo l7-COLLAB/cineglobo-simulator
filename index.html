@@ -35,7 +35,8 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.m
 import { finishCinema, upholsteredGeometry } from './visuals.js';
 import { saleError } from './training-rules.mjs';
 import { ticketIssues,createRoomRoutine,applyRoomAction } from './room-training.mjs';
-import { createShift,beginShift,recordShiftEvent,recordShiftError,getShiftGoals,nextShiftGoal,shiftProgress,makeShiftReport } from './shift-training.mjs';
+import { createShift,beginShift,recordShiftEvent,recordShiftError,getShiftGoals,nextShiftGoal,shiftProgress,makeShiftReport,assessShift } from './shift-training.mjs';
+import { createShiftTerminalVisuals } from './shift-terminal-visuals.js';
 import { createPopcornBatch,applyPopcornAction,advancePopcornBatch,createMixedTub,applyMixedTubAction } from './popcorn-training.mjs';
 import { createPerformanceMonitor } from './performance-monitor.js';
 import { createCheckoutZone } from './checkout-zone.js';
@@ -53,7 +54,7 @@ let settings={mouse:22,touch:22,quality:"low",fps:30,volume:40};try{settings={..
 let currentRole='caixa',npcTeam=[],npcClock=0,npcCycles={caixa:0,bomboniere:0,sala:0};
 const roleNames={caixa:'Caixa',bomboniere:'Bomboniere e pipoqueiras',sala:'Salas'};
 
-let shiftState=createShift(currentRole,city),lastDeliveredCodes=[];
+let shiftState=createShift(currentRole,city),lastDeliveredCodes=[],shiftTerminalVisualReport=null;
 const SHIFT_HISTORY_KEY='cineglobo_demo_shift_history_v1';
 let shiftHistory=[];try{const v=JSON.parse(localStorage.getItem(SHIFT_HISTORY_KEY)||'[]');if(Array.isArray(v))shiftHistory=v.filter(x=>x?.kind==='cineglobo-demo-shift-report').slice(-8)}catch{}
 function shiftHint(){
@@ -810,42 +811,26 @@ function animateEpi(dt){if(!equipMotion)return;equipMotion.time+=dt;
  * As conferências específicas usam objetos do setor, não checkboxes de progresso.
  */
 function createShiftTerminals(){
- const faceMat=new THREE.MeshStandardMaterial({color:0x2c303b,roughness:.65});
- const trimMat=new THREE.MeshStandardMaterial({color:0x9e7850,metalness:.28,roughness:.63});
- const screenGeo=new THREE.PlaneGeometry(.66,.27);
- const canvas=document.createElement('canvas');canvas.width=512;canvas.height=200;
- const c=canvas.getContext('2d');c.fillStyle='#1b232e';c.fillRect(0,0,512,200);
- c.strokeStyle='#bc9160';c.lineWidth=8;c.strokeRect(10,10,492,180);
- c.fillStyle='#ecd9b9';c.textAlign='center';c.font='bold 39px Arial';c.fillText('CINE GLOBO',256,91);
- c.font='26px Arial';c.fillText('CONTROLE DE TURNO',256,145);
- const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
- const screenMat=new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide});
  const equipment=[
-  ['caixa',-2.10,-5.10],
-  ['bomboniere',5.65,-4.20],
-  ['sala',.72,-8.65]
+  {name:'Terminal de turno · caixa',role:'caixa',x:-2.10,z:-5.10},
+  {name:'Terminal de turno · bomboniere',role:'bomboniere',x:5.65,z:-4.20},
+  {name:'Terminal de turno · sala',role:'sala',x:.72,z:-8.65}
  ];
- for(const [role,x,z] of equipment){
-  const group=new THREE.Group();group.name='Terminal de turno · '+role;group.position.set(x,0,z);scene.add(group);
-  const stem=new THREE.Mesh(new THREE.BoxGeometry(.12,.82,.14),trimMat);stem.position.y=.60;group.add(stem);
-  const base=new THREE.Mesh(new THREE.BoxGeometry(.76,.12,.46),faceMat);base.position.y=1.08;group.add(base);
-  const screen=new THREE.Mesh(screenGeo,screenMat);screen.position.set(0,1.10,.239);group.add(screen);
-  world.push({name:'Terminal de turno '+roleNames[role],x,z:z+.15,marker:group,
-   callback:()=>{if(!allowRole(role))return;openShiftConsole()}});
- }
- // Materiais e ingredientes são apenas representações, sem manipulação real.
  const inspections=[
   {name:'Conferir estoque da bomboniere',x:5.15,z:-4.82,event:'stock-inspected',role:'bomboniere'},
   {name:'Inspecionar bancada de bomboniere',x:4.60,z:-4.31,event:'station-inspected',role:'bomboniere'},
   {name:'Conferir saída da sala',x:.18,z:7.70,event:'exit-inspected',role:'sala'}
  ];
- for(const item of inspections){
-  const g=new THREE.Group();g.name=item.name;g.position.set(item.x,0,item.z);scene.add(g);
-  const plate=new THREE.Mesh(new THREE.BoxGeometry(.52,.13,.32),trimMat);
-  plate.position.y=1.04;g.add(plate);
-  const icon=new THREE.Mesh(new THREE.BoxGeometry(.28,.29,.16),faceMat);
-  icon.position.set(0,1.24,0);g.add(icon);
-  world.push({name:item.name,x:item.x,z:item.z,marker:g,callback:()=>{
+ const visuals=createShiftTerminalVisuals(scene,equipment,inspections);
+ shiftTerminalVisualReport=visuals.report;
+ for(const point of visuals.points){
+  if(point.type==='terminal'){
+   world.push({name:'Terminal de turno '+roleNames[point.role],x:point.x,z:point.z+.15,marker:point.marker,
+    callback:()=>{if(!allowRole(point.role))return;openShiftConsole()}});
+   continue;
+  }
+  const item=point;
+  world.push({name:item.name,x:item.x,z:item.z,marker:point.marker,callback:()=>{
    if(!allowRole(item.role))return;
    if(item.event==='station-inspected'&&Object.values(popcornTraining).some(b=>b.motor)){
     onShiftError('Bomboniere','A estação não pode ser conferida com misturador acionado.');
