@@ -73,11 +73,29 @@ test('Etapa 9: sofá quatro lados, fila, uniformes e luzes visíveis',async({pag
  await page.locator('#closeModal').click();
  expect(errors).toEqual([]);
 });
-test('Etapa 9: AGIR contextual e instrutor sem orbitar ao girar a câmera',async({page})=>{
+test('Etapa 9: botão AGIR contextual e ajudante estável',async({page})=>{
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.route('**/index.html',async route=>{
+  const html=fs.readFileSync('index.html','utf8').replace('function applyGraphics(){',
+  "window.__stage9={player,trainer:()=>trainer,follow:updateTrainerFollow};\nfunction applyGraphics(){");
+  await route.fulfill({contentType:'text/html',body:html});
+ });
  await page.goto('/index.html');
  await expect(page.locator('#scene canvas')).toBeVisible({timeout:45000});
  await page.locator('#enter').click();
- await page.evaluate(()=>{const t=window.__stage9;});
- // A área de circulação sem equipamentos interativos esconde AGIR.
- await page.evaluate(()=>{const controls=window.__stage9;if(!controls)throw new Error('Missing test harness')});
+ await page.evaluate(()=>{const p=window.__stage9.player;p.x=7.4;p.z=8.9;p.yaw=0});
+ await expect.poll(()=>page.locator('#touchInteract').evaluate(el=>getComputedStyle(el).display)).toBe('none');
+ await page.evaluate(()=>{const p=window.__stage9.player;p.x=-4;p.z=-8.5;p.yaw=0});
+ await expect.poll(()=>page.locator('#touchInteract').evaluate(el=>getComputedStyle(el).display)).toBe('block');
+ await page.evaluate(()=>{const p=window.__stage9.player;p.x=7.4;p.z=8.9;p.yaw=0});
+ await expect.poll(()=>page.locator('#touchInteract').evaluate(el=>getComputedStyle(el).display)).toBe('none');
+ const movement=await page.evaluate(()=>{
+  const t=window.__stage9,p=t.player;p.x=3;p.z=7.6;
+  for(let k=0;k<90;k++){p.z-=.02;t.follow(.05)}
+  const x=t.trainer().position.x,z=t.trainer().position.z;
+  for(let k=0;k<170;k++){p.yaw+=.047;t.follow(.05)}
+  return Math.hypot(x-t.trainer().position.x,z-t.trainer().position.z);
+ });
+ expect(movement).toBeLessThan(.15);
+ expect(errors).toEqual([]);
 });
