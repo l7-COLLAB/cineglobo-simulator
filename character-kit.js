@@ -105,10 +105,8 @@ function faceGeometry(role,uniformColor,skinColor,hairColor){
  ];
  if(worker){
   pieces.push({geo:geometry.collar,at:[0,1.595,.011],rotation:[Math.PI/2,0,0],color:0x171b21});
-  if(role==='bomboniere'){
-   pieces.push({geo:geometry.cap,at:[0,1.906,-.014],color:0x1c1e25});
-   pieces.push({geo:geometry.visor,at:[0,1.908,.155],color:0x1c1e25});
-  }
+  pieces.push({geo:geometry.cap,at:[0,1.906,-.014],color:0x111315});
+  pieces.push({geo:geometry.visor,at:[0,1.908,.155],color:0x111315});
  }
  const final=combineRigidParts(pieces);
  mainCache.set(signature,final);
@@ -126,6 +124,8 @@ function armGeometry(side,uniformColor,skinColor){
 }
 export function createCinemaCharacter({role='cliente',uniformColor=0x46647a,skinColor=0xbb8665,hairColor=0x292124}={}){
  const worker=role!=='cliente';
+ // Uniforme Cine Globo: mesmo preto e boné em Caixa, Bomboniere e Sala.
+ if(worker)uniformColor=0x111315;
  const root=new THREE.Group();
  root.name=worker?'Funcionário virtual · '+role:'Cliente virtual · atendimento';
  const torso=new THREE.Mesh(faceGeometry(role,uniformColor,skinColor,hairColor),rigidMaterial);
@@ -154,10 +154,16 @@ export function createCinemaCharacter({role='cliente',uniformColor=0x46647a,skin
  if(worker){
   const badge=new THREE.Mesh(geometry.badge,uniformBadge());
   badge.position.set(.082,1.45,.213);root.add(badge);
+  const capLogo=new THREE.Mesh(geometry.badge,uniformBadge());
+  capLogo.name='Logo Cine Globo no boné';
+  capLogo.position.set(0,1.934,.195);
+  capLogo.scale.set(.78,.78,1);
+  root.add(capLogo);
+  root.userData.uniform={shirt:'preta',cap:'preto',logo:true};
  }
  root.userData.graphicOptimization={
   independentLimbs:4,
-  originalBodyDraws:worker?(role==='bomboniere'?8:6):5,
+  originalBodyDraws:worker?8:5,
   bodyDraws:1,
   originalLimbDraws:8,
   limbDraws:4,
