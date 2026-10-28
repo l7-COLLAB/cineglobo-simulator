@@ -28,9 +28,9 @@ jobs:
         run: npm run build
       - name: Verificar regras e integridade do aplicativo
         run: npm run test:rules
+      # O token GITHUB_TOKEN não habilita Pages pela primeira vez.
+      # Ative Settings > Pages > Source: GitHub Actions antes do deploy.
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - name: Enviar apenas arquivos necessários ao jogo
         uses: actions/upload-pages-artifact@v3
         with:
