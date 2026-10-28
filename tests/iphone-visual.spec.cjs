@@ -13,7 +13,7 @@ test('iPhone horizontal: cena usa tela toda, mantém nitidez e HUD recolhido',as
  await page.route('**/index.html',async route=>{
   const src=fs.readFileSync('index.html','utf8');
   const html=src.replace('function applyGraphics(){',
-  'window.__iphoneV8={renderer:()=>renderer,player:()=>({...player}),joy:()=>({...joy}),settings:()=>({...settings}),furniture:()=>scene.getObjectByName("Mobiliário arredondado do foyer"),world:()=>world,resize:resizeGame};\nfunction applyGraphics(){');
+  'window.__iphoneV8={renderer:()=>renderer,player:()=>({...player}),joy:()=>({...joy}),settings:()=>({...settings}),furniture:()=>scene.getObjectByName("Sofá ilha central de quatro lados"),world:()=>world,resize:resizeGame};\nfunction applyGraphics(){');
   await route.fulfill({contentType:'text/html',body:html});
  });
  await page.goto('/index.html',{waitUntil:'load'});
