@@ -132,11 +132,31 @@ import { batchStaticBoxes, mergeStaticDetails } from './static-batching.js';
 import { planWalkingRoute } from './navigation.mjs';
 const $=x=>document.getElementById(x),cities=['Três Passos','Palmeira das Missões','Santa Rosa','Frederico Westphalen','Cruz Alta','Ijuí','Horizontina'];
 const defaults={notices:[{city:'Todas',text:'Bem-vindo ao ambiente demonstrativo. Todos os dados são fictícios.'}],sessions:[{city:'Ijuí',film:'Aventura Estelar (demonstração)',time:'14:00',room:'Sala 1',format:'2D'},{city:'Ijuí',film:'Mistério da Noite (demonstração)',time:'16:30',room:'Sala 2',format:'3D'}],tasks:['Acender as luzes do hall','Ligar o computador do caixa','Ligar a mini impressora','Conferir a televisão do catálogo','Preparar a pipoqueira','Conferir a iluminação da Sala 1','Conferir a climatização da Sala 2']};
-let data;try{data={...defaults,...JSON.parse(localStorage.getItem('cineglobo_demo')||'{}')}}catch{data=structuredClone(defaults)};
+let data=structuredClone(defaults);
+try{
+ const stored=JSON.parse(localStorage.getItem('cineglobo_demo')||'{}');
+ if(stored&&typeof stored==='object'&&!Array.isArray(stored)){
+  data={...data,...stored};
+  data.tasks=Array.isArray(stored.tasks)?stored.tasks.filter(t=>typeof t==='string'&&t.trim()).slice(0,60).map(t=>t.slice(0,240)):defaults.tasks;
+  data.sessions=Array.isArray(stored.sessions)?stored.sessions.filter(t=>t&&typeof t==='object'&&typeof t.film==='string'&&typeof t.city==='string'&&typeof t.time==='string'&&typeof t.room==='string').slice(0,180):defaults.sessions;
+  data.notices=Array.isArray(stored.notices)?stored.notices.filter(t=>t&&typeof t.city==='string'&&typeof t.text==='string').slice(-100):defaults.notices;
+ }
+}catch(error){console.warn('Configuração local inválida, usando dados demonstrativos.',error)}
 let technicalMonitor=null,staticBatchReport=null,staticDetailReport=null;
 const roomRoutines={'Sala 1':createRoomRoutine('Sala 1'),'Sala 2':createRoomRoutine('Sala 2')};
 const roomSessionChoice={'Sala 1':'','Sala 2':''};
-let settings={mouse:26,touch:34,quality:"medium",fps:30,volume:40};try{settings={...settings,...JSON.parse(localStorage.getItem("cineglobo_config")||"{}")}}catch{}
+let settings={mouse:26,touch:34,quality:"medium",fps:30,volume:40};
+try{
+ const stored=JSON.parse(localStorage.getItem("cineglobo_config")||"{}");
+ if(stored&&typeof stored==='object'&&!Array.isArray(stored))settings={...settings,...stored};
+}catch{}
+for(const k of ['mouse','touch','volume']){
+ const v=Number(settings[k]);
+ settings[k]=Number.isFinite(v)?Math.max(k==='volume'?0:1,Math.min(100,v)):({mouse:26,touch:34,volume:40})[k];
+}
+if(!['low','medium','high'].includes(settings.quality))settings.quality='medium';
+if(![30,45,60].includes(Number(settings.fps)))settings.fps=30;
+else settings.fps=Number(settings.fps);
 // Migração única da antiga qualidade subnativa (0,6×) para nitidez equilibrada.
 // Após esta atualização, a escolha manual do usuário é respeitada.
 try{
@@ -387,7 +407,7 @@ function updateTrainerFollow(dt){
  }
 }
 function say(t){$('helper').style.display='block';$('speech').textContent=t}function save(){localStorage.setItem('cineglobo_demo',JSON.stringify(data))}function fillCities(){['city','startCity'].forEach(id=>{$(id).innerHTML=cities.map(c=>`<option ${c==='Ijuí'?'selected':''}>${c}</option>`).join('')})}fillCities();
-function setCity(c){seatedAtSofa=null;if(c!==city){shiftState=createShift(currentRole,c);lastDeliveredCodes=[]}city=c;for(const name of Object.keys(roomRoutines)){roomRoutines[name]=createRoomRoutine(name);roomSessionChoice[name]='';if(roomLighting[name])setRoomLights(name,'entrada');}$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${t}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
+function setCity(c){seatedAtSofa=null;if(c!==city){shiftState=createShift(currentRole,c);lastDeliveredCodes=[]}city=c;for(const name of Object.keys(roomRoutines)){roomRoutines[name]=createRoomRoutine(name);roomSessionChoice[name]='';if(roomLighting[name])setRoomLights(name,'entrada');}$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${escapeHtml(t)}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
 function mat(color){return new THREE.MeshStandardMaterial({color,roughness:.75})}function box(x,y,z,w,h,d,color){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));m.position.set(x,y,z);scene.add(m);return m}const fixedTextSigns=[];
 function textSign(t,x,y,z,w=2,color='#ffffff'){
  fixedTextSigns.push({t,x,y,z,w,color});
