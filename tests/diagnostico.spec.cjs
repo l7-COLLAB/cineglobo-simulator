@@ -30,6 +30,13 @@ test('diagnóstico local sobrevive à pausa e produz resumo por área',async({pa
  expect(hall.frames).toBeGreaterThan(0);
  expect(hall.frameIntervalP95ms).toBeGreaterThan(0);
  expect(hall.maxDrawCalls).toBeGreaterThan(0);
+ expect(report.activeObservedSeconds).toBeGreaterThan(0);
+ expect(report.activeTwentyMinuteSampleReached).toBe(false);
+ expect(report.contextLossCount).toBe(0);
+ expect(report.geometryCountAtStart).toBeGreaterThan(0);
+ expect(report.geometryCountPeak).toBeGreaterThanOrEqual(report.geometryCountAtStart);
+ expect(report.notes.some(note=>note.includes('20 minutos'))).toBe(true);
+
  expect(Number.isFinite(hall.observedFps)).toBe(true);
  expect(errors).toEqual([]);
 });
