@@ -347,7 +347,13 @@ function createCinemaSignAtlas(){
  group.name='Sinalização fixa em atlas';
  group.userData.signs=n;scene.add(group);
 }
-function object(name,x,z,color,callback){let marker=box(x,1.05,z,.5,.6,.45,color);marker.userData.trainingWorldMarker=true;world.push({name,x,z,callback,marker});}
+function object(name,x,z,color,callback){
+ // Indicador compacto em forma de plaqueta: não ocupa o volume do equipamento.
+ const marker=box(x,1.61,z,.31,.17,.055,color);
+ marker.name='Plaqueta de interação · '+name;
+ marker.userData.trainingWorldMarker=true;
+ world.push({name,x,z,callback,marker});
+}
 function collider(x,z,w,d){blockers.push({x,z,w,d})}
 function canStand(x,z){
  if(x < -7.98||x > 7.98||z>10.65||z < -21.65)return false;
@@ -946,7 +952,37 @@ function createShiftTerminals(){
   }});
  }
 }
-function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e171c');scene.fog=new THREE.Fog('#1e171c',12,28);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.06,90);renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setSize(Math.max(1,document.documentElement.clientWidth),Math.max(1,window.innerHeight));renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;$('scene').appendChild(renderer.domElement);scene.add(new THREE.HemisphereLight(0xece2e2,0x2b2530,2.4));ambient=new THREE.AmbientLight(0xffe4c2,.46);scene.add(ambient);box(0,-.12,0,17,.2,22,0x5a4341);box(-8.4,2,0,.3,4,22,0x9d8281);box(8.4,2,0,.3,4,22,0x9d8281);box(0,3.7,0,17,.18,22,0x453a40);for(const segment of [{x:-7.15,w:2.1},{x:-1.95,w:3.9},{x:1.95,w:3.9},{x:7.15,w:2.1}])box(segment.x,2,-10.9,segment.w,4,.3,0x8c6769);box(0,2,-16.35,.27,4,10.7,0x3d3039);box(0,2,10.9,17,4,.3,0x59454c);box(-4.6,.63,-3.7,5,1.22,1.4,0x503539);box(-4.6,1.28,-3.7,4.85,.11,1.55,0xb66c4f);box(-4,2.83,-4.36,2.5,.8,.08,0x131d25);textSign('BILHETERIA',-4.7,3.3,-4.45,2.8);box(3.7,1.2,-4.6,5,1.4,1.4,0x70414b);box(3.7,2,-4.6,5,.15,1.4,0xc47a47);textSign('BOMBONIERE',3.7,3,-5.45,3);textSign('SALA 1 (2D)',-4,2.65,-10.68,2.8);textSign('SALA 2 (3D)',4,2.65,-10.68,2.8);for(let x of [-4,4]){box(x,0.1,-9.7,2,.15,1,0x813c40);for(let k=0;k<4;k++)box(x-1.2+k*.8,.42,-8.3,0.5,.65,.5,0x5e282e)}for(let x of [-6,0,6]){let lamp=box(x,3.57,1,.7,.06,.7,0xf5e4c2);lights.push(lamp)}for(let x of [-2,2])for(let z of [2,5]){box(x,.45,z,1.5,.12,1.2,0x81534b);box(x-.5,.23,z-.35,.1,.45,.1,0x3d2527);box(x+.5,.23,z+.35,.1,.45,.1,0x3d2527)}// Estação de atendimento: monitor, teclado, terminal, impressora e gaveta com formas reconhecíveis.
+function createFoyerFurniture(){
+ // Mesas de apoio circulares e banquetas com silhuetas reconhecíveis.
+ // Todo o mobiliário rígido é reunido em UMA malha, sem custo por banqueta.
+ const group=new THREE.Group();group.name='Mobiliário arredondado do foyer';scene.add(group);
+ const brass=0xa07b56,seat=0x773e46,dark=0x282329;
+ const palette=new Map();
+ function material(color){if(!palette.has(color))palette.set(color,new THREE.MeshStandardMaterial({color,roughness:.73,metalness:.12}));return palette.get(color)}
+ function cylinder(x,y,z,rTop,rBottom,h,color,segments=14,sx=1,sz=1){
+  const shape=new THREE.Mesh(new THREE.CylinderGeometry(rTop,rBottom,h,segments),material(color));
+  shape.position.set(x,y,z);shape.scale.set(sx,1,sz);group.add(shape);
+ }
+ for(const x of [-2,2])for(const z of [2,5]){
+  cylinder(x,.57,z,.69,.67,.075,brass,18,1.15,.83);
+  cylinder(x,.30,z,.085,.10,.50,dark,12);
+  cylinder(x,.065,z,.35,.35,.045,dark,14,1,.88);
+  for(const direction of [-1,1]){
+   const xSeat=x+direction*.86;
+   cylinder(xSeat,.39,z,.285,.285,.105,seat,16,1,.84);
+   cylinder(xSeat,.20,z,.062,.070,.36,dark,12);
+   cylinder(xSeat,.045,z,.21,.21,.035,brass,14);
+  }
+ }
+ const report=mergeStaticDetails(group,{minCount:3,maxVertices:24000});
+ group.userData.lobbyFurnitureReport=report;
+}
+function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e171c');scene.fog=new THREE.Fog('#1e171c',12,28);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.06,90);renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setSize(Math.max(1,document.documentElement.clientWidth),Math.max(1,window.innerHeight));renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;$('scene').appendChild(renderer.domElement);scene.add(new THREE.HemisphereLight(0xece2e2,0x2b2530,2.4));ambient=new THREE.AmbientLight(0xffe4c2,.46);scene.add(ambient);box(0,-.12,0,17,.2,22,0x5a4341);box(-8.4,2,0,.3,4,22,0x9d8281);box(8.4,2,0,.3,4,22,0x9d8281);box(0,3.7,0,17,.18,22,0x453a40);for(const segment of [{x:-7.15,w:2.1},{x:-1.95,w:3.9},{x:1.95,w:3.9},{x:7.15,w:2.1}])box(segment.x,2,-10.9,segment.w,4,.3,0x8c6769);box(0,2,-16.35,.27,4,10.7,0x3d3039);box(0,2,10.9,17,4,.3,0x59454c);box(-4.6,.63,-3.7,5,1.22,1.4,0x503539);box(-4.6,1.28,-3.7,4.85,.11,1.55,0xb66c4f);
+ // Base e frisos finos tornam o balcão reconhecível sem textura externa.
+ box(-4.6,.21,-2.98,4.84,.07,.06,0x30242a);
+ box(-4.6,1.20,-2.98,4.84,.035,.055,0xc19a66);
+ for(const x of [-6.15,-4.6,-3.05])box(x,.72,-2.972,.045,.80,.046,0x8b5c5c);
+box(-4,2.83,-4.36,2.5,.8,.08,0x131d25);textSign('BILHETERIA',-4.7,3.3,-4.45,2.8);box(3.7,1.2,-4.6,5,1.4,1.4,0x70414b);box(3.7,2,-4.6,5,.15,1.4,0xc47a47);textSign('BOMBONIERE',3.7,3,-5.45,3);textSign('SALA 1 (2D)',-4,2.65,-10.68,2.8);textSign('SALA 2 (3D)',4,2.65,-10.68,2.8);for(let x of [-4,4]){box(x,0.1,-9.7,2,.15,1,0x813c40);for(let k=0;k<4;k++)box(x-1.2+k*.8,.42,-8.3,0.5,.65,.5,0x5e282e)}for(let x of [-6,0,6]){let lamp=box(x,3.57,1,.7,.06,.7,0xf5e4c2);lights.push(lamp)}createFoyerFurniture();// Estação de atendimento: monitor, teclado, terminal, impressora e gaveta com formas reconhecíveis.
  const pos={x:-5.55,z:-3.12};
  const equipmentStart=scene.children.length;
  function eqBox(x,y,z,w,h,d,c){return box(x,y,z,w,h,d,c)}
