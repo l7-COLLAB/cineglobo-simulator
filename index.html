@@ -69,7 +69,7 @@ button,select,input,textarea{touch-action:manipulation}
  #look{left:36%;right:0;width:auto;top:calc(100px + env(safe-area-inset-top));bottom:calc(115px + env(safe-area-inset-bottom));background:transparent;overscroll-behavior:contain}
  #joy{width:132px;height:132px;bottom:calc(15px + env(safe-area-inset-bottom));left:calc(18px + env(safe-area-inset-left));background:#e4e5ed1e;border:2px solid #ffffff5c}
  #nub{width:45px;height:45px;left:calc(50% - 22.5px);top:calc(50% - 22.5px);background:#eeeeefd4;box-shadow:0 0 12px #0005}
- #touchInteract{width:78px;height:78px;min-height:78px;right:calc(20px + env(safe-area-inset-right));bottom:calc(27px + env(safe-area-inset-bottom));border-radius:50%}
+ #touchInteract{display:none;width:78px;height:78px;min-height:78px;right:calc(20px + env(safe-area-inset-right));bottom:calc(27px + env(safe-area-inset-bottom));border-radius:50%}
  #action{bottom:calc(124px + env(safe-area-inset-bottom));max-width:57vw;left:50%;font-size:12px}
  .dialog{max-height:calc(100dvh - 28px)}
 }
@@ -299,23 +299,57 @@ function setupWorkers(){makeWorker('caixa',-5.25,-4.02,0x4b545d);makeWorker('bom
 function updateWorkers(dt=0){npcClock+=dt;for(const n of npcTeam){n.g.visible=n.role!==currentRole;if(!n.g.visible)continue;const t=npcClock+n.phase;n.g.position.x=n.origin.x+Math.sin(t*.37)*.12;n.g.position.z=n.origin.z+Math.cos(t*.4)*.10;n.g.rotation.y=Math.sin(t*.3)*.23;n.g.userData['arm-1'].rotation.x=Math.sin(t*2)*.23;n.g.userData['arm1'].rotation.x=-Math.sin(t*2)*.23;}if(dt&&Math.floor(npcClock/20)!==Math.floor((npcClock-dt)/20)){for(const k of Object.keys(npcCycles))if(k!==currentRole)npcCycles[k]++;roleHUD()}}
 const speeches=['Bem-vindo! Este é um cinema virtual de treinamento. Comece explorando o hall e interagindo com equipamentos.','Aproxime-se de um objeto identificado e pressione E, ou AGIR no celular. Cada ação simula um procedimento.','Para treinar no caixa, caminhe para trás do balcão e use o computador voltado ao funcionário. Um cliente virá até você; também é possível clicar diretamente quando o monitor estiver selecionado. Depois confira o filme, a sessão, as poltronas e o pagamento.','Na agenda você verá sessões fictícias da unidade selecionada. No painel Admin poderá modificar horários e comunicados.'];
 function trainerAdvice(){if(!shiftState.started||!shiftState.completed){say(shiftHint());return;}const tips={caixa:'Estou ao seu lado. Aproxime-se da face do monitor do caixa e pressione E/AGIR ou clique nele. Quando o cliente chegar, confirme o pedido e conclua a venda no computador.',bomboniere:'Vamos para a bomboniere. Comece pela preparação de EPIs somente se você for operar as pipoqueiras. Siga os objetos da bancada em sequência.',sala:'Eu vou acompanhar você até as salas. Confira o ingresso do cliente, a sala correta e o horário antes de liberar o acesso.'};say(tips[currentRole]);}
-function updateTrainerFollow(dt){if(!trainer||paused||$('start').style.display!=='none')return;
- const sideX=Math.cos(player.yaw),sideZ=-Math.sin(player.yaw);
- const backX=Math.sin(player.yaw),backZ=Math.cos(player.yaw);
- const choices=[[-1.18,1.28],[1.18,1.28],[-1.3,1.85],[1.3,1.85]];
- let target=null;
- for(const [side,back] of choices){const x=player.x+sideX*side+backX*back,z=player.z+sideZ*side+backZ*back;
- if(canStand(x,z)){target={x,z};break}}
- if(!target)return;
- const d=Math.hypot(trainer.position.x-target.x,trainer.position.z-target.z);
- if(d>7){trainer.position.x=target.x;trainer.position.z=target.z;}
- else if(d>.13){const step=Math.min(d,dt*2.15);trainer.position.x+=(target.x-trainer.position.x)/d*step;trainer.position.z+=(target.z-trainer.position.z)/d*step;}
- const interaction=world.find(o=>o.instructor);if(interaction){interaction.x=trainer.position.x;interaction.z=trainer.position.z;}
- trainer.rotation.y=Math.atan2(player.x-trainer.position.x,player.z-trainer.position.z);
- if(!trainerRealistic){trainer.position.y=Math.sin(performance.now()*.005)*(d>.2?.028:.008);for(const a of trainerParts)a.pivot.rotation.x=Math.sin(performance.now()*.011+a.side)*(d>.2?.26:.03);}
+
+const trainerFollow={lastX:0,lastZ:6,headingX:0,headingZ:-1,targetX:.75,targetZ:4,walking:false};
+let seatedAtSofa=null;
+function updateTrainerFollow(dt){
+ if(!trainer||paused||$('start').style.display!=='none')return;
+ const px=player.x,pz=player.z;
+ const deltaX=px-trainerFollow.lastX,deltaZ=pz-trainerFollow.lastZ;
+ const moving=Math.hypot(deltaX,deltaZ)>.013;
+ if(moving){
+  // A trajetória real, e NÃO a rotação da câmera, define o ponto de parada.
+  const d=Math.hypot(deltaX,deltaZ);
+  trainerFollow.headingX=trainerFollow.headingX*.75+(deltaX/d)*.25;
+  trainerFollow.headingZ=trainerFollow.headingZ*.75+(deltaZ/d)*.25;
+  const h=Math.hypot(trainerFollow.headingX,trainerFollow.headingZ)||1;
+  const hx=trainerFollow.headingX/h,hz=trainerFollow.headingZ/h;
+  const candidates=[
+   [px-hx*1.65-hz*.43,pz-hz*1.65+hx*.43],
+   [px-hx*1.7+hz*.43,pz-hz*1.7-hx*.43],
+   [px-hx*2.0,pz-hz*2.0]
+  ];
+  const target=candidates.find(([x,z])=>canStand(x,z));
+  if(target){trainerFollow.targetX=target[0];trainerFollow.targetZ=target[1]}
+ }
+ trainerFollow.lastX=px;trainerFollow.lastZ=pz;
+ let dx=trainerFollow.targetX-trainer.position.x,dz=trainerFollow.targetZ-trainer.position.z;
+ const distance=Math.hypot(dx,dz),playerDistance=Math.hypot(px-trainer.position.x,pz-trainer.position.z);
+ // Histerese: quando o jogador para ou apenas gira, o ajudante permanece parado.
+ const shouldStart=distance>1.1||playerDistance>3.1;
+ const shouldStop=distance<.48&&playerDistance>1.05;
+ if(!trainerFollow.walking&&shouldStart)trainerFollow.walking=true;
+ if(trainerFollow.walking&&shouldStop)trainerFollow.walking=false;
+ if(trainerFollow.walking&&distance>.08){
+  const step=Math.min(distance,Math.max(0,dt)*2.0);
+  const nx=trainer.position.x+dx/distance*step,nz=trainer.position.z+dz/distance*step;
+  if(canStand(nx,nz)&&Math.hypot(nx-px,nz-pz)>1.02){
+   trainer.position.x=nx;trainer.position.z=nz;
+  }else trainerFollow.walking=false;
+ }
+ const interaction=world.find(o=>o.instructor);
+ if(interaction){interaction.x=trainer.position.x;interaction.z=trainer.position.z}
+ const angle=Math.atan2(px-trainer.position.x,pz-trainer.position.z);
+ const turn=Math.atan2(Math.sin(angle-trainer.rotation.y),Math.cos(angle-trainer.rotation.y));
+ trainer.rotation.y+=turn*Math.min(1,Math.max(0,dt)*4.5);
+ if(!trainerRealistic){
+  const pulse=performance.now()*.009,amplitude=trainerFollow.walking?.22:0;
+  trainer.position.y=trainerFollow.walking?Math.sin(pulse*1.3)*.013:0;
+  for(const a of trainerParts)a.pivot.rotation.x=Math.sin(pulse+a.side)*amplitude;
+ }
 }
 function say(t){$('helper').style.display='block';$('speech').textContent=t}function save(){localStorage.setItem('cineglobo_demo',JSON.stringify(data))}function fillCities(){['city','startCity'].forEach(id=>{$(id).innerHTML=cities.map(c=>`<option ${c==='Ijuí'?'selected':''}>${c}</option>`).join('')})}fillCities();
-function setCity(c){if(c!==city){shiftState=createShift(currentRole,c);lastDeliveredCodes=[]}city=c;for(const name of Object.keys(roomRoutines)){roomRoutines[name]=createRoomRoutine(name);roomSessionChoice[name]='';if(roomLighting[name])setRoomLights(name,'entrada');}$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${t}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
+function setCity(c){seatedAtSofa=null;if(c!==city){shiftState=createShift(currentRole,c);lastDeliveredCodes=[]}city=c;for(const name of Object.keys(roomRoutines)){roomRoutines[name]=createRoomRoutine(name);roomSessionChoice[name]='';if(roomLighting[name])setRoomLights(name,'entrada');}$('city').value=c;$('startCity').value=c;$('siteName').textContent='Cine Globo · '+c;completed.clear();tasksRender();say(c==='Ijuí'?'Você selecionou Ijuí. O cenário atual é provisório, com duas salas de demonstração.':'Você selecionou '+c+'. O mesmo cenário provisório será usado até cadastrarmos a planta desta unidade.')}function tasksRender(){$('tasks').innerHTML=data.tasks.map((t,i)=>`<div class="task ${completed.has(i)?'done':''}">${completed.has(i)?'✓':'○'} ${t}</div>`).join('');$('progress').textContent=completed.size+' de '+data.tasks.length+' atividades concluídas'}tasksRender();$('city').onchange=e=>setCity(e.target.value);$('startCity').onchange=e=>setCity(e.target.value);
 function mat(color){return new THREE.MeshStandardMaterial({color,roughness:.75})}function box(x,y,z,w,h,d,color){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));m.position.set(x,y,z);scene.add(m);return m}const fixedTextSigns=[];
 function textSign(t,x,y,z,w=2,color='#ffffff'){
  fixedTextSigns.push({t,x,y,z,w,color});
@@ -403,7 +437,10 @@ function makeTrainer(){
  // Corte de cabelo, com volume discretamente superior ao crânio.
  sphere(1,.193,.090,.187,hair,0,2.297,-.014);
  for(const side of [-1,1])sphere(1,.040,.10,.11,hair,side*.161,2.23,-.018);
- // Braços, antebraços e mãos (suspensos em postura neutra).
+ // O instrutor também usa boné escuro do cinema.
+ const staffCap=part(new THREE.SphereGeometry(.20,12,8,0,Math.PI*2,0,Math.PI*.48),shirt,0,2.31,-.012);
+ part(new THREE.BoxGeometry(.29,.028,.16),shirt,0,2.31,.169);
+  // Braços, antebraços e mãos (suspensos em postura neutra).
  const arms=[];
  for(const side of [-1,1]){
    const pivot=new THREE.Group();pivot.position.set(side*.308,1.705,0);group.add(pivot);
@@ -428,7 +465,27 @@ function makeTrainer(){
  c.beginPath();c.moveTo(79,87);c.lineTo(177,87);c.moveTo(89,62);c.lineTo(167,62);c.moveTo(89,112);c.lineTo(167,112);c.stroke();
  c.font='bold 27px Arial';c.fillStyle='#f2eee7';c.textAlign='center';c.fillText('CINE',128,169);c.fillText('GLOBO',128,199);
  const map=new THREE.CanvasTexture(logo);map.colorSpace=THREE.SRGBColorSpace;
- const chest=part(new THREE.PlaneGeometry(.21,.21),new THREE.MeshBasicMaterial({map,transparent:true,side:THREE.DoubleSide,depthWrite:false}),.128,1.61,.186);chest.rotation.y=.06;
+
+ // Dois logotipos com uma única geometria/textura, sem perder o boné.
+ const positions=[],uv=[];
+ function addLogoQuad(x,y,z,w,h,angle=0){
+  const cos=Math.cos(angle),sin=Math.sin(angle);
+  const corners=[[-.5,.5,0,1],[-.5,-.5,0,0],[.5,-.5,1,0],[-.5,.5,0,1],[.5,-.5,1,0],[.5,.5,1,1]];
+  for(const [ox,oy,u,v] of corners){
+   const horizontal=ox*w;
+   positions.push(x+horizontal*cos,y+oy*h,z-horizontal*sin);
+   uv.push(u,v);
+  }
+ }
+ addLogoQuad(.128,1.61,.186,.21,.21,.06);
+ addLogoQuad(0,2.315,.20,.125,.105);
+ const logoGeometry=new THREE.BufferGeometry();
+ logoGeometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ logoGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+ logoGeometry.computeBoundingSphere();
+ const sharedLogo=new THREE.Mesh(logoGeometry,new THREE.MeshBasicMaterial({map,transparent:true,side:THREE.DoubleSide,depthWrite:false}));
+ sharedLogo.name='Logo Cine Globo no boné do instrutor';
+ group.add(sharedLogo);
  // Orientação do instrutor por marcador fixo, sem componente luminoso dinâmico.
  const cc=document.createElement('canvas');cc.width=512;cc.height=128;const ctx=cc.getContext('2d');ctx.fillStyle='#13151edb';ctx.fillRect(0,10,512,100);ctx.fillStyle='#ffe2af';ctx.font='bold 29px Arial';ctx.textAlign='center';ctx.fillText('INSTRUTOR • E PARA FALAR',256,69);
  const badge=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cc),transparent:true,depthWrite:false}));badge.position.y=2.65;badge.scale.set(2.5,.62,1);group.add(badge);
@@ -456,14 +513,36 @@ function loadDetailedTrainer(){
 function setRoomLights(room, mode){
  const L=roomLighting[room];if(!L)return;L.mode=mode;
  const ar=mode==='entrada',clean=mode==='limpeza';
- L.sconceLight.intensity=ar?2.0:clean?.45:0;
- L.cleanLight.intensity=clean?3.4:0;
- L.sconces.forEach(o=>{o.bulb.material.emissiveIntensity=ar?2.8:clean?.5:.025;});
- L.ceiling.forEach(o=>{o.bulb.material.emissiveIntensity=clean?3.0:.015;});
+ L.sconceLight.intensity=ar?5.5:clean?1.2:0;
+ L.cleanLight.intensity=clean?9.0:0;
+ L.cleanLight.distance=19;
+ L.sconceLight.distance=17;
+ L.sconces.forEach(o=>{o.bulb.material.emissiveIntensity=ar?4.0:clean?1.0:0;});
+ L.ceiling.forEach(o=>{o.bulb.material.emissiveIntensity=clean?5.0:0;});
+ if(L.screen)L.screen.material.color.setHex(mode==='filme'?0x98999d:0xffffff);
  L.leds.forEach(o=>{o.visible=true;});
  const status=document.getElementById('lightingStatus');if(status)status.textContent=mode==='entrada'?'ARANDELAS ACESAS — iluminação suave para recepção e comerciais; LEDs ligados.':mode==='filme'?'FILME — arandelas apagadas, luzes gerais apagadas; somente LEDs de orientação ligados.':'LIMPEZA — luzes gerais acesas para a equipe limpar a sala; LEDs ligados.';
 }
 
+function openRoomLightPreview(label,feedback=''){
+ // Prévia do sistema de iluminação, acessível a todos os setores. Não avalia
+ // procedimentos nem avança as metas da função Sala.
+ const names={entrada:'Entrada / comerciais: arandelas acesas',filme:'Filme: somente LEDs vermelhos',limpeza:'Limpeza: luzes gerais acesas'};
+ const mode=roomLighting[label]?.mode||'entrada';
+ modal('<h2>Interruptor · '+escapeHtml(label)+'</h2>'+
+ '<p class="small">Prévia visual de iluminação. Para treinamento avaliado, escolha a função Sala e use o painel interno.</p>'+
+ '<p class="notice" role="status">'+escapeHtml(feedback||'Modo atual: '+names[mode])+'</p>'+
+ '<div class="rows">'+Object.entries(names).map(([value,title])=>'<button data-room-light-preview="'+value+'" data-room-light-label="'+escapeHtml(label)+'" type="button" style="min-height:44px">'+title+'</button>').join('')+'</div>');
+}
+function previewRoomLights(label,mode){
+ if(!roomLighting[label]||!['entrada','filme','limpeza'].includes(mode))return;
+ setRoomLights(label,mode);
+ // Deixe a sala visível pela porta quando a luz for acionada do corredor.
+ const d=doors.find(door=>Math.abs(door.x-roomScenes[label]?.centerX)<.1);
+ if(d){d.open=true;d.goal=-Math.PI*.55}
+ if(roomScenes[label])roomScenes[label].group.visible=true;
+ openRoomLightPreview(label,'Iluminação '+mode+' ativada em '+label+'. Entre e observe as luminárias.');
+}
 function roomLightingDialog(label,feedback='',error=false){
  if(!allowRole('sala'))return;
  const s=roomRoutines[label],sessions=currentSessions().filter(t=>t.room===label);
@@ -577,8 +656,9 @@ function addRoom(x,label,is3d){
  // Os pontos iluminam visualmente o caminho sem uma PointLight por LED,
  // conservando o desempenho da versão 0.7.
 
- roomLighting[label]={sconces,ceiling,leds,sconceLight,cleanLight,mode:'entrada'};
+ roomLighting[label]={sconces,ceiling,leds,sconceLight,cleanLight,screen,mode:'entrada'};
  object('Painel de iluminação '+label,x+2.9,-12.1,0xe5d1a6,()=>roomLightingDialog(label));
+ object('Interruptor de luz '+label,x+.9,-9.55,0xeed4a0,()=>openRoomLightPreview(label));
  textSign(is3d?'SALA 2 · 2D / 3D':'SALA 1 · 2D',x,3.2,-12.0,3.2);
  setRoomLights(label,'entrada');
  // Reparentar geometrias, instâncias e luzes da sala sob um único grupo lógico.
@@ -612,7 +692,7 @@ function summonCustomer(){
  newServiceMission();checkoutVisual?.reset();customerWalkTime=0;customerApproaching=true;queueArrivalPending=true;
  queueCustomer.visible=true;
  queueCustomer.userData.updateSpeech?.('Olá, boa tarde!', 'Estou chegando ao caixa');
- queueCustomer.position.set(-1.6,0,2.65);
+ queueCustomer.position.set(-4.7,0,6.9);
  queueCustomerTarget=new THREE.Vector3(-4.65,0,-1.65);
  say('Você assumiu o caixa. Um cliente está se aproximando. Receba-o, confirme o pedido e realize a venda no computador.');
 }
@@ -952,37 +1032,53 @@ function createShiftTerminals(){
   }});
  }
 }
+
 function createFoyerFurniture(){
- // Mesas de apoio circulares e banquetas com silhuetas reconhecíveis.
- // Todo o mobiliário rígido é reunido em UMA malha, sem custo por banqueta.
- const group=new THREE.Group();group.name='Mobiliário arredondado do foyer';scene.add(group);
- const brass=0xa07b56,seat=0x773e46,dark=0x282329;
- const palette=new Map();
- function material(color){if(!palette.has(color))palette.set(color,new THREE.MeshStandardMaterial({color,roughness:.73,metalness:.12}));return palette.get(color)}
- function cylinder(x,y,z,rTop,rBottom,h,color,segments=14,sx=1,sz=1){
-  const shape=new THREE.Mesh(new THREE.CylinderGeometry(rTop,rBottom,h,segments),material(color));
-  shape.position.set(x,y,z);shape.scale.set(sx,1,sz);group.add(shape);
+ const group=new THREE.Group();group.name='Sofá ilha central de quatro lados';scene.add(group);
+ const palette=[0x642c39,0x874556,0x33262e,0xa18160].map(color=>new THREE.MeshStandardMaterial({color,roughness:.83}));
+ const geo=new THREE.BoxGeometry(1,1,1);
+ function piece(x,y,z,w,h,d,material,name){const m=new THREE.Mesh(geo,palette[material]);m.position.set(x,y,z);m.scale.set(w,h,d);m.name=name;group.add(m)}
+ piece(0,.23,2.8,2.05,.24,4.65,2,'Base longitudinal');
+ for(const side of [-1,1]){piece(side*.64,.49,2.8,.77,.24,4.38,0,'Assento lateral');piece(side*1.0,.54,2.8,.13,.13,4.38,1,'Acabamento lateral')}
+ for(const end of [-1,1]){piece(0,.49,2.8+end*1.97,1.37,.24,.67,0,'Assento de ponta');piece(0,.67,2.8+end*2.3,1.82,.3,.13,1,'Borda do braço')}
+ piece(0,.85,2.8,.27,.55,3.25,1,'Encosto central de dupla face');
+ piece(0,1.13,2.8,.31,.06,3.30,3,'Friso superior');
+ for(const end of [-1,1])piece(0,.11,2.8+end*1.84,1.78,.08,.29,3,'Sapatas');
+ group.userData.lobbyFurnitureReport=mergeStaticDetails(group,{minCount:3,maxVertices:18000});
+ const sides=[['esquerda',-1.52,2.8],['direita',1.52,2.8],['entrada',0,5.55],['caixa',0,.05]];
+ for(const [side,x,z] of sides){
+  world.push({name:'Sentar no sofá · '+side,x,z,callback:()=>sitAtSofa(side)});
  }
- for(const x of [-2,2])for(const z of [2,5]){
-  cylinder(x,.57,z,.69,.67,.075,brass,18,1.15,.83);
-  cylinder(x,.30,z,.085,.10,.50,dark,12);
-  cylinder(x,.065,z,.35,.35,.045,dark,14,1,.88);
-  for(const direction of [-1,1]){
-   const xSeat=x+direction*.86;
-   cylinder(xSeat,.39,z,.285,.285,.105,seat,16,1,.84);
-   cylinder(xSeat,.20,z,.062,.070,.36,dark,12);
-   cylinder(xSeat,.045,z,.21,.21,.035,brass,14);
-  }
+}
+function sitAtSofa(side){
+ if(seatedAtSofa===side){seatedAtSofa=null;say('Você se levantou do sofá.');return}
+ const spots={esquerda:[-1.34,2.8],direita:[1.34,2.8],entrada:[0,5.43],caixa:[0,.16]};
+ if(!spots[side])return;
+ seatedAtSofa=side;
+ player.x=spots[side][0];player.z=spots[side][1];
+ say('Você se sentou no sofá pelo lado '+side+'. Toque AGIR novamente ou use o joystick para levantar.');
+}
+function createCashierQueue(){
+ const group=new THREE.Group();group.name='Organizadores de fila até bilheteria';scene.add(group);
+ // Mesmo perfil de material, três cores por vértice: uma só chamada gráfica.
+ const metal=new THREE.MeshStandardMaterial({color:0x4c4d54,roughness:.54,metalness:.17});
+ const gold=new THREE.MeshStandardMaterial({color:0xc39e69,roughness:.54,metalness:.17});
+ const red=new THREE.MeshStandardMaterial({color:0x923044,roughness:.54,metalness:.17});
+ const post=new THREE.CylinderGeometry(.046,.054,.82,10),foot=new THREE.CylinderGeometry(.16,.18,.07,14),cap=new THREE.CylinderGeometry(.07,.07,.06,12);
+ const zs=[-1.5,.1,1.7,3.3,4.9,6.5],xs=[-5.65,-3.75];
+ function add(geometry,material,x,y,z,name){const mesh=new THREE.Mesh(geometry,material);mesh.position.set(x,y,z);mesh.name=name;group.add(mesh)}
+ for(const x of xs)for(const z of zs){add(foot,metal,x,.045,z,'Base do pé de fila');add(post,metal,x,.46,z,'Poste da fila');add(cap,gold,x,.9,z,'Topo do poste')}
+ for(const x of xs)for(let i=1;i<zs.length;i++){
+   add(new THREE.BoxGeometry(.055,.096,zs[i]-zs[i-1]),red,x,.76,(zs[i]+zs[i-1])/2,'Faixa contínua vermelha');
  }
- const report=mergeStaticDetails(group,{minCount:3,maxVertices:24000});
- group.userData.lobbyFurnitureReport=report;
+ group.userData.queueReport=mergeStaticDetails(group,{minCount:3,maxVertices:32000});
 }
 function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e171c');scene.fog=new THREE.Fog('#1e171c',12,28);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.06,90);renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setSize(Math.max(1,document.documentElement.clientWidth),Math.max(1,window.innerHeight));renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;$('scene').appendChild(renderer.domElement);scene.add(new THREE.HemisphereLight(0xece2e2,0x2b2530,2.4));ambient=new THREE.AmbientLight(0xffe4c2,.46);scene.add(ambient);box(0,-.12,0,17,.2,22,0x5a4341);box(-8.4,2,0,.3,4,22,0x9d8281);box(8.4,2,0,.3,4,22,0x9d8281);box(0,3.7,0,17,.18,22,0x453a40);for(const segment of [{x:-7.15,w:2.1},{x:-1.95,w:3.9},{x:1.95,w:3.9},{x:7.15,w:2.1}])box(segment.x,2,-10.9,segment.w,4,.3,0x8c6769);box(0,2,-16.35,.27,4,10.7,0x3d3039);box(0,2,10.9,17,4,.3,0x59454c);box(-4.6,.63,-3.7,5,1.22,1.4,0x503539);box(-4.6,1.28,-3.7,4.85,.11,1.55,0xb66c4f);
  // Base e frisos finos tornam o balcão reconhecível sem textura externa.
  box(-4.6,.21,-2.98,4.84,.07,.06,0x30242a);
  box(-4.6,1.20,-2.98,4.84,.035,.055,0xc19a66);
  for(const x of [-6.15,-4.6,-3.05])box(x,.72,-2.972,.045,.80,.046,0x8b5c5c);
-box(-4,2.83,-4.36,2.5,.8,.08,0x131d25);textSign('BILHETERIA',-4.7,3.3,-4.45,2.8);box(3.7,1.2,-4.6,5,1.4,1.4,0x70414b);box(3.7,2,-4.6,5,.15,1.4,0xc47a47);textSign('BOMBONIERE',3.7,3,-5.45,3);textSign('SALA 1 (2D)',-4,2.65,-10.68,2.8);textSign('SALA 2 (3D)',4,2.65,-10.68,2.8);for(let x of [-4,4]){box(x,0.1,-9.7,2,.15,1,0x813c40);for(let k=0;k<4;k++)box(x-1.2+k*.8,.42,-8.3,0.5,.65,.5,0x5e282e)}for(let x of [-6,0,6]){let lamp=box(x,3.57,1,.7,.06,.7,0xf5e4c2);lights.push(lamp)}createFoyerFurniture();// Estação de atendimento: monitor, teclado, terminal, impressora e gaveta com formas reconhecíveis.
+box(-4,2.83,-4.36,2.5,.8,.08,0x131d25);textSign('BILHETERIA',-4.7,3.3,-4.45,2.8);box(3.7,1.2,-4.6,5,1.4,1.4,0x70414b);box(3.7,2,-4.6,5,.15,1.4,0xc47a47);textSign('BOMBONIERE',3.7,3,-5.45,3);textSign('SALA 1 (2D)',-4,2.65,-10.68,2.8);textSign('SALA 2 (3D)',4,2.65,-10.68,2.8);for(let x of [-4,4]){box(x,0.1,-9.7,2,.15,1,0x813c40);for(let k=0;k<4;k++)box(x-1.2+k*.8,.42,-8.3,0.5,.65,.5,0x5e282e)}for(let x of [-6,0,6]){let lamp=box(x,3.57,1,.7,.06,.7,0xf5e4c2);lights.push(lamp)}createFoyerFurniture();createCashierQueue();// Estação de atendimento: monitor, teclado, terminal, impressora e gaveta com formas reconhecíveis.
  const pos={x:-5.55,z:-3.12};
  const equipmentStart=scene.children.length;
  function eqBox(x,y,z,w,h,d,c){return box(x,y,z,w,h,d,c)}
@@ -1107,10 +1203,10 @@ box(-4,2.83,-4.36,2.5,.8,.08,0x131d25);textSign('BILHETERIA',-4.7,3.3,-4.45,2.8)
  }
  loadDetailedTrainer();
  collider(-4.6,-3.7,5,1.7);collider(3.7,-4.6,5.1,1.6);
- for(let x of [-2,2])for(let z of [2,5])collider(x,z,1.55,1.2);
+ collider(0,2.8,1.90,4.55);
  collider(-.25,-7.0,.5,.6);
  }
-function complete(i,msg){completed.add(i);tasksRender();say(msg)}function close(){ $('modal').classList.remove('visible');if(!isMobile)renderer.domElement.requestPointerLock?.()}function modal(html){$('modalContent').innerHTML=html;$('modal').classList.add('visible');document.exitPointerLock?.()}$('closeModal').onclick=close;$('rolePanel').addEventListener('click',e=>{if(e.target.closest('#shiftOpenButton'))openShiftConsole()});$('modalContent').addEventListener('click',e=>{if(e.target.closest('[data-shift-start]')){startSectorShift();openShiftConsole();return;}if(e.target.closest('[data-shift-export]')){exportShiftAssessment();return;}const shiftButton=e.target.closest('[data-shift-action]');if(shiftButton){shiftAction(shiftButton.dataset.shiftAction);openShiftConsole();return;}const roomAction=e.target.closest('[data-room-action]');if(roomAction){runRoomAction(roomAction.dataset.roomName,roomAction.dataset.roomAction);return;}const pop=e.target.closest('[data-popcorn-action]');if(pop){if(pop.dataset.popcornKind==='misto')operateMixedTub(pop.dataset.popcornAction);else operatePopcorn(pop.dataset.popcornKind,pop.dataset.popcornAction);return;}const btn=e.target.closest('[data-room-light]');if(btn){setRoomLights(btn.dataset.room,btn.dataset.roomLight);say(btn.dataset.roomLight==='filme'?'Música encerrada: arandelas apagadas, LEDs de orientação ligados.':btn.dataset.roomLight==='limpeza'?'Luzes gerais acesas para a limpeza após o filme.':'Arandelas ligadas para entrada do público.')}});
+function complete(i,msg){completed.add(i);tasksRender();say(msg)}function close(){ $('modal').classList.remove('visible');if(!isMobile)renderer.domElement.requestPointerLock?.()}function modal(html){$('modalContent').innerHTML=html;$('modal').classList.add('visible');document.exitPointerLock?.()}$('closeModal').onclick=close;$('rolePanel').addEventListener('click',e=>{if(e.target.closest('#shiftOpenButton'))openShiftConsole()});$('modalContent').addEventListener('click',e=>{if(e.target.closest('[data-shift-start]')){startSectorShift();openShiftConsole();return;}if(e.target.closest('[data-shift-export]')){exportShiftAssessment();return;}const shiftButton=e.target.closest('[data-shift-action]');if(shiftButton){shiftAction(shiftButton.dataset.shiftAction);openShiftConsole();return;}const preview=e.target.closest('[data-room-light-preview]');if(preview){previewRoomLights(preview.dataset.roomLightLabel,preview.dataset.roomLightPreview);return;}const roomAction=e.target.closest('[data-room-action]');if(roomAction){runRoomAction(roomAction.dataset.roomName,roomAction.dataset.roomAction);return;}const pop=e.target.closest('[data-popcorn-action]');if(pop){if(pop.dataset.popcornKind==='misto')operateMixedTub(pop.dataset.popcornAction);else operatePopcorn(pop.dataset.popcornKind,pop.dataset.popcornAction);return;}const btn=e.target.closest('[data-room-light]');if(btn){setRoomLights(btn.dataset.room,btn.dataset.roomLight);say(btn.dataset.roomLight==='filme'?'Música encerrada: arandelas apagadas, LEDs de orientação ligados.':btn.dataset.roomLight==='limpeza'?'Luzes gerais acesas para a limpeza após o filme.':'Arandelas ligadas para entrada do público.')}});
 // Banco exclusivamente fictício para demonstração — nunca consulta CPF real.
 const trainingDBKey='cineglobo_demo_tickets_v11';
 let trainingTickets=[];let selectedClient=0;let mission={served:0,rejected:0,attempts:0};
@@ -1300,13 +1396,14 @@ function movement(){
  walkVelocity.y+=(forward-walkVelocity.y)*response;
  if(blocked){walkVelocity.x=0;walkVelocity.y=0;}
  forward=walkVelocity.y;strafe=walkVelocity.x;
+ if(seatedAtSofa&&Math.hypot(forward,strafe)>.22){seatedAtSofa=null;say('Você se levantou do sofá.');}
  const magnitude=Math.hypot(forward,strafe);if(magnitude>1){forward/=magnitude;strafe/=magnitude}
  const spd=(keys.ShiftLeft?6.2:(isMobile?3.1:3.7))*dt;
  const dx=(-Math.sin(player.yaw)*forward+Math.cos(player.yaw)*strafe)*spd;
  const dz=(-Math.cos(player.yaw)*forward-Math.sin(player.yaw)*strafe)*spd;
  if(!paused&&canStand(player.x+dx,player.z))player.x+=dx;
  if(!paused&&canStand(player.x,player.z+dz))player.z+=dz;
- camera.position.set(player.x,1.67,player.z);camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
+ camera.position.set(player.x,seatedAtSofa?1.10:1.67,player.z);camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
  const room=player.z < -11?'sala':'hall';if(room!==roomState){roomState=room;say(room==='sala'?'Você entrou na sala. Observe a tela, as poltronas e os pontos de controle.':'Você voltou ao hall do cinema. Continue explorando os setores.')}
  let best=null,score=Infinity;
  const view=viewDirection;camera.getWorldDirection(view);const gaze=gazeDirection.set(view.x,view.z).normalize();
@@ -1315,7 +1412,13 @@ function movement(){
  const priority=o.epiStation?.12:(o.name==='Computador do caixa'?.65:0);const s=dist+(1-facing)*3-priority;
  if(s<score){best=o;score=s;}
  });
- currentTarget=best;$('action').style.display=best&&!blocked?'block':'none';if(best)$('action').textContent='E / AGIR · '+best.name;
+ currentTarget=best;
+ const canAct=Boolean(best&&!blocked&&!paused);
+ $('action').style.display=canAct?'block':'none';
+ if(best)$('action').textContent='E / AGIR · '+best.name;
+ // iPhone: o botão não fica permanente na tela; só surge no alcance real.
+ $('touchInteract').style.display=isMobile&&canAct?'block':'none';
+ $('touchInteract').setAttribute('aria-label',canAct?'Interagir: '+best.name:'Nenhuma interação próxima');
  for(const door of doors){door.hinge.rotation.y+= (door.goal-door.hinge.rotation.y)*Math.min(1,dt*8)}
  if(trainerMixer&&!paused)trainerMixer.update(dt);
  updateVisibleRooms();
@@ -1392,7 +1495,7 @@ function applyGraphics(){
  resizeGame();
 }
 function applyInputs(){for(const [key,id] of [['mouse','mouseSens'],['touch','touchSens'],['quality','quality'],['fps','fps'],['volume','volume']])$(id).value=settings[key];$('mouseText').textContent=settings.mouse+'%';$('touchText').textContent=settings.touch+'%';$('volumeText').textContent=settings.volume+'%'}
-function togglePause(force){paused=typeof force==='boolean'?force:!paused;technicalMonitor?.reset();$('pauseOverlay').classList.toggle('visible',paused);if(paused){document.exitPointerLock?.();keys={};joy={x:0,y:0};walkVelocity.set(0,0);$('nub').style.transform='none';applyInputs()}else{lastFrame=0}}
+function togglePause(force){paused=typeof force==='boolean'?force:!paused;technicalMonitor?.reset();$('pauseOverlay').classList.toggle('visible',paused);if(paused){document.exitPointerLock?.();keys={};joy={x:0,y:0};walkVelocity.set(0,0);$('nub').style.transform='none';$('touchInteract').style.display='none';applyInputs()}else{lastFrame=0}}
 $('pauseBtn').onclick=()=>togglePause(true);$('resumeBtn').onclick=$('closePause').onclick=()=>togglePause(false);
 $('resetViewBtn').onclick=()=>{player.pitch=0;player.yaw=0};
 $('techBtn').onclick=()=>{if(!technicalMonitor)return;const on=technicalMonitor.setEnabled(!technicalMonitor.isEnabled());$('techBtn').textContent='Métricas técnicas: '+(on?'ligadas':'desligadas');$('techBtn').setAttribute('aria-pressed',String(on));};
