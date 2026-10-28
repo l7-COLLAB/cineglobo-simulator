@@ -19,3 +19,8 @@ O computador pessoal não precisa ficar ligado; depende da publicação em hospe
 ## Roteiro de execução
 
 O plano de quatro etapas, as metas não comprovadas de desempenho e os requisitos de treinamento ficam registrados em [docs/ROTEIRO_EXECUCAO_2026-10-27.md](docs/ROTEIRO_EXECUCAO_2026-10-27.md). As melhorias são submetidas a PR e não são consideradas aprovadas até os testes necessários, inclusive no iPhone físico.
+
+## Treinamento de turno (demonstração)
+Após escolher a função Caixa, Bomboniere ou Sala, procure o **Terminal de turno** correspondente no cinema 3D ou abra **Terminal de turno** no painel lateral. Abertura, atendimento e fechamento usam metas que só avançam após ações executadas no jogo; o instrutor indica a próxima pendência. O histórico concluído fica apenas neste navegador, sem autenticação institucional.
+
+Regras e limites: [Etapa 4 — turnos e metas](docs/ETAPA4_TURNOS_METAS.md).
