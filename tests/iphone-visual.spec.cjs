@@ -1,5 +1,7 @@
 const {test,expect}=require('@playwright/test');
 const fs=require('node:fs');
+// iPhone 11 (Retina) apresenta densidade física > 1 pixel por unidade CSS.
+test.use({deviceScaleFactor:2});
 
 test('iPhone horizontal: cena usa tela toda, mantém nitidez e HUD recolhido',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
