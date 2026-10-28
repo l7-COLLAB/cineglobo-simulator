@@ -35,3 +35,9 @@ A publicação usa GitHub Pages e serve a versão estática em `dist/`, com o mo
 - Para desenvolver: `npm install`, `npm run build`, `python3 -m http.server 8765 --directory dist`.
 
 > **Ativação do GitHub Pages (iPhone):** em **Settings → Pages → Build and deployment → Source**, selecione **GitHub Actions**. O workflow `pages.yml` é executado a cada atualização da `main` e confirma por HTTPS a presença do HTML e do Three.js local. Não use os modelos Jekyll ou Static HTML.
+
+## Etapa 9 — Hall e interações (iPhone)
+
+Na revisão `v32`, o cinema inclui sofá-ilha comprido com interação pelos quatro lados, organizadores de fila do hall até o Caixa, demonstração de três modos de iluminação por interruptores nas entradas das salas, botão AGIR por proximidade e instrutor que para de seguir quando chega ao ponto de acompanhamento. Funcionários usam camisa preta e boné com logo Cine Globo.
+
+As regras e evidências dos testes estão em [Etapa 9](docs/ETAPA9_HALL_INTERACOES.md). A reprodução no Safari físico deve confirmar a iluminação, a circulação, os gestos e a atualização do cache.
