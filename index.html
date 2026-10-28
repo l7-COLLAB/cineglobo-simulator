@@ -489,14 +489,36 @@ function loadDetailedTrainer(){
 function setRoomLights(room, mode){
  const L=roomLighting[room];if(!L)return;L.mode=mode;
  const ar=mode==='entrada',clean=mode==='limpeza';
- L.sconceLight.intensity=ar?2.0:clean?.45:0;
- L.cleanLight.intensity=clean?3.4:0;
- L.sconces.forEach(o=>{o.bulb.material.emissiveIntensity=ar?2.8:clean?.5:.025;});
- L.ceiling.forEach(o=>{o.bulb.material.emissiveIntensity=clean?3.0:.015;});
+ L.sconceLight.intensity=ar?5.5:clean?1.2:0;
+ L.cleanLight.intensity=clean?9.0:0;
+ L.cleanLight.distance=19;
+ L.sconceLight.distance=17;
+ L.sconces.forEach(o=>{o.bulb.material.emissiveIntensity=ar?4.0:clean?1.0:0;});
+ L.ceiling.forEach(o=>{o.bulb.material.emissiveIntensity=clean?5.0:0;});
+ if(L.screen)L.screen.material.color.setHex(mode==='filme'?0x98999d:0xffffff);
  L.leds.forEach(o=>{o.visible=true;});
  const status=document.getElementById('lightingStatus');if(status)status.textContent=mode==='entrada'?'ARANDELAS ACESAS — iluminação suave para recepção e comerciais; LEDs ligados.':mode==='filme'?'FILME — arandelas apagadas, luzes gerais apagadas; somente LEDs de orientação ligados.':'LIMPEZA — luzes gerais acesas para a equipe limpar a sala; LEDs ligados.';
 }
 
+function openRoomLightPreview(label,feedback=''){
+ // Prévia do sistema de iluminação, acessível a todos os setores. Não avalia
+ // procedimentos nem avança as metas da função Sala.
+ const names={entrada:'Entrada / comerciais: arandelas acesas',filme:'Filme: somente LEDs vermelhos',limpeza:'Limpeza: luzes gerais acesas'};
+ const mode=roomLighting[label]?.mode||'entrada';
+ modal('<h2>Interruptor · '+escapeHtml(label)+'</h2>'+
+ '<p class="small">Prévia visual de iluminação. Para treinamento avaliado, escolha a função Sala e use o painel interno.</p>'+
+ '<p class="notice" role="status">'+escapeHtml(feedback||'Modo atual: '+names[mode])+'</p>'+
+ '<div class="rows">'+Object.entries(names).map(([value,title])=>'<button data-room-light-preview="'+value+'" data-room-light-label="'+escapeHtml(label)+'" type="button" style="min-height:44px">'+title+'</button>').join('')+'</div>');
+}
+function previewRoomLights(label,mode){
+ if(!roomLighting[label]||!['entrada','filme','limpeza'].includes(mode))return;
+ setRoomLights(label,mode);
+ // Deixe a sala visível pela porta quando a luz for acionada do corredor.
+ const d=doors.find(door=>Math.abs(door.x-roomScenes[label]?.centerX)<.1);
+ if(d){d.open=true;d.goal=-Math.PI*.55}
+ if(roomScenes[label])roomScenes[label].group.visible=true;
+ openRoomLightPreview(label,'Iluminação '+mode+' ativada em '+label+'. Entre e observe as luminárias.');
+}
 function roomLightingDialog(label,feedback='',error=false){
  if(!allowRole('sala'))return;
  const s=roomRoutines[label],sessions=currentSessions().filter(t=>t.room===label);
@@ -610,8 +632,9 @@ function addRoom(x,label,is3d){
  // Os pontos iluminam visualmente o caminho sem uma PointLight por LED,
  // conservando o desempenho da versão 0.7.
 
- roomLighting[label]={sconces,ceiling,leds,sconceLight,cleanLight,mode:'entrada'};
+ roomLighting[label]={sconces,ceiling,leds,sconceLight,cleanLight,screen,mode:'entrada'};
  object('Painel de iluminação '+label,x+2.9,-12.1,0xe5d1a6,()=>roomLightingDialog(label));
+ object('Interruptor de luz '+label,x+.9,-9.55,0xeed4a0,()=>openRoomLightPreview(label));
  textSign(is3d?'SALA 2 · 2D / 3D':'SALA 1 · 2D',x,3.2,-12.0,3.2);
  setRoomLights(label,'entrada');
  // Reparentar geometrias, instâncias e luzes da sala sob um único grupo lógico.
@@ -1146,7 +1169,7 @@ box(-4,2.83,-4.36,2.5,.8,.08,0x131d25);textSign('BILHETERIA',-4.7,3.3,-4.45,2.8)
  for(let x of [-2,2])for(let z of [2,5])collider(x,z,1.55,1.2);
  collider(-.25,-7.0,.5,.6);
  }
-function complete(i,msg){completed.add(i);tasksRender();say(msg)}function close(){ $('modal').classList.remove('visible');if(!isMobile)renderer.domElement.requestPointerLock?.()}function modal(html){$('modalContent').innerHTML=html;$('modal').classList.add('visible');document.exitPointerLock?.()}$('closeModal').onclick=close;$('rolePanel').addEventListener('click',e=>{if(e.target.closest('#shiftOpenButton'))openShiftConsole()});$('modalContent').addEventListener('click',e=>{if(e.target.closest('[data-shift-start]')){startSectorShift();openShiftConsole();return;}if(e.target.closest('[data-shift-export]')){exportShiftAssessment();return;}const shiftButton=e.target.closest('[data-shift-action]');if(shiftButton){shiftAction(shiftButton.dataset.shiftAction);openShiftConsole();return;}const roomAction=e.target.closest('[data-room-action]');if(roomAction){runRoomAction(roomAction.dataset.roomName,roomAction.dataset.roomAction);return;}const pop=e.target.closest('[data-popcorn-action]');if(pop){if(pop.dataset.popcornKind==='misto')operateMixedTub(pop.dataset.popcornAction);else operatePopcorn(pop.dataset.popcornKind,pop.dataset.popcornAction);return;}const btn=e.target.closest('[data-room-light]');if(btn){setRoomLights(btn.dataset.room,btn.dataset.roomLight);say(btn.dataset.roomLight==='filme'?'Música encerrada: arandelas apagadas, LEDs de orientação ligados.':btn.dataset.roomLight==='limpeza'?'Luzes gerais acesas para a limpeza após o filme.':'Arandelas ligadas para entrada do público.')}});
+function complete(i,msg){completed.add(i);tasksRender();say(msg)}function close(){ $('modal').classList.remove('visible');if(!isMobile)renderer.domElement.requestPointerLock?.()}function modal(html){$('modalContent').innerHTML=html;$('modal').classList.add('visible');document.exitPointerLock?.()}$('closeModal').onclick=close;$('rolePanel').addEventListener('click',e=>{if(e.target.closest('#shiftOpenButton'))openShiftConsole()});$('modalContent').addEventListener('click',e=>{if(e.target.closest('[data-shift-start]')){startSectorShift();openShiftConsole();return;}if(e.target.closest('[data-shift-export]')){exportShiftAssessment();return;}const shiftButton=e.target.closest('[data-shift-action]');if(shiftButton){shiftAction(shiftButton.dataset.shiftAction);openShiftConsole();return;}const preview=e.target.closest('[data-room-light-preview]');if(preview){previewRoomLights(preview.dataset.roomLightLabel,preview.dataset.roomLightPreview);return;}const roomAction=e.target.closest('[data-room-action]');if(roomAction){runRoomAction(roomAction.dataset.roomName,roomAction.dataset.roomAction);return;}const pop=e.target.closest('[data-popcorn-action]');if(pop){if(pop.dataset.popcornKind==='misto')operateMixedTub(pop.dataset.popcornAction);else operatePopcorn(pop.dataset.popcornKind,pop.dataset.popcornAction);return;}const btn=e.target.closest('[data-room-light]');if(btn){setRoomLights(btn.dataset.room,btn.dataset.roomLight);say(btn.dataset.roomLight==='filme'?'Música encerrada: arandelas apagadas, LEDs de orientação ligados.':btn.dataset.roomLight==='limpeza'?'Luzes gerais acesas para a limpeza após o filme.':'Arandelas ligadas para entrada do público.')}});
 // Banco exclusivamente fictício para demonstração — nunca consulta CPF real.
 const trainingDBKey='cineglobo_demo_tickets_v11';
 let trainingTickets=[];let selectedClient=0;let mission={served:0,rejected:0,attempts:0};
