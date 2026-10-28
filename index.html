@@ -174,6 +174,36 @@ function shiftAction(action){
  const changed=onShiftEvent(action);
  if(!changed)say(shiftHint());
 }
+async function exportShiftAssessment(){
+ const report=makeShiftReport(shiftState);
+ if(!report){say('Conclua todas as metas antes de compartilhar a avaliação.');return}
+ const payload={...report,generatedAt:new Date().toISOString(),disclaimer:'Avaliação local ilustrativa, sem certificação ou aprovação operacional.'};
+ const json=JSON.stringify(payload,null,2);
+ const filename='cineglobo-turno-'+report.role+'-'+new Date().toISOString().slice(0,10)+'.json';
+ try{
+  const file=new File([json],filename,{type:'application/json'});
+  if(navigator.share&&navigator.canShare?.({files:[file]})){
+   await navigator.share({files:[file],title:'Avaliação fictícia do CineGlobo Simulator'});
+   say('Relatório disponibilizado pelo compartilhamento do dispositivo.');return
+  }
+ }catch(error){
+  if(error?.name==='AbortError'){say('Compartilhamento cancelado. Os dados continuam neste navegador.');return}
+ }
+ try{
+  if(navigator.clipboard?.writeText){
+   await navigator.clipboard.writeText(json);
+   say('Relatório em JSON copiado. Cole em uma nota ou conversa.');return
+  }
+ }catch{}
+ try{
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const anchor=document.createElement('a');anchor.href=url;anchor.download=filename;
+  document.body.appendChild(anchor);anchor.click();anchor.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  say('Arquivo de avaliação solicitado ao navegador. Confira Downloads.');
+ }catch{say('Não foi possível compartilhar este relatório no navegador.')}
+}
 function openShiftConsole(){
  const p=shiftProgress(shiftState),goals=getShiftGoals(shiftState),assessment=assessShift(shiftState);
  const escaped=escapeHtml;
@@ -989,7 +1019,7 @@ function build(){scene=new THREE.Scene();scene.background=new THREE.Color('#1e17
  for(let x of [-2,2])for(let z of [2,5])collider(x,z,1.55,1.2);
  collider(-.25,-7.0,.5,.6);
  }
-function complete(i,msg){completed.add(i);tasksRender();say(msg)}function close(){ $('modal').classList.remove('visible');if(!isMobile)renderer.domElement.requestPointerLock?.()}function modal(html){$('modalContent').innerHTML=html;$('modal').classList.add('visible');document.exitPointerLock?.()}$('closeModal').onclick=close;$('rolePanel').addEventListener('click',e=>{if(e.target.closest('#shiftOpenButton'))openShiftConsole()});$('modalContent').addEventListener('click',e=>{if(e.target.closest('[data-shift-start]')){startSectorShift();openShiftConsole();return;}const shiftButton=e.target.closest('[data-shift-action]');if(shiftButton){shiftAction(shiftButton.dataset.shiftAction);openShiftConsole();return;}const roomAction=e.target.closest('[data-room-action]');if(roomAction){runRoomAction(roomAction.dataset.roomName,roomAction.dataset.roomAction);return;}const pop=e.target.closest('[data-popcorn-action]');if(pop){if(pop.dataset.popcornKind==='misto')operateMixedTub(pop.dataset.popcornAction);else operatePopcorn(pop.dataset.popcornKind,pop.dataset.popcornAction);return;}const btn=e.target.closest('[data-room-light]');if(btn){setRoomLights(btn.dataset.room,btn.dataset.roomLight);say(btn.dataset.roomLight==='filme'?'Música encerrada: arandelas apagadas, LEDs de orientação ligados.':btn.dataset.roomLight==='limpeza'?'Luzes gerais acesas para a limpeza após o filme.':'Arandelas ligadas para entrada do público.')}});
+function complete(i,msg){completed.add(i);tasksRender();say(msg)}function close(){ $('modal').classList.remove('visible');if(!isMobile)renderer.domElement.requestPointerLock?.()}function modal(html){$('modalContent').innerHTML=html;$('modal').classList.add('visible');document.exitPointerLock?.()}$('closeModal').onclick=close;$('rolePanel').addEventListener('click',e=>{if(e.target.closest('#shiftOpenButton'))openShiftConsole()});$('modalContent').addEventListener('click',e=>{if(e.target.closest('[data-shift-start]')){startSectorShift();openShiftConsole();return;}if(e.target.closest('[data-shift-export]')){exportShiftAssessment();return;}const shiftButton=e.target.closest('[data-shift-action]');if(shiftButton){shiftAction(shiftButton.dataset.shiftAction);openShiftConsole();return;}const roomAction=e.target.closest('[data-room-action]');if(roomAction){runRoomAction(roomAction.dataset.roomName,roomAction.dataset.roomAction);return;}const pop=e.target.closest('[data-popcorn-action]');if(pop){if(pop.dataset.popcornKind==='misto')operateMixedTub(pop.dataset.popcornAction);else operatePopcorn(pop.dataset.popcornKind,pop.dataset.popcornAction);return;}const btn=e.target.closest('[data-room-light]');if(btn){setRoomLights(btn.dataset.room,btn.dataset.roomLight);say(btn.dataset.roomLight==='filme'?'Música encerrada: arandelas apagadas, LEDs de orientação ligados.':btn.dataset.roomLight==='limpeza'?'Luzes gerais acesas para a limpeza após o filme.':'Arandelas ligadas para entrada do público.')}});
 // Banco exclusivamente fictício para demonstração — nunca consulta CPF real.
 const trainingDBKey='cineglobo_demo_tickets_v11';
 let trainingTickets=[];let selectedClient=0;let mission={served:0,rejected:0,attempts:0};
