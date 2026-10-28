@@ -18,7 +18,8 @@ export function createPerformanceMonitor(renderer,getArea){
   pointerEvents:'none',whiteSpace:'pre-wrap',display:'none'
  });
  document.body.appendChild(root);
- let enabled=false,previous=0,lastPaint=0;
+ let enabled=false,previous=0,lastPaint=0,initialGeometries=null,peakGeometries=0,contextLossCount=0;
+ renderer.domElement.addEventListener('webglcontextlost',()=>{contextLossCount++});
  const recent=[],areas=new Map();
  function percentile(values,p=.95){
   if(!values.length)return null;
@@ -39,7 +40,7 @@ export function createPerformanceMonitor(renderer,getArea){
   enabled=Boolean(next);
   root.style.display=enabled?'block':'none';
   reset();
-  if(enabled&&!wasEnabled){areas.clear();root.textContent='Coletando medições do navegador...'}
+  if(enabled&&!wasEnabled){areas.clear();initialGeometries=renderer.info.memory.geometries;peakGeometries=initialGeometries;contextLossCount=0;root.textContent='Coletando medições do navegador...'}
   return enabled;
  }
  function record(now){
@@ -61,15 +62,19 @@ export function createPerformanceMonitor(renderer,getArea){
    }
   }
   previous=now;
+  peakGeometries=Math.max(peakGeometries,renderer.info.memory.geometries);
   if(now-lastPaint<1000)return;
   lastPaint=now;
   const current=String(getArea());
   const a=areas.get(current);
   const fps=a?.elapsedMs?1000*a.frames/a.elapsedMs:0;
+  const trackedSeconds=Array.from(areas.values()).reduce((n,a)=>n+a.elapsedMs,0)/1000;
   root.textContent=[
    'CINEGLOBO | DIAGNÓSTICO',
    'Área: '+current,
    'FPS observados na área: '+fps.toFixed(1),
+   'Teste 20 min ativo: '+(trackedSeconds/60).toFixed(1)+'/20,0 min',
+   'Contexto WebGL perdido: '+contextLossCount+' vez(es)',
    'Intervalo p95 recente: '+(percentile(recent)?.toFixed(1)||'--')+' ms',
    'Draw calls: '+renderer.info.render.calls,
    'Triângulos: '+renderer.info.render.triangles.toLocaleString('pt-BR'),
@@ -95,8 +100,15 @@ export function createPerformanceMonitor(renderer,getArea){
     maxTriangles:a.maxTriangles
    };
   }
+  const trackedSeconds=Array.from(areas.values()).reduce((n,a)=>n+a.elapsedMs,0)/1000;
   return {
    kind:'cineglobo-simulator-performance-report',
+   activeObservedSeconds:Math.round(trackedSeconds*10)/10,
+   activeTwentyMinuteSampleReached:trackedSeconds>=1200,
+   contextLossCount,
+   geometryCountAtStart:initialGeometries,
+   geometryCountPeak:peakGeometries,
+   geometryCountChange:initialGeometries===null?null:renderer.info.memory.geometries-initialGeometries,
    generatedAt:new Date().toISOString(),
    browser:navigator.userAgent,
    pixelRatio:renderer.getPixelRatio(),
@@ -108,7 +120,9 @@ export function createPerformanceMonitor(renderer,getArea){
     'Medições de intervalos entre quadros desenhados; não são medições exatas da GPU.',
     'FPS limitados pelas configurações e por possíveis restrições de economia de energia.',
     'Transferência pode excluir cache e conteúdo cross-origin.',
-    'Relatório local: não é enviado automaticamente a um servidor.'
+    'Relatório local: não é enviado automaticamente a um servidor.',
+    'Teste de 20 minutos mede tempo ativo amostrado; não substitui avaliação física de aquecimento, memória, bateria ou Safari.',
+    'Contextos WebGL perdidos são contados, não há garantia de recuperação automática.'
    ],
    areas:byArea
   };
