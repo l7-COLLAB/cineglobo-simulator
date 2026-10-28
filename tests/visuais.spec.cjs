@@ -28,6 +28,16 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
      customerLimbs:customer.userData.walkingLimbs.length,
      staffHasIndependentArms:!!staff.userData['arm-1']&&!!staff.userData['arm1'],
      customerCanSpeak:typeof customer.userData.updateSpeech==='function',
+     optimizedActors:[...workers().map(w=>w.g),customer].map(actor=>({
+       title:actor.name,
+       torsoMeshes:actor.children.filter(c=>c.isMesh&&c.name==='Corpo e rosto · malha agrupada').length,
+       walkingGroups:actor.userData.walkingLimbs.length,
+       legs:actor.userData.walkingLimbs.map(l=>({meshes:l.leg.children.filter(c=>c.isMesh).length,shared:l.leg.children[0].geometry===staff.userData.walkingLimbs[0].leg.children[0].geometry})),
+       arms:actor.userData.walkingLimbs.map(l=>l.arm.children.filter(c=>c.isMesh).length),
+       before:actor.userData.graphicOptimization.originalBodyDraws+actor.userData.graphicOptimization.originalLimbDraws,
+       after:actor.userData.graphicOptimization.bodyDraws+actor.userData.graphicOptimization.limbDraws
+     })),
+
      machines,
      batches:window.__visualTest.batches(),
      shiftVisuals:window.__visualTest.shiftVisuals(),
@@ -44,6 +54,16 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
  expect(metrics.customerLimbs).toBe(2);
  expect(metrics.staffHasIndependentArms).toBe(true);
  expect(metrics.customerCanSpeak).toBe(true);
+ expect(metrics.optimizedActors.length).toBe(4);
+ for(const actor of metrics.optimizedActors){
+  expect(actor.torsoMeshes).toBe(1);
+  expect(actor.walkingGroups).toBe(2);
+  expect(actor.legs.every(l=>l.meshes===1&&l.shared)).toBe(true);
+  expect(actor.arms.every(n=>n===1)).toBe(true);
+  expect(actor.before-actor.after).toBeGreaterThanOrEqual(8);
+ }
+ expect(metrics.drawCalls).toBeLessThanOrEqual(150); // engenharia, mesmo percurso de referência em Chromium simulado
+
  for(const m of metrics.machines){
    expect(m.exists).toBe(true);
    expect(m.instancedBoxGroups).toBeGreaterThanOrEqual(2);
@@ -96,7 +116,7 @@ test('personagens econômicos, pipoqueiras separadas e acabamento de referência
  });
  expect(roomsCheck).toEqual({initialClosed:true,opens:true,remainsVisibleInside:true});
  console.log('Métricas em Chromium simulado (não representam Safari físico):',JSON.stringify({
-  drawCalls:metrics.drawCalls,triangles:metrics.triangles,machines:metrics.machines,batches:metrics.batches,details:metrics.details
+  drawCalls:metrics.drawCalls,triangles:metrics.triangles,optimizedActors:metrics.optimizedActors,machines:metrics.machines,batches:metrics.batches,details:metrics.details
  }));
  await page.evaluate(()=>{
    window.__visualTest.position(0,1.5);
