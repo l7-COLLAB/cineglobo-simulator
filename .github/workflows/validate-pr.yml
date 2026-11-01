@@ -1,0 +1,25 @@
+name: Validar simulador (Pull Request)
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependências
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Analisar sintaxe dos materiais e da PWA
+        run: |
+          node --check visuals.js
+          node --check sw.js
+      - name: Criar pacote offline
+        run: npm run build
+      - name: Testar regras do treinamento
+        run: npm run test:rules

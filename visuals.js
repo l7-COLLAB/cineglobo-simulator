@@ -1,12 +1,75 @@
 import * as THREE from 'three';
 
 // Texturas pequenas geradas localmente, sem imagens ou downloads adicionais.
-function surfaceTexture(kind){
- const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');
- x.fillStyle=kind==='floor'?'#605852':'#28262b';x.fillRect(0,0,256,256);
- for(let i=0;i<1800;i++){const n=(i*73)%256,m=(i*127+Math.floor(i/256)*19)%256;x.fillStyle=i%2?'#ffffff08':'#0000000b';x.fillRect(n,m,2,2);}
- if(kind==='floor'){x.strokeStyle='#343133';x.lineWidth=2;x.strokeRect(1,1,254,254);}
- const texture=new THREE.CanvasTexture(c);texture.colorSpace=THREE.SRGBColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(kind==='floor'?12:3,kind==='floor'?16:3);return texture;
+// Texturas PBR leves e determinísticas: sem downloads, APIs externas ou imagens protegidas.
+// Um atlas pequeno é repetido no cenário; detalhes finos continuam visíveis em dispositivos móveis.
+function surfaceTexture(kind, relief=false){
+ const c=document.createElement('canvas');c.width=c.height=256;
+ const ctx=c.getContext('2d');
+ let seed=kind==='floor'?113:kind==='wall'?227:341;
+ const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+ if(kind==='floor'){
+   ctx.fillStyle=relief?'#c0c0c0':'#403b39';ctx.fillRect(0,0,256,256);
+   for(let y=0;y<4;y++)for(let x=0;x<4;x++){
+     const v=relief?190+Math.floor(random()*26):0;
+     ctx.fillStyle=relief?`rgb(${v},${v},${v})`:
+       ['#655e58','#5e5a56','#68615b','#625d59'][Math.floor(random()*4)];
+     ctx.fillRect(x*64+2,y*64+2,60,60);
+     // Sulcos de rejunte e discreta diferença de relevo entre placas.
+     ctx.fillStyle=relief?'#858585':'#34302f';
+     ctx.fillRect(x*64,y*64,2,64);ctx.fillRect(x*64,y*64,64,2);
+   }
+ }else if(kind==='wall'){
+   ctx.fillStyle=relief?'#c6c6c6':'#393538';ctx.fillRect(0,0,256,256);
+   for(let x=0;x<256;x+=32){
+     const v=relief?192+Math.floor(random()*13):0;
+     ctx.fillStyle=relief?`rgb(${v},${v},${v})`:
+       ['#393438','#3e393d','#363337','#403a3c'][Math.floor(random()*4)];
+     ctx.fillRect(x+2,0,29,256);
+     ctx.fillStyle=relief?'#969696':'#242126';ctx.fillRect(x,0,2,256);
+   }
+ }else{
+   ctx.fillStyle=relief?'#c7c7c7':'#44353b';ctx.fillRect(0,0,256,256);
+   for(let y=0;y<256;y+=4){
+     ctx.fillStyle=relief?'#bdbdbd':y%8===0?'#4b3c41':'#403238';
+     ctx.fillRect(0,y,256,1);
+   }
+ }
+ const dots=kind==='floor'?2300:kind==='wall'?1800:1150;
+ for(let i=0;i<dots;i++){
+   const x=Math.floor(random()*256),y=Math.floor(random()*256);
+   ctx.fillStyle=relief?(random()>.5?'#dadada':'#afafaf'):(random()>.5?'#ffffff0c':'#00000014');
+   ctx.fillRect(x,y,1+Math.floor(random()*2),1);
+ }
+ const texture=new THREE.CanvasTexture(c);
+ if(!relief)texture.colorSpace=THREE.SRGBColorSpace;
+ texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+ texture.repeat.set(kind==='floor'?6:kind==='wall'?2:3,kind==='floor'?9:kind==='wall'?2:5);
+ texture.anisotropy=4;
+ return texture;
+}
+function contactShadows(scene){
+ // Sombra de contato pré-calculada: evita shadow maps dinâmicos, caros no Safari móvel.
+ const c=document.createElement('canvas');c.width=c.height=128;
+ const ctx=c.getContext('2d');
+ const gradient=ctx.createRadialGradient(64,64,7,64,64,63);
+ gradient.addColorStop(0,'rgba(0,0,0,.63)');
+ gradient.addColorStop(.52,'rgba(0,0,0,.37)');
+ gradient.addColorStop(1,'rgba(0,0,0,0)');
+ ctx.fillStyle=gradient;ctx.fillRect(0,0,128,128);
+ const texture=new THREE.CanvasTexture(c);
+ const material=new THREE.MeshBasicMaterial({map:texture,transparent:true,opacity:.5,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});
+ const geometry=new THREE.PlaneGeometry(1,1);
+ for(const [name,x,z,w,d] of [
+   ['Sombra da bilheteria',-4.6,-3.7,6.2,2.6],
+   ['Sombra da bomboniere',3.7,-4.6,6.2,2.8],
+   ['Sombra do sofá-ilha',0,2.8,4.2,6]
+ ]){
+   const shadow=new THREE.Mesh(geometry,material);
+   shadow.name=name;shadow.rotation.x=-Math.PI/2;
+   shadow.position.set(x,.026,z);shadow.scale.set(w,d,1);
+   shadow.renderOrder=1;scene.add(shadow);
+ }
 }
 export function upholsteredGeometry(w,h,d){
  const r=Math.min(w,h)*.16,s=new THREE.Shape(),a=-w/2,b=-h/2;
@@ -15,12 +78,13 @@ export function upholsteredGeometry(w,h,d){
 }
 export function finishCinema(scene){
  const floor=surfaceTexture('floor'),wall=surfaceTexture('wall');
+ const floorRelief=surfaceTexture('floor',true),wallRelief=surfaceTexture('wall',true);
  // Modificar somente superfícies estruturais identificadas pela posição e dimensão.
  scene.children.forEach(o=>{if(!o.isMesh||o.geometry.type!=='BoxGeometry')return;const p=o.geometry.parameters;
- if(p.width===17&&p.depth===22&&o.position.y<0){o.material.map=floor;o.material.color.set('#ffffff');o.material.roughness=.72;o.material.needsUpdate=true;}
- if(p.height===4&&Math.abs(o.position.x)>8){o.material.map=wall;o.material.color.set('#c3b6aa');o.material.needsUpdate=true;}
- if(p.width===5&&p.height===1.22){o.material.color.set('#8d1d2d');o.material.roughness=.46;}
- if(p.width===5&&p.height===1.4){o.material.color.set('#951f30');o.material.roughness=.46;}
+ if(p.width===17&&p.depth===22&&o.position.y<0){o.material.map=floor;o.material.color.set('#ffffff');o.material.metalness=.06;o.material.roughness=.77;o.material.roughnessMap=floorRelief;o.material.bumpMap=floorRelief;o.material.bumpScale=.008;o.material.needsUpdate=true;}
+ if(p.height===4&&Math.abs(o.position.x)>8){o.material.map=wall;o.material.color.set('#ffffff');o.material.metalness=0;o.material.roughness=.95;o.material.bumpMap=wallRelief;o.material.bumpScale=.003;o.material.needsUpdate=true;}
+ if(p.width===5&&p.height===1.22){o.material.color.set('#713038');o.material.metalness=.13;o.material.roughness=.49;}
+ if(p.width===5&&p.height===1.4){o.material.color.set('#7e343c');o.material.metalness=.10;o.material.roughness=.47;}
  });
  const brass=new THREE.MeshStandardMaterial({color:'#b49459',metalness:.65,roughness:.4});
  const dark=new THREE.MeshStandardMaterial({color:'#17191e',roughness:.9});
@@ -47,7 +111,7 @@ export function finishCinema(scene){
  // Etapa visual v2.1: detalhes de profundidade com geometria compartilhada.
  // Usamos instancing para reduzir o custo por objeto no iPhone.
  const trimMat=new THREE.MeshStandardMaterial({color:'#8c643f',metalness:.42,roughness:.55});
- const pathMat=new THREE.MeshStandardMaterial({color:'#30272b',roughness:.82});
+ const pathMat=new THREE.MeshStandardMaterial({color:'#ffffff',map:surfaceTexture('fabric'),roughness:.97});
  const trimParts=[];
  for(const side of [-1,1]){
    // Rodapés e guias embutidas, sem interferir em colisões.
@@ -74,5 +138,6 @@ export function finishCinema(scene){
  const signMat=new THREE.MeshBasicMaterial({map:st,side:THREE.DoubleSide});
  const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.9,.72),signMat);
  sign.position.set(0,3.16,-9.7);sign.name='Identificação do cinema';scene.add(sign);
- return {decorativeDrawCalls:11};
+ contactShadows(scene);
+ return {decorativeDrawCalls:14,visualProfile:'PBR procedural leve + sombra de contato'};
 }
