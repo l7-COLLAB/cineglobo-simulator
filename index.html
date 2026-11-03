@@ -1462,8 +1462,12 @@ function movement(){
  if(document.hidden||paused){clock.getDelta();return;}
  const now=performance.now();if(now-lastFrame<1000/settings.fps)return;
  lastFrame=now;
- const dt=Math.min(.05,clock.getDelta());
- if($('start').style.display==='none'){animateEpi(dt);animatePopcornTraining(dt);advanceCustomer(dt);updateWorkers(dt);updateTrainerFollow(dt);checkoutVisual?.tick(dt);}
+ // A lógica física mantém passos curtos; chegada do cliente e entrega seguem tempo real,
+  // mesmo quando o iPhone ou o runner renderizam a menos de 20 FPS.
+  const elapsed=Math.max(0,clock.getDelta());
+  const dt=Math.min(.05,elapsed);
+  const characterDt=Math.min(.25,elapsed);
+ if($('start').style.display==='none'){animateEpi(dt);animatePopcornTraining(dt);advanceCustomer(characterDt);updateWorkers(dt);updateTrainerFollow(dt);checkoutVisual?.tick(characterDt);}
  const blocked=paused||$('modal').classList.contains('visible')||$('start').style.display!=='none';
  let forward=blocked?0:(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-joy.y;
  let strafe=blocked?0:(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joy.x;
