@@ -1575,12 +1575,15 @@ function effectivePixelRatio(){
 }
 function resizeGame(){
  if(!renderer||!camera)return;
- // Safari pode alterar o tamanho da viewport ao girar ou ao ocultar barras.
- const w=Math.max(1,document.documentElement.clientWidth||window.innerWidth);
- const h=Math.max(1,window.innerHeight);
+ // Alinhar buffer 3D à área real da cena, inclusive após rotação e barras do Safari.
+ const bounds=$('scene').getBoundingClientRect();
+ const w=Math.max(1,Math.round(bounds.width||document.documentElement.clientWidth||window.innerWidth));
+ const h=Math.max(1,Math.round(bounds.height||window.innerHeight));
  const aspect=w/h;
  if(Math.abs(camera.aspect-aspect)>0.001){camera.aspect=aspect;camera.updateProjectionMatrix()}
- renderer.setSize(w,h,false);
+ // Não recriar o framebuffer a cada evento de viewport sem mudança de dimensão.
+ const size=renderer.getSize(new THREE.Vector2());
+ if(size.x!==w||size.y!==h)renderer.setSize(w,h,false);
 }
 function applyGraphics(){
  if(!renderer)return;
