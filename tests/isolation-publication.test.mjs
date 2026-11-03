@@ -19,3 +19,11 @@ test('A distribuição copia somente recursos executáveis e licença da bibliot
  assert.match(build,/three-LICENSE\.txt/);
  assert.doesNotMatch(build,/copyFile\([^)]*\.env/);
 });
+
+test('Agenda escapa dados de sessão editados no navegador',()=>{
+ const html=readFileSync('index.html','utf8');
+ for(const field of ['time','film','room','format']){
+  assert.ok(html.includes('escapeHtml(s.'+field+')'), 'Campo de agenda sem escape: '+field);
+ }
+ assert.doesNotMatch(html,/\$\{s\.time\} · \$\{s\.film\}/);
+});
