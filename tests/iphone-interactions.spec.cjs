@@ -49,6 +49,14 @@ test('iPhone: perda de foco e abertura de painel limpam joystick imediatamente',
  expect((await page.evaluate(()=>window.__tapTest.joystick())).y).toBe(0);
  expect(await page.locator('#nub').evaluate(el=>el.style.transform)).toBe('none');
  await page.mouse.up();
+ // Girar a tela durante um gesto deve liberar o joystick sem movimento fantasma.
+ await page.mouse.move(pad.x+pad.width/2,pad.y+pad.height/2);
+ await page.mouse.down();
+ await page.mouse.move(pad.x+pad.width/2,pad.y+pad.height/2-28,{steps:4});
+ expect((await page.evaluate(()=>window.__tapTest.joystick())).y).toBeLessThan(-.20);
+ await page.evaluate(()=>window.dispatchEvent(new Event('orientationchange')));
+ expect((await page.evaluate(()=>window.__tapTest.joystick())).y).toBe(0);
+ await page.mouse.up();
  await page.locator('#pauseBtn').click();
  expect((await page.evaluate(()=>window.__tapTest.joystick())).y).toBe(0);
  expect(errors).toEqual([]);
