@@ -1,0 +1,22 @@
+name: Testar progresso e orientação do treinamento
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  unit-training:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar sintaxe dos módulos
+        run: |
+          node --check shift-training.mjs
+          node --check performance-monitor.js
+          node --check sw.js
+      - name: Testar regras, missões, avaliação e orientação
+        run: node --test tests/*.test.mjs

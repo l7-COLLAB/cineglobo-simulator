@@ -1,5 +1,5 @@
 /* PWA demonstrativa: cache limitado ao app shell publicado no escopo do projeto. */
-const CACHE='cineglobo-v35-escopo-privado';
+const CACHE='cineglobo-v36-treino-orientado';
 const LOCAL=["./","./index.html","./visuals.js","./navigation.mjs","./interaction-targeting.mjs","./training-rules.mjs","./performance-monitor.js","./checkout-zone.js","./character-kit.js","./static-batching.js","./popcorn-training.mjs","./room-training.mjs","./shift-training.mjs","./shift-terminal-visuals.js","./vendor/three.module.js","./manifest.webmanifest","./icon.svg"];
 const APP_URL=new URL(self.registration.scope);
 const CACHED_PATHS=new Set(LOCAL.map(path=>new URL(path,APP_URL).pathname));

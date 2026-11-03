@@ -122,7 +122,7 @@ import * as THREE from 'three';
 import { finishCinema, upholsteredGeometry } from './visuals.js';
 import { saleError } from './training-rules.mjs';
 import { ticketIssues,createRoomRoutine,applyRoomAction } from './room-training.mjs';
-import { createShift,beginShift,recordShiftEvent,recordShiftError,getShiftGoals,nextShiftGoal,shiftProgress,makeShiftReport,assessShift } from './shift-training.mjs';
+import { createShift,beginShift,recordShiftEvent,recordShiftError,recordShiftHelp,getShiftGuidance,getShiftGoals,nextShiftGoal,shiftProgress,makeShiftReport,assessShift } from './shift-training.mjs';
 import { createShiftTerminalVisuals } from './shift-terminal-visuals.js';
 import { createPopcornBatch,applyPopcornAction,advancePopcornBatch,createMixedTub,applyMixedTubAction } from './popcorn-training.mjs';
 import { createPerformanceMonitor } from './performance-monitor.js';
@@ -176,33 +176,20 @@ let shiftState=createShift(currentRole,city),lastDeliveredCodes=[],shiftTerminal
 const SHIFT_HISTORY_KEY='cineglobo_demo_shift_history_v1';
 let shiftHistory=[];try{const v=JSON.parse(localStorage.getItem(SHIFT_HISTORY_KEY)||'[]');if(Array.isArray(v))shiftHistory=v.filter(x=>x?.kind==='cineglobo-demo-shift-report').slice(-8)}catch{}
 function shiftHint(){
- const g=nextShiftGoal(shiftState);
- if(!shiftState.started)return 'Procure o terminal de turno do seu setor e inicie a abertura para registrar suas metas.';
- if(!g)return 'Todas as metas deste exercício foram concluídas. Confira o resumo no terminal.';
- const instruction={
-  'pos-opened':'Aproxime-se do computador do caixa e abra o sistema de vendas.',
-  'printer-checked':'Toque na mini impressora do caixa e confira o estado demonstrativo.',
-  'catalogue-checked':'Confira a televisão com a programação do cinema.',
-  'sale-delivered':'Chame um cliente, venda a sessão solicitada e entregue os ingressos pela animação.',
-  'receipt-audited':'No terminal de turno, confira o relatório fictício dos ingressos emitidos.',
-  'pos-shutdown':'No terminal do setor, encerre o computador de treinamento após a conferência.',
-  'epi-verified':'Inicie a bancada de EPIs, vista todos os itens e confirme a preparação.',
-  'stock-inspected':'Aproxime-se dos recipientes da bomboniere e inspecione o estoque fictício.',
-  'salted-ready':'Prepare uma batelada salgada pela pipoqueira específica.',
-  'sweet-ready':'Prepare uma batelada doce com chocolate em pó.',
-  'mixed-ready':'Use o balde misto da bancada para montar salgada, doce e acabamento salgado.',
-  'motors-checked':'Use o terminal do setor para conferir que os dois misturadores estão desligados.',
-  'station-inspected':'Inspecione a bancada de finalização da bomboniere (sem produtos de limpeza).',
-  'doors-checked':'Aproxime-se de uma porta de sala, confira e acione o comando de abertura.',
-  'reception-opened':'No painel da sala correta, inicie a recepção com as arandelas.',
-  'ticket-approved':'No leitor de ingressos, valide um bilhete fictício da sessão exata.',
-  'room-completed':'Finalize a sessão no painel, inspecione as poltronas, o piso e os objetos.',
-  'lights-checked':'Confirme no terminal que a sala concluída está com iluminação de limpeza.',
-  'exit-inspected':'Depois da iluminação, inspecione a saída pelo terminal de turno.'
- };
- return 'Próxima meta: '+g.title+'. '+(instruction[g.event]||'Use E ou AGIR no equipamento relacionado.');
+ const guidance=getShiftGuidance(shiftState);
+ return guidance.event?'Próxima meta: '+guidance.title+'. '+guidance.how:
+  guidance.how;
 }
-function shiftLabel(){const p=shiftProgress(shiftState);return (shiftState.started?p.phase:'não iniciado')+' · '+p.done+'/'+p.total+' metas · '+p.errors+' erro(s)';}
+function completeTrainerAdvice(){
+ const guidance=getShiftGuidance(shiftState);
+ const last=shiftState.errors?.at(-1);
+ const lastError=last&&last.goalId===nextShiftGoal(shiftState)?.id?
+  ' Último erro neste objetivo: '+last.message+'.':'';
+ return 'Meta: '+guidance.title+'. Como fazer: '+guidance.how+
+  ' Por que fazer: '+guidance.why+
+  ' Como corrigir: '+guidance.correction+lastError;
+}
+function shiftLabel(){const p=shiftProgress(shiftState);return (shiftState.started?p.phase:'não iniciado')+' · '+p.done+'/'+p.total+' metas · '+p.totalErrors+' erro(s)';}
 function shiftSidebarHtml(){
  const progress=shiftProgress(shiftState);
  const next=nextShiftGoal(shiftState);
@@ -212,7 +199,7 @@ function shiftSidebarHtml(){
   '<div class="shift-compact-head"><b>Metas do turno</b><span>'+progress.done+'/'+progress.total+'</span></div>'+
   '<div class="shift-progress" role="progressbar" aria-label="Metas concluídas" aria-valuemin="0" aria-valuemax="'+progress.total+'" aria-valuenow="'+progress.done+'"><div style="width:'+percent+'%"></div></div>'+
   '<p class="shift-next"><b>Próxima:</b> '+current+'</p>'+
-  '<div class="small">'+escapeHtml(progress.phase)+' · '+progress.errors+' erro(s)</div>'+
+  '<div class="small">'+escapeHtml(progress.phase)+' · '+progress.totalErrors+' erro(s) · '+progress.attempts+' tentativa(s) · '+progress.helpRequests+' ajuda(s)</div>'+
   '<button type="button" id="shiftOpenButton" aria-label="Abrir terminal de treinamento do seu setor">Abrir terminal do turno</button></section>';
 }
 function refreshShiftHUD(){
@@ -319,11 +306,14 @@ function openShiftConsole(){
   (!shiftState.started?'<button data-shift-start="1" class="primary" style="min-height:44px">Iniciar abertura do turno</button>':'')+
   '<h3>Metas e ações realizadas</h3>'+pending+
   (actions.length?'<div class="rows">'+actions.map(([event,title])=>'<button data-shift-action="'+event+'" style="min-height:44px">'+title+'</button>').join('')+'</div>':'')+
-  '<p class="small">'+escaped(shiftHint())+'</p>'+
+  '<section class="shift-assessment" aria-label="Orientação contextual do instrutor">'+
+   '<h3>O que fazer e por quê</h3><p>'+escaped(getShiftGuidance(shiftState).how)+'</p>'+
+   '<p class="small"><b>Motivo:</b> '+escaped(getShiftGuidance(shiftState).why)+'</p>'+
+   '<p class="small"><b>Se houver erro:</b> '+escaped(getShiftGuidance(shiftState).correction)+'</p></section>'+
   (assessment.finished?
    '<section class="shift-assessment" aria-label="Avaliação final do exercício">'+
    '<h3>Avaliação ilustrativa</h3><p class="shift-grade">'+assessment.score+'<span>/100 pontos</span></p>'+
-   '<p>'+escaped(assessment.label)+'</p><p class="small">'+assessment.done+'/'+assessment.total+' metas executadas · '+assessment.errors+' erro(s) registrados. Pontos = 100 menos 5 por erro, mínimo zero. Não representa aprovação profissional.</p>'+
+   '<p>'+escaped(assessment.label)+'</p><p class="small">'+assessment.done+'/'+assessment.total+' metas executadas · '+assessment.errors+' erro(s) registrados · '+assessment.attemptedActions+' tentativas · '+assessment.helpRequests+' pedido(s) de ajuda. Pontos = 100 menos 5 por erro, mínimo zero. A ajuda não desconta pontos. Não representa aprovação profissional.</p>'+
    '<button type="button" data-shift-export="1">Compartilhar relatório fictício</button></section>':'')+
   '<h3>Ocorrências deste turno</h3>'+(errors||'<p class="small">Nenhum erro registrado.</p>')+
   '<h3>Histórico neste dispositivo</h3>'+(history||'<p class="small">Sem turnos anteriores completos.</p>')+
@@ -345,7 +335,13 @@ function makeWorker(role,x,z,color){
 function setupWorkers(){makeWorker('caixa',-5.25,-4.02,0x4b545d);makeWorker('bomboniere',3.9,-3.53,0x733840);makeWorker('sala',-.1,-8.15,0x3c5967);updateWorkers()}
 function updateWorkers(dt=0){npcClock+=dt;for(const n of npcTeam){n.g.visible=n.role!==currentRole;if(!n.g.visible)continue;const t=npcClock+n.phase;n.g.position.x=n.origin.x+Math.sin(t*.37)*.12;n.g.position.z=n.origin.z+Math.cos(t*.4)*.10;n.g.rotation.y=Math.sin(t*.3)*.23;n.g.userData['arm-1'].rotation.x=Math.sin(t*2)*.23;n.g.userData['arm1'].rotation.x=-Math.sin(t*2)*.23;}if(dt&&Math.floor(npcClock/20)!==Math.floor((npcClock-dt)/20)){for(const k of Object.keys(npcCycles))if(k!==currentRole)npcCycles[k]++;roleHUD()}}
 const speeches=['Bem-vindo! Este é um cinema virtual de treinamento. Comece explorando o hall e interagindo com equipamentos.','Aproxime-se de um objeto identificado e pressione E, ou AGIR no celular. Cada ação simula um procedimento.','Para treinar no caixa, caminhe para trás do balcão e use o computador voltado ao funcionário. Um cliente virá até você; também é possível clicar diretamente quando o monitor estiver selecionado. Depois confira o filme, a sessão, as poltronas e o pagamento.','Na agenda você verá sessões fictícias da unidade selecionada. No painel Admin poderá modificar horários e comunicados.'];
-function trainerAdvice(){if(!shiftState.started||!shiftState.completed){say(shiftHint());return;}const tips={caixa:'Estou ao seu lado. Aproxime-se da face do monitor do caixa e pressione E/AGIR ou clique nele. Quando o cliente chegar, confirme o pedido e conclua a venda no computador.',bomboniere:'Vamos para a bomboniere. Comece pela preparação de EPIs somente se você for operar as pipoqueiras. Siga os objetos da bancada em sequência.',sala:'Eu vou acompanhar você até as salas. Confira o ingresso do cliente, a sala correta e o horário antes de liberar o acesso.'};say(tips[currentRole]);}
+function trainerAdvice(){
+ if(shiftState.started&&!shiftState.completed){
+  shiftState=recordShiftHelp(shiftState);
+  refreshShiftHUD();
+ }
+ say(completeTrainerAdvice());
+}
 
 const trainerFollow={lastX:0,lastZ:6,headingX:0,headingZ:-1,targetX:2.25,targetZ:6.55,walking:false,path:[],repath:0,lastGoalX:2.25,lastGoalZ:6.55};
 let seatedAtSofa=null;
@@ -802,8 +798,8 @@ function openCustomerDialogue(){
  const action=cmd=>{if(cmd==='hello'){m.stage='request';queueCustomer?.userData.updateSpeech?.('Meu pedido',m.count+' ingressos para '+m.session.time);chat(`Boa tarde! Gostaria de ${m.count} ingressos para ${m.session.film}, às ${m.session.time}. Você pode me ajudar?`,[['Claro! Vou confirmar a sala e os lugares.','check'],['Escolha qualquer lugar, depois vemos.','incorrect'],['Não sei atender esse pedido.','help']]);return}
  if(cmd==='check'){m.stage='confirmed';m.score+=1;chat(`Obrigado! A sessão é ${m.session.format}, na ${m.session.room}. Queremos ingressos inteiros e dois lugares juntos.`,[['Sim. Vou conferir o mapa de poltronas no computador.','open'],['Pode entrar sem comprar ingresso.','incorrect']]);return}
  if(cmd==='open'){m.stage='selling';queueCustomer?.userData.updateSpeech?.('Aguardando minha compra','Conferir lugares e pagamento');say(`Missão do cliente: venda ${m.count} ingressos para ${m.session.film}, ${m.session.time}, ${m.session.room}.`);openCash();return}
- if(cmd==='help'){chat('Sem problemas. Você pode consultar a programação, confirmar a sala e usar o computador do caixa para fazer a venda.',[['Entendi. Vamos continuar.','hello'],['Abrir o computador do caixa','open']]);return}
- if(cmd==='incorrect'){m.feedback.push('É necessário conferir o pedido e concluir a venda antes de autorizar a entrada.');chat('Você poderia conferir minha sessão e me orientar corretamente?', [['Desculpe. Vou conferir filme, horário e sala antes da venda.','check'],['Pedir ajuda ao instrutor','help'] ],'<div class="customer-score customer-bad">O instrutor identificou uma resposta inadequada. Você pode corrigir o atendimento.</div>');return}
+ if(cmd==='help'){if(shiftState.started&&!shiftState.completed){shiftState=recordShiftHelp(shiftState);refreshShiftHUD();}chat('Sem problemas. Você pode consultar a programação, confirmar a sala e usar o computador do caixa para fazer a venda.',[['Entendi. Vamos continuar.','hello'],['Abrir o computador do caixa','open']]);return}
+ if(cmd==='incorrect'){onShiftError('Atendimento ao cliente','Resposta inadequada: confirme pedido, sessão e ingresso antes de liberar a entrada.');m.feedback.push('É necessário conferir o pedido e concluir a venda antes de autorizar a entrada.');chat('Você poderia conferir minha sessão e me orientar corretamente?', [['Desculpe. Vou conferir filme, horário e sala antes da venda.','check'],['Pedir ajuda ao instrutor','help'] ],'<div class="customer-score customer-bad">O instrutor identificou uma resposta inadequada. Você pode corrigir o atendimento.</div>');return}
  if(cmd==='reset'){checkoutVisual?.reset();customerAtCounter=false;customerApproaching=false;queueCustomer.visible=false;queueCustomer.position.set(-1.6,0,2.65);serviceMission=null;close();say('Atendimento encerrado. Volte ao computador para chamar o próximo cliente.');return}
  if(cmd==='handoff'){const matching=trainingTickets.filter(t=>m.issuedCodes.includes(t.code)&&t.city===city&&t.status==='novo');if(m.handoffPending||matching.length!==m.count){chat('Confira os ingressos antes da entrega.',[['Voltar ao caixa','open']]);return;}m.handoffPending=true;const started=checkoutVisual?.beginHandoff(queueCustomer,()=>{m.handoffPending=false;m.handoffCompleted=true;openCustomerDialogue()});if(started){close();say('Entrega fictícia em andamento.');}else{m.handoffPending=false;chat('Não foi possível realizar a animação de entrega.',[['Tentar entregar novamente','handoff']]);}return;}
  if(cmd==='finish'){if(!m.handoffCompleted){const prepared=trainingTickets.filter(t=>m.issuedCodes.includes(t.code)&&t.city===city&&t.status==='novo');if(prepared.length!==m.count){chat('Ainda não encontrei meus '+(m.count===2?'dois':m.count)+' ingressos desta sessão. Podemos conferir?', [['Voltar ao caixa','open']],'<div class="customer-score customer-bad">Venda pendente. Confirme a sessão e emita os ingressos fictícios.</div>');}else{chat('A venda está registrada, mas ainda preciso receber os ingressos.', [['Entregar ingressos agora','handoff'],['Voltar ao caixa','open']],'<div class="customer-score customer-bad">Entrega pendente: concluir a venda não substitui a entrega ao cliente.</div>');}return;}const issued=trainingTickets.filter(t=>m.issuedCodes.includes(t.code)&&t.city===city&&t.film===m.session.film&&t.time===m.session.time&&t.room===m.session.room&&t.status==='novo');const passed=issued.length===m.count;if(passed){onShiftEvent('sale-delivered');queueCustomer?.userData.updateSpeech?.('Obrigado pelo atendimento!', 'Ingressos recebidos');}chat(passed?'Obrigado pelo atendimento! Agora vou guardar meus ingressos.':'Ainda não encontrei meus dois ingressos desta sessão. Podemos conferir?',[[passed?'Atender próximo cliente':'Voltar à bilheteria',passed?'reset':'open']],`<div class="customer-score ${passed?'':'customer-bad'}">${passed?'Treinamento concluído: os ingressos deste atendimento correspondem ao pedido.':'Faltam ingressos compatíveis. A missão permanece pendente.'}</div>`)}
@@ -1466,8 +1462,12 @@ function movement(){
  if(document.hidden||paused){clock.getDelta();return;}
  const now=performance.now();if(now-lastFrame<1000/settings.fps)return;
  lastFrame=now;
- const dt=Math.min(.05,clock.getDelta());
- if($('start').style.display==='none'){animateEpi(dt);animatePopcornTraining(dt);advanceCustomer(dt);updateWorkers(dt);updateTrainerFollow(dt);checkoutVisual?.tick(dt);}
+ // A lógica física mantém passos curtos; chegada do cliente e entrega seguem tempo real,
+  // mesmo quando o iPhone ou o runner renderizam a menos de 20 FPS.
+  const elapsed=Math.max(0,clock.getDelta());
+  const dt=Math.min(.05,elapsed);
+  const characterDt=Math.min(.25,elapsed);
+ if($('start').style.display==='none'){animateEpi(dt);animatePopcornTraining(dt);advanceCustomer(characterDt);updateWorkers(dt);updateTrainerFollow(dt);checkoutVisual?.tick(characterDt);}
  const blocked=paused||$('modal').classList.contains('visible')||$('start').style.display!=='none';
  let forward=blocked?0:(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-joy.y;
  let strafe=blocked?0:(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joy.x;
@@ -1570,7 +1570,7 @@ function resetTouchState(){
  }
 }
 
-$('enter').onclick=()=>{$('start').style.display='none';setCity($('startCity').value);setRole($('startRole').value);if(!isMobile)renderer.domElement.requestPointerLock?.()};addEventListener('resize',resizeGame);addEventListener('orientationchange',()=>requestAnimationFrame(resizeGame));window.visualViewport?.addEventListener('resize',resizeGame);try{build();technicalMonitor=createPerformanceMonitor(renderer,()=>player.z< -11?(player.x<0?'Sala 1':'Sala 2'):(player.z<1?'Caixa / Bomboniere':'Hall'));applyGraphics();movement();renderer.domElement.onclick=()=>{if(!paused&&currentRole==='caixa'&&nearestInteraction({player,targets:world,blockers,doors,previous:currentTarget})?.name==='Computador do caixa'){activateNearbyTarget();return;}if(!isMobile&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))renderer.domElement.requestPointerLock?.()}}catch(e){$('start').querySelector('.dialog').innerHTML+='<p class="notice">Não foi possível iniciar o motor gráfico. Confira a conexão de internet e o suporte WebGL do navegador.</p>';console.error(e)}
+$('enter').onclick=()=>{$('start').style.display='none';setCity($('startCity').value);setRole($('startRole').value);if(!isMobile)renderer.domElement.requestPointerLock?.()};addEventListener('resize',resizeGame);addEventListener('orientationchange',()=>{resetTouchState();requestAnimationFrame(resizeGame)});window.visualViewport?.addEventListener('resize',resizeGame);try{build();technicalMonitor=createPerformanceMonitor(renderer,()=>player.z< -11?(player.x<0?'Sala 1':'Sala 2'):(player.z<1?'Caixa / Bomboniere':'Hall'));applyGraphics();movement();renderer.domElement.onclick=()=>{if(!paused&&currentRole==='caixa'&&nearestInteraction({player,targets:world,blockers,doors,previous:currentTarget})?.name==='Computador do caixa'){activateNearbyTarget();return;}if(!isMobile&&$('start').style.display==='none'&&!$('modal').classList.contains('visible'))renderer.domElement.requestPointerLock?.()}}catch(e){$('start').querySelector('.dialog').innerHTML+='<p class="notice">Não foi possível iniciar o motor gráfico. Confira a conexão de internet e o suporte WebGL do navegador.</p>';console.error(e)}
 
 function effectivePixelRatio(){
  const dpr=Math.max(1,window.devicePixelRatio||1);
@@ -1579,12 +1579,15 @@ function effectivePixelRatio(){
 }
 function resizeGame(){
  if(!renderer||!camera)return;
- // Safari pode alterar o tamanho da viewport ao girar ou ao ocultar barras.
- const w=Math.max(1,document.documentElement.clientWidth||window.innerWidth);
- const h=Math.max(1,window.innerHeight);
+ // Alinhar buffer 3D à área real da cena, inclusive após rotação e barras do Safari.
+ const bounds=$('scene').getBoundingClientRect();
+ const w=Math.max(1,Math.round(bounds.width||document.documentElement.clientWidth||window.innerWidth));
+ const h=Math.max(1,Math.round(bounds.height||window.innerHeight));
  const aspect=w/h;
  if(Math.abs(camera.aspect-aspect)>0.001){camera.aspect=aspect;camera.updateProjectionMatrix()}
- renderer.setSize(w,h,false);
+ // Não recriar o framebuffer a cada evento de viewport sem mudança de dimensão.
+ const size=renderer.getSize(new THREE.Vector2());
+ if(size.x!==w||size.y!==h)renderer.setSize(w,h,false);
 }
 function applyGraphics(){
  if(!renderer)return;

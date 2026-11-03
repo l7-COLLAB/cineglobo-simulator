@@ -18,7 +18,7 @@ export function createPerformanceMonitor(renderer,getArea){
   pointerEvents:'none',whiteSpace:'pre-wrap',display:'none'
  });
  document.body.appendChild(root);
- let enabled=false,previous=0,lastPaint=0,initialGeometries=null,peakGeometries=0,contextLossCount=0;
+ let enabled=false,previous=0,lastPaint=0,initialGeometries=null,peakGeometries=0,initialTextures=null,peakTextures=0,contextLossCount=0;
  renderer.domElement.addEventListener('webglcontextlost',()=>{contextLossCount++});
  const recent=[],areas=new Map();
  function percentile(values,p=.95){
@@ -40,7 +40,7 @@ export function createPerformanceMonitor(renderer,getArea){
   enabled=Boolean(next);
   root.style.display=enabled?'block':'none';
   reset();
-  if(enabled&&!wasEnabled){areas.clear();initialGeometries=renderer.info.memory.geometries;peakGeometries=initialGeometries;contextLossCount=0;root.textContent='Coletando medições do navegador...'}
+  if(enabled&&!wasEnabled){areas.clear();initialGeometries=renderer.info.memory.geometries;peakGeometries=initialGeometries;initialTextures=renderer.info.memory.textures;peakTextures=initialTextures;contextLossCount=0;root.textContent='Coletando medições do navegador...'}
   return enabled;
  }
  function record(now){
@@ -63,6 +63,7 @@ export function createPerformanceMonitor(renderer,getArea){
   }
   previous=now;
   peakGeometries=Math.max(peakGeometries,renderer.info.memory.geometries);
+  peakTextures=Math.max(peakTextures,renderer.info.memory.textures);
   if(now-lastPaint<1000)return;
   lastPaint=now;
   const current=String(getArea());
@@ -108,6 +109,9 @@ export function createPerformanceMonitor(renderer,getArea){
    contextLossCount,
    geometryCountAtStart:initialGeometries,
    geometryCountPeak:peakGeometries,
+   textureCountAtStart:initialTextures,
+   textureCountPeak:peakTextures,
+   textureCountChange:initialTextures===null?null:renderer.info.memory.textures-initialTextures,
    geometryCountChange:initialGeometries===null?null:renderer.info.memory.geometries-initialGeometries,
    generatedAt:new Date().toISOString(),
    browser:navigator.userAgent,
@@ -122,7 +126,8 @@ export function createPerformanceMonitor(renderer,getArea){
     'Transferência pode excluir cache e conteúdo cross-origin.',
     'Relatório local: não é enviado automaticamente a um servidor.',
     'Teste de 20 minutos mede tempo ativo amostrado; não substitui avaliação física de aquecimento, memória, bateria ou Safari.',
-    'Contextos WebGL perdidos são contados, não há garantia de recuperação automática.'
+    'Contextos WebGL perdidos são contados, não há garantia de recuperação automática.',
+    'Pico de geometrias e texturas é indicador aproximado de recursos alocados, não de bytes de memória GPU.'
    ],
    areas:byArea
   };
