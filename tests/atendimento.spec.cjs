@@ -5,14 +5,16 @@ test('atendimento completo em viewport móvel',async({page})=>{
  // Exposição apenas na resposta do servidor de teste; não altera o jogo publicado.
  await page.route('**/index.html',async route=>{
  let html=fs.readFileSync('index.html','utf8');
- html=html.replace('function applyGraphics(){','window.__testGame={summonCustomer,openCash,openCustomerDialogue,tickets:()=>trainingTickets,mission:()=>serviceMission};\nfunction applyGraphics(){');
+ html=html.replace('function applyGraphics(){','window.__testGame={summonCustomer,openCash,openCustomerDialogue,tickets:()=>trainingTickets,mission:()=>serviceMission,atCounter:()=>customerAtCounter};\nfunction applyGraphics(){');
  await route.fulfill({contentType:'text/html',body:html});
  });
  await page.goto('/index.html');
  await expect(page.locator('#scene canvas')).toBeVisible({timeout:45000});
  await page.locator('#enter').click();
  await page.evaluate(()=>window.__testGame.summonCustomer());
- await expect(page.locator('[data-customer-choice="hello"]')).toBeVisible({timeout:15000});
+ // Aguarda estado real do cliente, não o tempo de animação inferido pelo teste.
+ await expect.poll(()=>page.evaluate(()=>window.__testGame.atCounter()),{timeout:25000}).toBe(true);
+ await expect(page.locator('[data-customer-choice="hello"]')).toBeVisible({timeout:5000});
  await page.locator('[data-customer-choice="hello"]').click();
  await page.locator('[data-customer-choice="check"]').click();
  await page.locator('[data-customer-choice="open"]').click();
@@ -30,7 +32,9 @@ test('atendimento completo em viewport móvel',async({page})=>{
  expect(await page.evaluate(()=>window.__testGame.mission().handoffCompleted)).toBe(true);
  await page.locator('[data-customer-choice="reset"]').click();
  await page.evaluate(()=>window.__testGame.summonCustomer());
- await expect(page.locator('[data-customer-choice="hello"]')).toBeVisible({timeout:15000});
+ // Aguarda estado real do cliente, não o tempo de animação inferido pelo teste.
+ await expect.poll(()=>page.evaluate(()=>window.__testGame.atCounter()),{timeout:25000}).toBe(true);
+ await expect(page.locator('[data-customer-choice="hello"]')).toBeVisible({timeout:5000});
  await page.locator('[data-customer-choice="hello"]').click();
  await page.locator('[data-customer-choice="check"]').click();
  await page.locator('[data-customer-choice="open"]').click();
