@@ -45,3 +45,13 @@ As regras e evidências dos testes estão em [Etapa 9](docs/ETAPA9_HALL_INTERACO
 ## Etapa 10 — Auditoria técnica do iPhone
 
 A revisão `v33` corrige a posição inicial do instrutor, adiciona navegação A* ao redor do sofá e obstáculos, escurece de fato as superfícies das salas no modo filme, protege dados antigos do Safari e exibe um aviso quando a PWA recebe uma atualização. Consulte [a auditoria completa](docs/AUDITORIA_TECNICA_ETAPA10.md). O projeto segue demonstrativo e exige validação no Safari físico antes de uso institucional.
+
+## Privacidade, marca e limites de divulgação
+
+Este repositório e a demonstração hospedada no GitHub Pages são **públicos**: código, documentação e arquivos distribuídos podem ser consultados e copiados por terceiros. A diretiva `noindex` foi proposta para reduzir a presença em buscadores, **não** para restringir acesso.
+
+O simulador não é um sistema oficial do Cine Globo. Marca, aparência de uniformes, unidades e procedimentos de treino exigem revisão e autorização expressa de quem detém os direitos e responde pela operação antes de qualquer uso institucional ou oferta comercial. Receitas, temperaturas, sequências de segurança e preços exibidos são **parâmetros de simulação não homologados**; não devem ser executados como instruções reais.
+
+Não inserir nome, CPF, e-mail, credenciais, preços reais, avisos internos ou dados reais de funcionários e clientes no painel demonstrativo. Preferências, ingressos fictícios e progresso podem permanecer no `localStorage` do navegador e ser acessados por pessoas que compartilhem o mesmo perfil. Limpe os dados locais em dispositivos compartilhados.
+
+Caso seja necessário treinar funcionários com informações internas, mantenha uma **demonstração pública sanitizada** e implemente o treinamento institucional em serviço separado com autenticação no servidor, autorização por perfil, proteção dos arquivos e regras de retenção. GitHub Pages e `robots.txt` não fornecem esse controle.
