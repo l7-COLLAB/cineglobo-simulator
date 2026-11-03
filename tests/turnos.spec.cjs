@@ -35,6 +35,8 @@ test('turno de caixa: abertura física, venda real do jogo, fechamento e histór
  expect(await page.evaluate(()=>window.__shiftTest.shift().errors.length)).toBe(1);
  await page.evaluate(()=>window.__shiftTest.trainerAdvice());
  await expect(page.locator('#speech')).toContainText('Chame um cliente');
+ await expect(page.locator('#speech')).toContainText('Por que fazer:');
+ expect(await page.evaluate(()=>window.__shiftTest.assessment().helpRequests)).toBe(1);
 
  // O atendimento usa a interface e a animação reais do jogo.
  await page.evaluate(()=>window.__shiftTest.summonCustomer());
@@ -66,8 +68,13 @@ test('turno de caixa: abertura física, venda real do jogo, fechamento e histór
  const assessment=await page.evaluate(()=>window.__shiftTest.assessment());
  expect(assessment.finished).toBe(true);
  expect(assessment.score).toBe(95);
+ expect(assessment.attemptedActions).toBe(7);
+ expect(assessment.failedAttempts).toBe(1);
+ expect(assessment.helpRequests).toBe(1);
  expect(assessment.isCertification).toBe(false);
  await expect(page.getByText('Avaliação ilustrativa',{exact:true})).toBeVisible();
+ await expect(page.getByText('O que fazer e por quê',{exact:true})).toBeVisible();
+ await expect(page.locator('#modalContent')).toContainText('pedido(s) de ajuda');
  await expect(page.locator('.shift-grade')).toContainText('95');
  await expect(page.locator('[data-shift-export]')).toBeVisible();
  await expect(page.locator('#modalContent .notice')).toContainText('6/6 metas');
